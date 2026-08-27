@@ -1,72 +1,81 @@
 # travel-yantra — STATE
 Project: travel-yantra
 Purpose: AI travel planner + Karnataka virtual guide for BCS705 Phase-2 Review 1 on 28 Aug 2026.
-Stack: Python 3.12 (uv), FastAPI, uvicorn, pydantic + pydantic-settings, jinja2, httpx, psycopg, numpy, sentence-transformers, pgvector; ruff + pytest.
-Services: Supabase Postgres 17 + pgvector 0.8.2 + pg_trgm (project puzbpzdamygjosugoeeb, ap-south-1, session pooler on 5432); OpenRouter (deepseek/deepseek-chat) verified; embeddings computed locally with intfloat/multilingual-e5-small (cached, runs offline).
-Exists now: app/main.py GET /health; scripts/check_env.py (preflight); db/migrations 001-003 applied; data/pois.json (112 POIs); scripts/seed.py; data/chunks.json (268 Katha paragraphs); scripts/seed_chunks.py; app/planner/ (deterministic planner); app/rag/ (embedding + hybrid retrieval); scripts/eval_retrieval.py; tests for health, check_env, seed data, planner and rag.
-DB rows: poi 112, poi_edge 58, intercity_leg 40, advisory 1, doc_chunk 268 (all embedded), eval_run 8.
-Gates: `uv run ruff check .`, `uv run ruff format --check .`, `uv run pytest` — all pass (37 tests).
+Stack: Python 3.12 (uv), FastAPI, pydantic, httpx, psycopg, numpy, sentence-transformers, pgvector; ruff + pytest.
+Services: Supabase Postgres 17 + pgvector + pg_trgm (project puzbpzdamygjosugoeeb, ap-south-1, session pooler on 5432); OpenRouter (three jobs, see app/llm/models.py); Sarvam bulbul:v3 for speech; embeddings local (intfloat/multilingual-e5-small, cached, offline).
+Gates: `uv run ruff check .`, `uv run ruff format --check .`, `uv run pytest` — all pass (81 tests).
 Preflight: `uv run python scripts/check_env.py` before any DB or LLM task.
+DB: poi 112, poi_edge 58, intercity_leg 40, advisory 1, doc_chunk 311 rows of which 257 live (54 retired, not deleted), trip and tour rows from the API, eval_run 9.
+Migrations: 001 core, 002 doc_chunk (city,title) key, 003 aliases in body_tsv, 004 doc_chunk.retired + tour.language/scope/total_words.
 
-## Planner (app/planner/)
-Pure Python, no LLM, no write. `plan(request, db)` reads; `build(...)` is the same
-planner with every input in memory, which is how the tests run without a database.
-Candidates → feasibility gate → k-means (own implementation, fixed seed) → nearest
-neighbour → 2-opt → validator → bounded repair → three weight variants ranked by
-(validity, interest, travel). Both routes are kept, so route_km_before survives for
-the map toggle. Demo: `uv run python -m app.planner.engine --demo`.
+## Corpus (data/chunks_curated.json + data/chunks.json → doc_chunk)
+257 live paragraphs: 45 curated by Rohan (authoritative, loaded first, never rewritten; only
+source_url was attached, 24 of them, 19/20 fact+practical) and 212 generated around them.
+56 generated drafts that overlapped a curated paragraph for the same place were dropped from
+chunks.json; their rows are `retired`, retrieval ignores them, DELETE is Rohan's call.
+By city (live): Mysuru 70, Hampi 62, Chikmagalur 55 (Belur/Halebidu under the hub city), Bengaluru 45, Coorg 25.
+Curated localities (Srirangapatna, Belur, Halebidu) and short names (Chamundi Hill, Vittala Temple…)
+are mapped to the poi table on load in scripts/seed_chunks.py; the file keeps its own words.
 
-## Katha corpus (data/chunks.json → doc_chunk)
-268 paragraphs, 90–160 words each, written to be spoken aloud. By city: Mysuru 74,
-Hampi 65, Chikmagalur 59 (Belur and Halebidu live under Chikmagalur, per the hub-city
-rule), Bengaluru 45, Coorg 25. By type: fact 68, practical 61, story 47, sensory 47,
-hook 25, taste 20. 24 are marked is_legend. 62 carry a source_url; the rest carry a
-source_name only, per the sourcing cap. Deep sets of 10+ for Mysore Palace, Vittala,
-Virupaksha and Chennakeshava Belur; Chamundi Hill has 10 spread over its three POI rows.
-Seed with `uv run python scripts/seed_chunks.py` (upsert on (city, title), never
-destructive; `--reembed` recomputes vectors).
+## Planner (app/planner/) — unchanged, plus `rebuild_day()` and a `day_start` on build_day
+Pure, no LLM, no write. Deterministic k-means → NN → 2-opt → validate → repair. `rebuild_day()`
+runs steps 3–6 for one day only so a chat edit can leave every other Day object untouched.
 
-## Retrieval (app/rag/)
-- `embed.py` — multilingual-e5-small, loaded once on first use. Documents are encoded
-  as "passage: ...", queries as "query: ...". Vectors are 384-dim and normalised.
-  Indexed text is title + body + the POI name in English and Kannada + the city.
-- `retrieve.py` — `search(query, db, filters=, k=8, trip_context=)`. Dense pgvector
-  cosine over HNSW and Postgres full text over body_tsv, each over-fetching 20, fused
-  with RRF (k=60), trimmed to k. Filters: city, poi_id, chunk_type, exclude_ids.
-  Trip context appends the current stop and its city to the query, adds 0.15 to that
-  POI's rows and 0.05 to rows mentioning steps or access when the party has elderly
-  members. Below 0.81 cosine with no strict lexical match it returns nothing, and the
-  caller is expected to say it does not know.
+## Retrieval (app/rag/) — unchanged, plus `NOT retired`
+Dense (pgvector HNSW) + lexical (tsvector, strict then OR fallback) fused with RRF k=60; refusal
+below 0.81 cosine with no strict lexical match. Eval (eval_run id=9, 311-row table, 30 questions):
 
-## Retrieval eval (scripts/eval_retrieval.py, eval_run id=8)
-30 written questions (21 English, 6 Kannada, 3 Hinglish) plus a separate block of 10
-name and keyword lookups. Expected chunks are named by title and resolved to ids at
-run time.
+    A. 30 written questions      Recall@5   MRR    p50 ms   p95 ms
+       dense only                   0.867  0.761     76.6   3827.2*
+       lexical only                 0.633  0.551     57.3    106.0
+       hybrid + RRF                 0.867  0.772    110.0    115.1
+    B. 10 name/keyword lookups      0.900 / 0.900 / 0.900 Recall@5 (dense / lexical / hybrid)
+    refusal gate 6/6.  * one network stall; p50 is the honest number.
 
-    A. 30 written questions        Recall@5    MRR    p50 ms   p95 ms
-       dense only                     0.933  0.882      58.5     67.2
-       lexical only                   0.733  0.654      57.9     62.2
-       hybrid + RRF                   0.933  0.877     116.0    125.7
+Down from 0.933 before the merge: three curated answers phrase things differently from the
+questions, and the Kannada "stone chariot" query no longer lands in the top 20 (e5-small on a
+short Kannada query against a paragraph that never says Hampi or Vittala in the body).
 
-    B. 10 name/keyword lookups     Recall@5    MRR    p50 ms   p95 ms
-       dense only                     1.000  0.950      59.7     68.1
-       lexical only                   1.000  1.000      28.1     29.0
-       hybrid + RRF                   1.000  0.950      82.4     86.2
+## Katha builder (app/katha/build.py) — scheduling, no creativity
+budget = minutes × 145 words. Spine: place → 5 themes (quick) or 7 (deep); city → a city-level
+opener + top places by popularity capped 2/4/6 by duration; day → the trip's stops in order.
+Budget split by popularity, floor 90 words, tail items dropped if they cannot be paid. Retrieval
+per item carries exclude_ids forward; a thin place may borrow city-level paragraphs and the
+segment is then labelled as the city. Rhythm rules are enforced in `arrange()` and re-checked by
+`check_rhythm()` (the tests call it directly): opens on hook|story, no adjacent same type, ≥5 min
+needs a story and a taste|sensory, quick favours hook/story/taste, deep favours fact/sensory and
+longer segments. A second pass fills to 85% of budget. Demo: `uv run python -m app.katha.build --demo`.
 
-Refusal gate: 6/6 unanswerable queries returned nothing.
+## Narrator (app/llm/) — two jobs, one fact-check
+`narrate_plan()` and `narrate_segment()` via OpenRouter. Post-check flags any number or year not in
+the input (Indic digits normalised), any capitalised English name not in the input, any %, and a
+completion cut off by the token cap. Failure → retry at temperature 0 → fallback to the retrieved
+text lightly joined. Legends get "The story goes" / "ಕಥೆಯ ಪ್ರಕಾರ" / "कहते हैं" prepended if missing.
+Kannada/Hindi names cannot be checked (no capitals, transliterated); documented, not hidden.
+`app/llm/models.py` maps job → model. `narrate_katha` is still deepseek/deepseek-chat (the model
+check_env verifies) pending Rohan's pick from `scripts/pick_model.py`, which ran three current
+models on one Mysore Palace segment in Kannada and chose nothing.
 
-Honest reading: hybrid does NOT beat both single methods on this corpus. It matches the
-better of the two in each regime and costs about twice the latency. Dense alone
-dominates lexical at every point here, because 268 chunks and a strong multilingual
-embedder leave little for term matching to add. Hybrid is kept because lexical is the
-only method that gets exact names perfectly (MRR 1.000 on block B) and because the two
-questions dense misses are ones lexical structurally cannot help with, not ones fusion
-got wrong.
+## Voice (app/voice/tts.py)
+Sarvam bulbul:v3, speaker roopa, 22050 Hz WAV, ≤2000-char pieces joined with `wave`. Cached in
+var/tts/<sha256(voice,lang,text)>.wav (gitignored). Any error → None → browser speech.
+`scripts/warm_tts.py` builds the 5-min Mysuru Katha, narrates it in en and kn, caches both, and
+writes var/tts/demo_en.json and demo_kn.json for an offline demo.
 
-Known issue: RLS is disabled on every public table (Supabase advisor). The app connects as the postgres role over the pooler, so this only matters once the anon key is used; enable RLS with policies before that.
-Known limit: Kannada Recall@5 is 0.833 against 0.952 for English. body_tsv is an English tsvector, so lexical scores 0.333 on Kannada and the dense side carries it alone.
-Known limit: MIN_SIMILARITY 0.81 was calibrated against 12 real and 8 nonsense queries. The margin is about two points and the set is small.
-Note: doc_chunk now has rows, so `scripts/seed.py` will refuse to run. That is by design and needs Rohan's go-ahead, not a flag.
-Not yet: the planner and retrieval behind API routes, frontend, LLM narration, Katha assembly.
-Next step (estimated): POST /plan and POST /katha over the planner and retriever, then the frontend.
+## Chat (app/chat/router.py)
+Messages without an edit verb are Questions and never reach the model. Edits are parsed by the
+model into strict JSON, validated, resolved against the real plan (one clarifying question on any
+doubt), then applied with `rebuild_day()`. Other days are the same objects, so byte-identical by
+construction; tests assert it on the serialised days.
+
+## API (app/api/routes.py)
+POST /api/trips, GET /api/trips/{id}, POST /api/trips/{id}/chat, POST /api/katha, GET /api/katha/{id},
+POST /api/katha/{id}/audio (204 when speech is unavailable), GET /api/places/search?q= (pg_trgm),
+GET /health. Trips persist in `trip`, Kathas in `tour`. Smoke-tested end to end against the DB.
+
+Known issue: RLS disabled on every public table; enable before the anon key is used.
+Known limit: 54 retired doc_chunk rows await `DELETE FROM doc_chunk WHERE retired` — Rohan's call.
+Known limit: `scripts/seed.py` refuses to run while doc_chunk has rows (FK); by design.
+Not yet: frontend, plan narration surfaced in the API, Hindi voice tested end to end, RLS.
+Next step (estimated): the frontend over these routes; Rohan's Kannada model pick.
 Updated: 2026-08-28
