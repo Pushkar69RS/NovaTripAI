@@ -12,3 +12,7 @@ Reload this every session. These rules are non-negotiable.
 5. Never put secrets in code or commits — env vars only (see `.env.example`).
 6. When a fact could be stale, label it "estimated" rather than asserting it.
 7. `docs/STATE.md` stays under 150 lines and is rewritten, not appended.
+
+## Preflight
+
+Run `uv run python scripts/check_env.py` before any task that touches the database or an LLM. It is read-only, masks every secret, and exits 1 on any FAIL.
