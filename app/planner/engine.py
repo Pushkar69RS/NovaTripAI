@@ -345,10 +345,11 @@ def build_day(
     request: TripRequest,
     arrival: Move | None,
     entry: Point,
+    day_start: time = DAY_START,
 ) -> tuple[Day, float, float]:
     """(Day, route km before 2-opt, route km after). Both routes are kept."""
     if not chosen:
-        empty = Day(index=index, date=on, city=city, items=[], ends_at=DAY_START)
+        empty = Day(index=index, date=on, city=city, items=[], ends_at=day_start)
         return empty, 0.0, 0.0
 
     start = min(
@@ -360,7 +361,7 @@ def build_day(
     anchor = max(ordered, key=lambda p: (p.score, -p.id))
 
     items: list[Stop | Move] = []
-    now = mins(DAY_START)
+    now = mins(day_start)
     walk_km = road_km = 0.0
     spend = 0
     if arrival is not None:
@@ -658,6 +659,87 @@ def attempt(
         interest=sum(by_id[s.poi_id].score for d in days for s in d.stops),
         spend=sum(d.spend_inr for d in days),
     )
+
+
+# --------------------------------------------------------------------------- #
+# rebuilding one day, for the chat edits
+# --------------------------------------------------------------------------- #
+
+
+def scored_pool(
+    pois: list[Poi], request: TripRequest, edges: list[Edge], advisories: list[Advisory]
+) -> dict[int, Poi]:
+    """Every eligible POI, scored, by id. Wider than the shortlist on purpose:
+    a traveller may ask for a stop the shortlist never held."""
+    pool = [p.model_copy() for p in eligible(pois, request, advisories)]
+    score(pool, request, edges, WEIGHTS[0])
+    return {p.id: p for p in pool}
+
+
+def rebuild_day(
+    plan: Plan,
+    request: TripRequest,
+    loaded: Loaded,
+    day_index: int,
+    poi_ids: list[int],
+    *,
+    start: time = DAY_START,
+    pace: str | None = None,
+) -> tuple[Day, list[Violation], int]:
+    """Steps 3-6 for one day only: order, schedule, validate, repair.
+
+    Every other day is left exactly as it was; the caller splices the result in.
+    Returns the day, whatever it still violates, and the repairs it took.
+    """
+    pois, edges, _legs, advisories, centroids = loaded
+    req = request if pace is None else request.model_copy(update={"pace": pace})
+    scored = scored_pool(pois, req, edges, advisories)
+    unknown = [i for i in poi_ids if i not in scored]
+    if unknown:
+        raise ValueError(f"not eligible for this trip: {unknown}")
+    old = plan.days[day_index - 1]
+    chosen = [scored[i] for i in poi_ids]
+    first = old.items[0] if old.items else None
+    arrival = first if isinstance(first, Move) and first.to_name == old.city else None
+    fallback = (chosen[0].lat, chosen[0].lng) if chosen else (0.0, 0.0)
+    pool = Pool(old.date, old.city, chosen, arrival, centroids.get(old.city, fallback))
+    by_id = {p.id: p for p in pois} | scored
+
+    def rebuilt() -> Day:
+        return build_day(
+            old.index,
+            pool.on,
+            pool.city,
+            pool.chosen,
+            req,
+            pool.arrival,
+            pool.entry,
+            start,
+        )[0]
+
+    def check(day: Day) -> list[Violation]:
+        days = [*plan.days[: day_index - 1], day, *plan.days[day_index:]]
+        spend = sum(d.spend_inr for d in days)
+        return [
+            v
+            for v in validate(days, req, by_id, advisories, spend)
+            if v.day_index == day.index or v.code == "OVER_BUDGET"
+        ]
+
+    day = rebuilt()
+    repairs = 0
+    violations = check(day)
+    while violations and repairs < MAX_REPAIRS:
+        victim = next(
+            (d for v in violations if (d := drop_for(pool, v)) is not None), None
+        )
+        if victim is None:
+            break
+        pool.chosen.remove(victim)
+        day = rebuilt()
+        repairs += 1
+        violations = check(day)
+    return day, violations, repairs
 
 
 # --------------------------------------------------------------------------- #
