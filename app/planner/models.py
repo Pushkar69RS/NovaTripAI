@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import date, time
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 Pace = Literal["relaxed", "comfortable", "packed"]
 Transport = Literal["train", "car", "bus", "any"]
@@ -18,10 +18,33 @@ Transport = Literal["train", "car", "bus", "any"]
 #: Stops a single day can hold, by pace.
 PACE_CAPACITY: dict[str, int] = {"relaxed": 3, "comfortable": 4, "packed": 6}
 
+#: poi.city is the hub city (see data/pois.json _notes). A traveller types the
+#: locality; the planner works in the hub whose rows hold it.
+HUBS = ("Bengaluru", "Mysuru", "Hampi", "Chikmagalur", "Coorg")
+LOCALITIES: dict[str, str] = {
+    "bangalore": "Bengaluru",
+    "mysore": "Mysuru",
+    "srirangapatna": "Mysuru",
+    "hospet": "Hampi",
+    "hosapete": "Hampi",
+    "belur": "Chikmagalur",
+    "halebidu": "Chikmagalur",
+    "chikkamagaluru": "Chikmagalur",
+    "kodagu": "Coorg",
+    "madikeri": "Coorg",
+    "kushalnagar": "Coorg",
+} | {h.lower(): h for h in HUBS}
+
+
+def hub_city(name: str) -> str:
+    """The hub city for a typed place; unknown names pass through untouched."""
+    return LOCALITIES.get(name.strip().lower(), name.strip())
+
 
 class TripRequest(BaseModel):
     origin_city: str
     destination_cities: list[str] = Field(min_length=1)
+    places: list[str] = []  # what the traveller typed, localities included
     start_date: date
     days: int = Field(ge=1)
     party_size: int = Field(ge=1)
@@ -32,10 +55,33 @@ class TripRequest(BaseModel):
     transport: Transport = "any"
     interest_tags: list[str] = []
     notes: str | None = None
+    day_one_start: time = time(9, 0)  # when the party can actually leave
+    day_end: time | None = None  # None: 20:00, or 19:00 with an elder
+    preferences: dict[str, str] = {}  # answers the planner does not act on yet
+
+    @model_validator(mode="before")
+    @classmethod
+    def _to_hubs(cls, data: object) -> object:
+        if not isinstance(data, dict) or not data.get("destination_cities"):
+            return data
+        typed = [str(c).strip() for c in data["destination_cities"] if str(c).strip()]
+        hubs = list(dict.fromkeys(hub_city(c) for c in typed))
+        out = {
+            **data,
+            "destination_cities": hubs,
+            "places": data.get("places") or typed,
+        }
+        if data.get("origin_city"):
+            out["origin_city"] = hub_city(str(data["origin_city"]))
+        return out
 
     @property
     def capacity(self) -> int:
         return PACE_CAPACITY[self.pace]
+
+    @property
+    def title(self) -> str:
+        return " & ".join(self.places or self.destination_cities)
 
 
 class Poi(BaseModel):
@@ -113,6 +159,9 @@ class Day(BaseModel):
     walk_km: float = 0.0
     road_km: float = 0.0
     spend_inr: int = 0
+    naive_order: list[int] = []  # poi ids in candidate-score order: "as listed"
+    naive_km: float = 0.0  # road km of visiting them in that order
+    route_km: float = 0.0  # road km in the order built, measured the same way
 
     @property
     def stops(self) -> list[Stop]:
@@ -132,6 +181,7 @@ class PlanMetrics(BaseModel):
     build_ms: int
     constraint_checks_passed: int
     constraint_checks_total: int
+    route_km_naive: float = 0.0  # every day visited in list order, no routing
 
 
 class Plan(BaseModel):
@@ -140,6 +190,7 @@ class Plan(BaseModel):
     comfort: Literal["comfortable", "tight"]
     has_plan_b: bool
     metrics: PlanMetrics
+    variant: str = "steady"  # which scoring mix built it; see engine.VARIANTS
 
 
 class Reason(BaseModel):

@@ -233,6 +233,57 @@ def test_mysuru_alone_in_two_days_is_a_valid_plan() -> None:
     assert result.comfort in {"comfortable", "tight"}
 
 
+def test_the_demo_trip_lists_longer_than_it_routes() -> None:
+    """A plain list visits stops in score order; that is what a pure LLM
+    itinerary does, and the map's as-listed / as-routed toggle compares it."""
+    from app.demo import DEMO_REQUEST
+
+    plan = run(DEMO_REQUEST)
+    assert isinstance(plan, Plan)
+    assert plan.metrics.route_km_naive > plan.metrics.route_km_after
+    assert plan.metrics.route_km_naive == round(sum(d.naive_km for d in plan.days), 2)
+    for day in plan.days:
+        assert sorted(day.naive_order) == sorted(s.poi_id for s in day.stops)
+        assert day.naive_km >= 0.0
+    assert plan.metrics.route_km_after == round(sum(d.route_km for d in plan.days), 2)
+
+
+def test_localities_resolve_to_their_hub_city_and_keep_the_typed_names() -> None:
+    request = trip(destination_cities=["Mysuru", "Srirangapatna"])
+    assert request.destination_cities == ["Mysuru"]
+    assert request.places == ["Mysuru", "Srirangapatna"]
+    again = TripRequest.model_validate(request.model_dump(mode="json"))
+    assert again.places == request.places  # idempotent on the stored request
+    assert trip(origin_city="Bangalore").origin_city == "Bengaluru"
+    assert trip(destination_cities=["Belur", "halebidu"]).destination_cities == [
+        "Chikmagalur"
+    ]
+
+
+def test_day_one_start_and_day_end_are_honoured() -> None:
+    late = run(trip(day_one_start=time(14, 0)))
+    assert isinstance(late, Plan)
+    first = late.days[0].stops[0]
+    assert (first.arrive.hour, first.arrive.minute) >= (14, 0)
+
+    early_end = run(trip(day_end=time(17, 0)))
+    assert isinstance(early_end, Plan)
+    assert all(d.ends_at <= time(17, 0) for d in early_end.days)
+
+
+def test_build_all_ranks_three_variants_best_first() -> None:
+    from app.planner.engine import build_all
+
+    plans = build_all(trip(days=3), pois(), edges(), legs(), advisories(), centroids())
+    assert isinstance(plans, list) and len(plans) == 3
+    assert {p.variant for p in plans} == {"steady", "interests", "popular"}
+    timing = {"metrics": {"build_ms"}}
+    assert plans[0].model_dump(exclude=timing) == run(trip(days=3)).model_dump(
+        exclude=timing
+    )
+    assert all(p.metrics.candidates_considered for p in plans)
+
+
 def test_mysuru_and_hampi_in_one_day_is_impossible_with_alternatives() -> None:
     result = run(trip(destination_cities=["Mysuru", "Hampi"], days=1))
     assert isinstance(result, Verdict)

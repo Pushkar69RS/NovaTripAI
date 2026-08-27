@@ -78,6 +78,19 @@ def two_opt(
     return order
 
 
+def as_listed(stops: list[Poi]) -> tuple[list[int], float]:
+    """(the order a plain list would visit, its road km): highest score first.
+
+    An itinerary that never routes walks its own list top to bottom, so this is
+    the honest baseline for the map's as-listed / as-routed toggle.
+    """
+    if len(stops) < 2:
+        return list(range(len(stops))), 0.0
+    order = sorted(range(len(stops)), key=lambda i: (-stops[i].score, stops[i].id))
+    _, km = matrices(stops)
+    return order, round(total(order, km), 2)
+
+
 def optimise(
     stops: list[Poi], start: int = 0
 ) -> tuple[list[int], list[int], float, float]:

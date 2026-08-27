@@ -35,7 +35,7 @@ from .models import (
     TripRequest,
     Verdict,
 )
-from .route import optimise
+from .route import as_listed, optimise
 from .validate import Violation, checks_total, validate
 
 DAY_START = time(9, 0)
@@ -54,6 +54,9 @@ WEIGHTS: list[tuple[float, float, float]] = [
     (3.5, 1.5, 1.0),
     (2.5, 2.5, 1.2),
 ]
+#: One name per WEIGHTS entry, for the chooser: the house mix, the one that
+#: leans on the traveller's tags, the one that leans on the famous names.
+VARIANTS = ("steady", "interests", "popular")
 
 Point = tuple[float, float]
 Edge = tuple[int, int, float]
@@ -276,7 +279,8 @@ def feasibility(
     centroids: dict[str, Point],
 ) -> tuple[int, int, list[Reason]]:
     """(required minutes, available minutes, the arithmetic behind both)."""
-    travel = sum(m.minutes for m in transfer_moves(request, legs, centroids))
+    moves = transfer_moves(request, legs, centroids)
+    travel = sum(m.minutes for m in moves)
     anchors = 0
     for city, _ in allot_days(request):
         in_city = [p for p in candidates if p.city == city]
@@ -285,6 +289,16 @@ def feasibility(
     required = travel + anchors
     available = request.days * DAY_BUDGET_MIN
     reasons = [
+        Reason(
+            label=(
+                f"{m.from_name} → {m.to_name} by {m.mode}, {m.km:g} km"
+                + (" (estimated)" if m.is_estimated else "")
+            ),
+            value=m.minutes,
+            unit="minutes",
+        )
+        for m in moves
+    ] + [
         Reason(label="Travel between cities", value=travel, unit="minutes"),
         Reason(
             label="Minimum time at one sight per city", value=anchors, unit="minutes"
@@ -357,6 +371,7 @@ def build_day(
         key=lambda i: haversine(entry[0], entry[1], chosen[i].lat, chosen[i].lng),
     )
     _before, after, km_before, km_after = optimise(chosen, start)
+    listed, km_naive = as_listed(chosen)
     ordered = [chosen[i] for i in after]
     anchor = max(ordered, key=lambda p: (p.score, -p.id))
 
@@ -436,6 +451,9 @@ def build_day(
         walk_km=round(walk_km, 2),
         road_km=round(road_km, 2),
         spend_inr=spend,
+        naive_order=[chosen[i].id for i in listed],
+        naive_km=km_naive,
+        route_km=km_after,
     )
     return day, km_before, km_after
 
@@ -449,6 +467,7 @@ class Pool:
     chosen: list[Poi]
     arrival: Move | None
     entry: Point
+    start: time = DAY_START
 
 
 MEAL_FROM_STOPS = 3  # a day of this many stops runs long enough to need feeding
@@ -549,7 +568,16 @@ def day_pools(
                 else None
             )
             fallback = (chosen[0].lat, chosen[0].lng) if chosen else (0.0, 0.0)
-            pools.append(Pool(on, city, chosen, arrival, centroids.get(city, fallback)))
+            pools.append(
+                Pool(
+                    on,
+                    city,
+                    chosen,
+                    arrival,
+                    centroids.get(city, fallback),
+                    request.day_one_start if index == 0 else DAY_START,
+                )
+            )
             index += 1
         previous_city = city
     return pools
@@ -568,6 +596,7 @@ class Attempt:
     violations: list[Violation]
     km_before: float
     km_after: float
+    km_naive: float
     repairs: int
     interest: float
     spend: int
@@ -615,7 +644,7 @@ def attempt(
     by_id = {p.id: p for p in candidates}
     pools = day_pools(request, candidates, legs, centroids)
     built = [
-        build_day(n + 1, p.on, p.city, p.chosen, request, p.arrival, p.entry)
+        build_day(n + 1, p.on, p.city, p.chosen, request, p.arrival, p.entry, p.start)
         for n, p in enumerate(pools)
     ]
 
@@ -644,7 +673,14 @@ def attempt(
         pool = pools[n]
         pool.chosen.remove(victim)
         built[n] = build_day(
-            n + 1, pool.on, pool.city, pool.chosen, request, pool.arrival, pool.entry
+            n + 1,
+            pool.on,
+            pool.city,
+            pool.chosen,
+            request,
+            pool.arrival,
+            pool.entry,
+            pool.start,
         )
         repairs += 1
         violations = check()
@@ -655,6 +691,7 @@ def attempt(
         violations=violations,
         km_before=round(sum(b for _, b, _ in built), 2),
         km_after=round(sum(a for _, _, a in built), 2),
+        km_naive=round(sum(d.naive_km for d in days), 2),
         repairs=repairs,
         interest=sum(by_id[s.poi_id].score for d in days for s in d.stops),
         spend=sum(d.spend_inr for d in days),
@@ -755,7 +792,61 @@ def build(
     advisories: list[Advisory],
     centroids: dict[str, Point],
 ) -> Plan | Verdict:
-    """The whole planner with every input already in memory. Touches no IO."""
+    """The best plan, or the verdict. Every input in memory; touches no IO."""
+    result = build_all(request, pois, edges, legs, advisories, centroids)
+    return result if isinstance(result, Verdict) else result[0]
+
+
+def _plan(
+    variant: str,
+    best: Attempt,
+    others: list[Attempt],
+    *,
+    required: int,
+    available: int,
+    considered: int,
+    build_ms: int,
+) -> Plan:
+    total = checks_total(best.days)
+    gained = (
+        round((best.km_before - best.km_after) / best.km_before * 100, 1)
+        if best.km_before
+        else 0.0
+    )
+    return Plan(
+        days=best.days,
+        total_spend=best.spend,
+        comfort="tight"
+        if required > TIGHT_SHARE * available or best.violations
+        else "comfortable",
+        has_plan_b=any(not a.violations for a in others),
+        variant=variant,
+        metrics=PlanMetrics(
+            route_km_before=best.km_before,
+            route_km_after=best.km_after,
+            route_km_naive=best.km_naive,
+            improvement_pct=gained,
+            repair_iterations=best.repairs,
+            candidates_considered=considered,
+            build_ms=build_ms,
+            constraint_checks_passed=total - len(best.violations),
+            constraint_checks_total=total,
+        ),
+    )
+
+
+def build_all(
+    request: TripRequest,
+    pois: list[Poi],
+    edges: list[Edge],
+    legs: list[Leg],
+    advisories: list[Advisory],
+    centroids: dict[str, Point],
+) -> list[Plan] | Verdict:
+    """Every scoring variant taken to a plan, best first, or the verdict.
+
+    The first is the plan; the others are the alternatives the chooser offers.
+    """
     started = perf_counter()
     considered = len(eligible(pois, request, advisories))
     house = select_candidates(pois, request, edges, advisories, WEIGHTS[0])
@@ -784,36 +875,24 @@ def build(
 
     attempts = sorted(
         (
-            attempt(request, pois, edges, legs, advisories, centroids, w)
-            for w in WEIGHTS
+            (variant, attempt(request, pois, edges, legs, advisories, centroids, w))
+            for variant, w in zip(VARIANTS, WEIGHTS, strict=True)
         ),
-        key=lambda a: a.rank,
+        key=lambda va: va[1].rank,
     )
-    best = attempts[0]
-    total = checks_total(best.days)
-    gained = (
-        round((best.km_before - best.km_after) / best.km_before * 100, 1)
-        if best.km_before
-        else 0.0
-    )
-    return Plan(
-        days=best.days,
-        total_spend=best.spend,
-        comfort="tight"
-        if required > TIGHT_SHARE * available or best.violations
-        else "comfortable",
-        has_plan_b=any(not a.violations for a in attempts[1:]),
-        metrics=PlanMetrics(
-            route_km_before=best.km_before,
-            route_km_after=best.km_after,
-            improvement_pct=gained,
-            repair_iterations=best.repairs,
-            candidates_considered=considered,
-            build_ms=int((perf_counter() - started) * 1000),
-            constraint_checks_passed=total - len(best.violations),
-            constraint_checks_total=total,
-        ),
-    )
+    build_ms = int((perf_counter() - started) * 1000)
+    return [
+        _plan(
+            variant,
+            a,
+            [b for _, b in attempts if b is not a],
+            required=required,
+            available=available,
+            considered=considered,
+            build_ms=build_ms,
+        )
+        for variant, a in attempts
+    ]
 
 
 POI_SQL = """
@@ -900,6 +979,11 @@ def load(request: TripRequest, db: Any) -> Loaded:
 def plan(request: TripRequest, db: Any) -> Plan | Verdict:
     """Plan a trip. Reads from `db`; writes nothing, anywhere."""
     return build(request, *load(request, db))
+
+
+def plan_all(request: TripRequest, db: Any) -> list[Plan] | Verdict:
+    """All three ranked candidates, or the verdict. Reads only."""
+    return build_all(request, *load(request, db))
 
 
 # --------------------------------------------------------------------------- #

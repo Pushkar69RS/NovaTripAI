@@ -103,7 +103,7 @@ def validate(
 ) -> list[Violation]:
     """Every violation in the plan, in the order the checks are defined."""
     out: list[Violation] = []
-    limit = DAY_END_ELDERLY if request.has_elderly else DAY_END
+    limit = request.day_end or (DAY_END_ELDERLY if request.has_elderly else DAY_END)
 
     for day in days:
         stops = day.stops
