@@ -5,12 +5,14 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
+from app.accounts import COOKIE, hash_password, sign
 from app.api.routes import db
 from app.main import app
-from app.web import COOKIE, daterange, session_token, short
+from app.web import daterange, short
 
 client = TestClient(app)
 EMAIL = "rohan@travelyantra.in"
+PASSWORD = "pw"
 
 
 class NoRows:
@@ -29,10 +31,30 @@ class NoRows:
         return iter([])
 
 
+class OneUser(NoRows):
+    """A connection that knows exactly one account: Rohan, with PASSWORD."""
+
+    ROW = (4, EMAIL, "Rohan Balu", hash_password(PASSWORD))
+
+    def execute(self, query, params=None, *_a, **_k):
+        self.query, self.params = query, params
+        return self
+
+    def fetchone(self):
+        q = self.query
+        if "FROM app_user" in q and "password_hash" in q:
+            return self.ROW if self.params[0] == EMAIL else None
+        if "FROM app_user" in q:
+            return self.ROW[:3] if self.params[0] == 4 else None
+        return None
+
+
 @pytest.fixture
 def password(monkeypatch):
-    monkeypatch.setenv("DEMO_PASSWORD", "pw")
-    return "pw"
+    monkeypatch.setenv("DEMO_PASSWORD", PASSWORD)
+    app.dependency_overrides[db] = lambda: OneUser()
+    yield PASSWORD
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture
@@ -49,13 +71,27 @@ def test_app_pages_redirect_to_signin_without_a_session(password) -> None:
         assert r.headers["location"] == f"/signin?next={path}"
 
 
+def test_the_api_needs_the_same_cookie_and_health_does_not(password) -> None:
+    for path in ("/api/trips/x", "/api/katha/x", "/api/places/search"):
+        assert client.get(path).status_code == 401, path
+    assert client.post("/api/trips", json={}).status_code == 401
+    assert client.get("/health").status_code == 200
+
+
 def test_signin_sets_the_cookie_and_a_wrong_password_does_not(password) -> None:
     bad = client.post(
         "/signin", data={"email": EMAIL, "password": "nope"}, follow_redirects=False
     )
     assert bad.status_code == 401
     assert COOKIE not in bad.cookies
-    assert "not it. One seeded account" in bad.text  # Jinja escapes the apostrophe
+    assert "not it. Four seeded accounts" in bad.text  # Jinja escapes the apostrophe
+
+    unknown = client.post(
+        "/signin",
+        data={"email": "nobody@travelyantra.in", "password": password},
+        follow_redirects=False,
+    )
+    assert unknown.status_code == 401
 
     ok = client.post(
         "/signin",
@@ -64,7 +100,7 @@ def test_signin_sets_the_cookie_and_a_wrong_password_does_not(password) -> None:
     )
     assert ok.status_code == 303
     assert ok.headers["location"] == "/saved"
-    assert ok.cookies.get(COOKIE) == session_token()
+    assert ok.cookies.get(COOKIE) == sign(4)
 
 
 def test_an_open_redirect_in_next_is_ignored(password) -> None:
@@ -76,13 +112,13 @@ def test_an_open_redirect_in_next_is_ignored(password) -> None:
     assert r.headers["location"] == "/home"
 
 
-def test_no_demo_password_means_nobody_signs_in(monkeypatch) -> None:
+def test_no_demo_password_means_nobody_signs_in(monkeypatch, empty_db) -> None:
     monkeypatch.delenv("DEMO_PASSWORD", raising=False)
     r = client.post(
         "/signin", data={"email": EMAIL, "password": ""}, follow_redirects=False
     )
     assert r.status_code == 401
-    assert session_token() is None
+    assert sign(1) is None
 
 
 def test_the_landing_page_is_public_and_makes_no_external_request(empty_db) -> None:

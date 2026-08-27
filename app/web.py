@@ -1,13 +1,12 @@
 """The pages: Jinja2 and vanilla JS over the JSON API, no build step.
 
 Every number on a page comes from the modules the API uses; the templates
-format, they do not compute. One seeded account sits behind a signed cookie.
+format, they do not compute. The four team accounts sit behind a signed cookie
+(see app/accounts.py); only the landing page and /health are public.
 """
 
 from __future__ import annotations
 
-import hashlib
-import hmac
 import os
 from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
@@ -18,6 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
+from app.accounts import COOKIE, User, authenticate, from_cookie, sign
 from app.api.routes import (
     Db,
     _json,
@@ -33,13 +33,6 @@ from app.planner.validate import DAY_END, DAY_END_ELDERLY, local_moves
 
 ROOT = Path(__file__).resolve().parent
 IST = timezone(timedelta(hours=5, minutes=30))
-COOKIE = "ty_session"
-ACCOUNT = {
-    "email": "rohan@travelyantra.in",
-    "name": "Rohan Balu",
-    "first": "Rohan",
-    "initials": "RB",
-}
 CITY_KN = {
     "Mysuru": "ಮೈಸೂರು",
     "Hampi": "ಹಂಪಿ",
@@ -149,44 +142,34 @@ templates.env.filters.update(
 
 
 # --------------------------------------------------------------------------- #
-# the one account
+# the session
 # --------------------------------------------------------------------------- #
 
 
-def session_token() -> str | None:
-    """The cookie value for the seeded account, or None when no password is set.
-
-    ponytail: one account, so the session is an HMAC of its email under the
-    demo password. A users table with per-session tokens replaces this.
-    """
-    secret = os.environ.get("DEMO_PASSWORD", "")
-    if not secret:
-        return None
-    return hmac.new(
-        secret.encode(), ACCOUNT["email"].encode(), hashlib.sha256
-    ).hexdigest()
+def signed_in(request: Request, conn: Any) -> User | None:
+    """The user this request's cookie names, or None."""
+    return from_cookie(conn, request.cookies.get(COOKIE, ""))
 
 
-def signed_in(request: Request) -> bool:
-    token = session_token()
-    given = request.cookies.get(COOKIE, "")
-    return bool(token) and hmac.compare_digest(given, token)
-
-
-def require_user(request: Request) -> dict:
-    if not signed_in(request):
+def require_user(request: Request, conn: Db) -> User:
+    """A page behind the session cookie. Anonymous visitors are sent to sign in
+    and come back to where they were going."""
+    user = signed_in(request, conn)
+    if user is None:
         raise HTTPException(
             303, headers={"Location": f"/signin?next={request.url.path}"}
         )
-    return ACCOUNT
+    return user
 
 
-User = Annotated[dict, Depends(require_user)]
+Me = Annotated[User, Depends(require_user)]
 
 
-def render(request: Request, name: str, **context: Any) -> HTMLResponse:
+def render(
+    request: Request, name: str, user: User | None = None, **context: Any
+) -> HTMLResponse:
     context.setdefault("data", {})
-    context["account"] = ACCOUNT if signed_in(request) else None
+    context["account"] = user
     return templates.TemplateResponse(request, name, context)
 
 
@@ -261,11 +244,11 @@ def _poi_names(conn: Any, ids: list[int]) -> dict[int, dict]:
     return {r[0]: {"name": r[1], "name_kn": r[2], "city": r[3]} for r in rows}
 
 
-def trip_rows(conn: Any, limit: int) -> list[dict]:
+def trip_rows(conn: Any, limit: int, user_id: int) -> list[dict]:
     rows = conn.execute(
         "SELECT id, created_at, request, status, plan FROM trip "
-        "ORDER BY created_at DESC LIMIT %s",
-        (limit,),
+        "WHERE user_id = %s ORDER BY created_at DESC LIMIT %s",
+        (user_id, limit),
     ).fetchall()
     out = []
     for r in rows:
@@ -294,11 +277,11 @@ def trip_rows(conn: Any, limit: int) -> list[dict]:
     return out
 
 
-def katha_rows(conn: Any, limit: int) -> list[dict]:
+def katha_rows(conn: Any, limit: int, user_id: int) -> list[dict]:
     rows = conn.execute(
         "SELECT id, created_at, city, duration_min, depth, language, scope FROM tour "
-        "ORDER BY created_at DESC LIMIT %s",
-        (limit,),
+        "WHERE user_id = %s ORDER BY created_at DESC LIMIT %s",
+        (user_id, limit),
     ).fetchall()
     scopes = [_json(r[6]) or {"kind": "city", "id": r[2]} for r in rows]
     names = _poi_names(conn, [int(s["id"]) for s in scopes if s["kind"] == "place"])
@@ -355,6 +338,7 @@ def landing(request: Request, conn: Db) -> HTMLResponse:
     return render(
         request,
         "landing.html",
+        user=signed_in(request, conn),
         trip=trip,
         day=day,
         summary=summary,
@@ -370,23 +354,18 @@ def signin_form(request: Request) -> HTMLResponse:
 
 
 @pages.post("/signin")
-async def signin(request: Request) -> Any:
+async def signin(request: Request, conn: Db) -> Any:
     # ponytail: parse_qs instead of Form(): the one form in the app is not
     # worth the python-multipart dependency.
     form = parse_qs((await request.body()).decode())
     email = form.get("email", [""])[0].strip().lower()
     password = form.get("password", [""])[0]
     nxt = form.get("next", ["/home"])[0]
-    expected = os.environ.get("DEMO_PASSWORD", "")
-    ok = (
-        bool(expected)
-        and email == ACCOUNT["email"]
-        and hmac.compare_digest(password, expected)
-    )
-    if not ok:
+    user = authenticate(conn, email, password)
+    if user is None:
         error = (
-            "That's not it. One seeded account in this build."
-            if expected
+            "That's not it. Four seeded accounts in this build."
+            if os.environ.get("DEMO_PASSWORD")
             else "DEMO_PASSWORD is not set on the server, so nobody can sign in yet."
         )
         response = render(request, "signin.html", next=nxt, error=error, email=email)
@@ -397,7 +376,7 @@ async def signin(request: Request) -> Any:
     response = RedirectResponse(nxt, status_code=303)
     response.set_cookie(
         COOKIE,
-        session_token() or "",
+        sign(user.id) or "",
         httponly=True,
         samesite="lax",
         max_age=7 * 24 * 3600,
@@ -418,16 +397,17 @@ def signout() -> RedirectResponse:
 
 
 @pages.get("/home", response_class=HTMLResponse)
-def home(request: Request, conn: Db, user: User) -> HTMLResponse:
+def home(request: Request, conn: Db, me: Me) -> HTMLResponse:
     now = datetime.now(IST)
     recent = sorted(
-        trip_rows(conn, 3) + katha_rows(conn, 3),
+        trip_rows(conn, 3, me.id) + katha_rows(conn, 3, me.id),
         key=lambda r: r["created"],
         reverse=True,
     )[:3]
     return render(
         request,
         "home.html",
+        user=me,
         nav="home",
         today=f"{now:%A}, {now.day} {now:%B}",
         recent=recent,
@@ -435,10 +415,11 @@ def home(request: Request, conn: Db, user: User) -> HTMLResponse:
 
 
 @pages.get("/trips/new", response_class=HTMLResponse)
-def trip_new(request: Request, conn: Db, user: User) -> HTMLResponse:
+def trip_new(request: Request, conn: Db, me: Me) -> HTMLResponse:
     return render(
         request,
         "trip_new.html",
+        user=me,
         nav="trips",
         defaults=DEMO_REQUEST,
         data={"poi_total": poi_total(conn)},
@@ -446,8 +427,8 @@ def trip_new(request: Request, conn: Db, user: User) -> HTMLResponse:
 
 
 @pages.get("/trips/{trip_id}", response_class=HTMLResponse)
-def trip_page(request: Request, trip_id: str, conn: Db, user: User) -> HTMLResponse:
-    trip = load_trip(conn, trip_id)
+def trip_page(request: Request, trip_id: str, conn: Db, me: Me) -> HTMLResponse:
+    trip = load_trip(conn, trip_id, me.id)
     req = TripRequest.model_validate(trip["request"])
     if trip["status"] != "planned" or not trip["plan"]:
         verdict = trip["alternatives"] or {
@@ -475,6 +456,7 @@ def trip_page(request: Request, trip_id: str, conn: Db, user: User) -> HTMLRespo
         return render(
             request,
             "nofit.html",
+            user=me,
             nav="trips",
             trip=trip,
             req=req,
@@ -520,6 +502,7 @@ def trip_page(request: Request, trip_id: str, conn: Db, user: User) -> HTMLRespo
         return render(
             request,
             "choose.html",
+            user=me,
             nav="trips",
             trip=trip,
             req=req,
@@ -533,6 +516,7 @@ def trip_page(request: Request, trip_id: str, conn: Db, user: User) -> HTMLRespo
     return render(
         request,
         "trip.html",
+        user=me,
         nav="trips",
         trip=trip,
         req=req,
@@ -549,12 +533,13 @@ def trip_page(request: Request, trip_id: str, conn: Db, user: User) -> HTMLRespo
 
 
 @pages.get("/katha", response_class=HTMLResponse)
-def katha_home(request: Request, conn: Db, user: User) -> HTMLResponse:
+def katha_home(request: Request, conn: Db, me: Me) -> HTMLResponse:
     q = request.query_params.get("q", "").strip()
     cov = coverage(conn)
     return render(
         request,
         "katha_home.html",
+        user=me,
         nav="katha",
         q=q,
         coverage=cov,
@@ -569,10 +554,10 @@ def _place_of(spine_item: str) -> str:
 
 
 @pages.get("/katha/{tour_id}", response_class=HTMLResponse)
-def katha_page(request: Request, tour_id: str, conn: Db, user: User) -> HTMLResponse:
-    katha, city, meta = load_katha(conn, tour_id)
+def katha_page(request: Request, tour_id: str, conn: Db, me: Me) -> HTMLResponse:
+    katha, city, meta = load_katha(conn, tour_id, me.id)
     scope = katha.scope
-    trip = load_trip(conn, meta["trip_id"]) if meta["trip_id"] else None
+    trip = load_trip(conn, meta["trip_id"], me.id) if meta["trip_id"] else None
     trip_title = TripRequest.model_validate(trip["request"]).title if trip else None
     kn_title = None
     if scope.kind == "place":
@@ -639,6 +624,7 @@ def katha_page(request: Request, tour_id: str, conn: Db, user: User) -> HTMLResp
     return render(
         request,
         "katha.html",
+        user=me,
         nav="katha",
         katha=katha,
         city=city,
@@ -661,11 +647,12 @@ def katha_page(request: Request, tour_id: str, conn: Db, user: User) -> HTMLResp
 
 
 @pages.get("/saved", response_class=HTMLResponse)
-def saved(request: Request, conn: Db, user: User) -> HTMLResponse:
+def saved(request: Request, conn: Db, me: Me) -> HTMLResponse:
     return render(
         request,
         "saved.html",
+        user=me,
         nav="trips",
-        trips=trip_rows(conn, 30),
-        kathas=katha_rows(conn, 30),
+        trips=trip_rows(conn, 30, me.id),
+        kathas=katha_rows(conn, 30, me.id),
     )

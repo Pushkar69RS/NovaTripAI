@@ -8,9 +8,10 @@ from collections.abc import Iterator
 from typing import Annotated, Any
 
 import psycopg
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
+from app.accounts import COOKIE, User, from_cookie
 from app.chat.router import (
     Clarification,
     Question,
@@ -28,8 +29,6 @@ from app.planner.models import Plan, TripRequest, Verdict
 from app.rag.retrieve import TripContext
 from app.voice.tts import cache_path, speak
 
-router = APIRouter(prefix="/api")
-
 
 def db() -> Iterator[Any]:
     with psycopg.connect(os.environ["SUPABASE_DB_URL"]) as conn:
@@ -37,6 +36,20 @@ def db() -> Iterator[Any]:
 
 
 Db = Annotated[Any, Depends(db)]
+
+
+def require_api_user(request: Request, conn: Db) -> User:
+    """Every /api route needs the same session cookie the pages use. /health,
+    which lives on the app rather than this router, stays open."""
+    user = from_cookie(conn, request.cookies.get(COOKIE, ""))
+    if user is None:
+        raise HTTPException(401, "sign in first")
+    return user
+
+
+Me = Annotated[User, Depends(require_api_user)]
+
+router = APIRouter(prefix="/api", dependencies=[Depends(require_api_user)])
 
 
 def _json(value: Any) -> Any:
@@ -50,7 +63,7 @@ def _json(value: Any) -> Any:
 # --------------------------------------------------------------------------- #
 
 
-def create(request: TripRequest, conn: Any) -> dict:
+def create(request: TripRequest, conn: Any, user_id: int | None = None) -> dict:
     """Plan, store, and return what the page needs. demo_seed.py uses this too.
 
     A planned trip keeps the best candidate in `plan` and the other two in
@@ -59,8 +72,14 @@ def create(request: TripRequest, conn: Any) -> dict:
     result = plan_all(request, conn)
     if isinstance(result, Verdict):
         (trip_id,) = conn.execute(
-            "INSERT INTO trip (request, status, alternatives) VALUES (%s, %s, %s) RETURNING id",
-            (request.model_dump_json(), "impossible", result.model_dump_json()),
+            "INSERT INTO trip (request, status, alternatives, user_id) "
+            "VALUES (%s, %s, %s, %s) RETURNING id",
+            (
+                request.model_dump_json(),
+                "impossible",
+                result.model_dump_json(),
+                user_id,
+            ),
         ).fetchone()
         return {
             "id": str(trip_id),
@@ -70,13 +89,14 @@ def create(request: TripRequest, conn: Any) -> dict:
     first, *others = result
     alternatives = [p.model_dump(mode="json") for p in others]
     (trip_id,) = conn.execute(
-        "INSERT INTO trip (request, status, plan, alternatives) "
-        "VALUES (%s, %s, %s, %s) RETURNING id",
+        "INSERT INTO trip (request, status, plan, alternatives, user_id) "
+        "VALUES (%s, %s, %s, %s, %s) RETURNING id",
         (
             request.model_dump_json(),
             "planned",
             first.model_dump_json(),
             json.dumps(alternatives),
+            user_id,
         ),
     ).fetchone()
     return {
@@ -88,17 +108,19 @@ def create(request: TripRequest, conn: Any) -> dict:
 
 
 @router.post("/trips")
-def create_trip(request: TripRequest, conn: Db) -> dict:
-    return create(request, conn)
+def create_trip(request: TripRequest, conn: Db, me: Me) -> dict:
+    return create(request, conn, me.id)
 
 
-def load_trip(conn: Any, trip_id: str) -> dict:
+def load_trip(conn: Any, trip_id: str, user_id: int | None = None) -> dict:
+    """One trip. With a user_id, a trip someone else owns is a 404, not a 403:
+    the traveller has no business learning that the id exists."""
     row = conn.execute(
-        "SELECT id, request, status, plan, alternatives, created_at "
+        "SELECT id, request, status, plan, alternatives, created_at, user_id "
         "FROM trip WHERE id = %s",
         (trip_id,),
     ).fetchone()
-    if not row:
+    if not row or (user_id is not None and row[6] is not None and row[6] != user_id):
         raise HTTPException(404, "no such trip")
     return {
         "id": str(row[0]),
@@ -107,12 +129,13 @@ def load_trip(conn: Any, trip_id: str) -> dict:
         "plan": _json(row[3]),
         "alternatives": _json(row[4]),
         "created_at": row[5].isoformat(),
+        "user_id": row[6],
     }
 
 
 @router.get("/trips/{trip_id}")
-def get_trip(trip_id: str, conn: Db) -> dict:
-    return load_trip(conn, trip_id)
+def get_trip(trip_id: str, conn: Db, me: Me) -> dict:
+    return load_trip(conn, trip_id, me.id)
 
 
 class ChooseIn(BaseModel):
@@ -120,13 +143,13 @@ class ChooseIn(BaseModel):
 
 
 @router.post("/trips/{trip_id}/choose")
-def choose_plan(trip_id: str, body: ChooseIn, conn: Db) -> dict:
+def choose_plan(trip_id: str, body: ChooseIn, conn: Db, me: Me) -> dict:
     """Make candidate `index` of [plan, *alternatives] the plan.
 
     The plan that was current joins the alternatives, so nothing is lost and
     the chat keeps editing whichever one the traveller is looking at.
     """
-    trip = load_trip(conn, trip_id)
+    trip = load_trip(conn, trip_id, me.id)
     if trip["status"] != "planned":
         raise HTTPException(409, "this trip has no plan to choose from")
     candidates = [trip["plan"], *(trip["alternatives"] or [])]
@@ -137,7 +160,7 @@ def choose_plan(trip_id: str, body: ChooseIn, conn: Db) -> dict:
         "UPDATE trip SET plan = %s, alternatives = %s WHERE id = %s",
         (json.dumps(chosen), json.dumps(candidates), trip_id),
     )
-    return load_trip(conn, trip_id)
+    return load_trip(conn, trip_id, me.id)
 
 
 class ChatIn(BaseModel):
@@ -148,8 +171,8 @@ class ChatIn(BaseModel):
 
 
 @router.post("/trips/{trip_id}/chat")
-def chat(trip_id: str, body: ChatIn, conn: Db) -> dict:
-    trip = load_trip(conn, trip_id)
+def chat(trip_id: str, body: ChatIn, conn: Db, me: Me) -> dict:
+    trip = load_trip(conn, trip_id, me.id)
     if not trip["plan"]:
         raise HTTPException(409, "this trip has no plan to talk about")
     request = TripRequest.model_validate(trip["request"])
@@ -233,7 +256,7 @@ def fill_narration(katha: Katha, city: str | None) -> tuple[bool, str]:
 
 
 @router.post("/katha")
-def create_katha(body: KathaIn, conn: Db) -> dict:
+def create_katha(body: KathaIn, conn: Db, me: Me) -> dict:
     try:
         katha = build(
             body.scope,
@@ -251,7 +274,8 @@ def create_katha(body: KathaIn, conn: Db) -> dict:
     city = katha.spine[0].city if katha.spine else str(body.scope.id)
     (tour_id,) = conn.execute(
         "INSERT INTO tour (trip_id, city, duration_min, depth, segments, language, "
-        "scope, total_words) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
+        "scope, total_words, user_id) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
         (
             body.trip_id,
             city,
@@ -261,20 +285,23 @@ def create_katha(body: KathaIn, conn: Db) -> dict:
             body.language,
             body.scope.model_dump_json(),
             katha.total_words,
+            me.id,
         ),
     ).fetchone()
     katha.id = str(tour_id)
     return katha.model_dump(mode="json")
 
 
-def load_katha(conn: Any, tour_id: str) -> tuple[Katha, str | None, dict]:
-    """(the Katha, its city, the tour row's own facts)."""
+def load_katha(
+    conn: Any, tour_id: str, user_id: int | None = None
+) -> tuple[Katha, str | None, dict]:
+    """(the Katha, its city, the tour row's own facts). Scoped like load_trip."""
     row = conn.execute(
         "SELECT id, duration_min, depth, segments, language, scope, total_words, "
-        "city, trip_id, created_at FROM tour WHERE id = %s",
+        "city, trip_id, created_at, user_id FROM tour WHERE id = %s",
         (tour_id,),
     ).fetchone()
-    if not row:
+    if not row or (user_id is not None and row[10] is not None and row[10] != user_id):
         raise HTTPException(404, "no such katha")
     segments = _json(row[3]) or []
     scope = _json(row[5]) or {"kind": "city", "id": row[7]}
@@ -297,15 +324,15 @@ def load_katha(conn: Any, tour_id: str) -> tuple[Katha, str | None, dict]:
 
 
 @router.get("/katha/{tour_id}")
-def get_katha(tour_id: str, conn: Db) -> dict:
-    katha, _, _ = load_katha(conn, tour_id)
+def get_katha(tour_id: str, conn: Db, me: Me) -> dict:
+    katha, _, _ = load_katha(conn, tour_id, me.id)
     return katha.model_dump(mode="json")
 
 
 @router.post("/katha/{tour_id}/narrate")
-def katha_narrate(tour_id: str, conn: Db) -> dict:
+def katha_narrate(tour_id: str, conn: Db, me: Me) -> dict:
     """Every segment narrated in the Katha's language, stored, returned."""
-    katha, city, _ = load_katha(conn, tour_id)
+    katha, city, _ = load_katha(conn, tour_id, me.id)
     changed, source = fill_narration(katha, city)
     if changed:
         _store_segments(conn, tour_id, katha)
@@ -313,9 +340,9 @@ def katha_narrate(tour_id: str, conn: Db) -> dict:
 
 
 @router.post("/katha/{tour_id}/audio")
-def katha_audio(tour_id: str, conn: Db) -> Response:
+def katha_audio(tour_id: str, conn: Db, me: Me) -> Response:
     """The whole Katha spoken, or 204 when speech is not available right now."""
-    katha, city, _ = load_katha(conn, tour_id)
+    katha, city, _ = load_katha(conn, tour_id, me.id)
     changed, source = fill_narration(katha, city)
     if changed:
         _store_segments(conn, tour_id, katha)
@@ -371,7 +398,7 @@ def coverage(conn: Any) -> list[dict]:
 
 
 @router.get("/places/search")
-def places_search(conn: Db, q: str = "") -> dict:
+def places_search(conn: Db, me: Me, q: str = "") -> dict:
     """Cities and places for the Katha search box, with minutes of material."""
     q = q.strip()
     cities = [
