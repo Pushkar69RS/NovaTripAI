@@ -10,3 +10,6 @@ build/
 # Environments
 .venv/
 .env
+
+# Keep the rulebook despite a global claude.md ignore
+!CLAUDE.md
