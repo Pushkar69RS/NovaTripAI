@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Travel Yantra — mockup v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Anek+Kannada:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   TRAVEL YANTRA v3 — "survey sheet + reservation chart"
+   Same tokens as v2 (approved). New: form controls, interstitial,
+   plan chooser, pipeline trace, voice player, quick chips, footer.
+   ============================================================ */
+:root{
+  --sheet:#E9E9E1; --sheet-2:#F2F2EC; --sheet-3:#DEDFD5;
+  --ink:#17211E; --ink-60:rgba(23,33,30,.62); --ink-38:rgba(23,33,30,.38);
+  --river:#1F5C6B; --river-wash:rgba(31,92,107,.10);
+  --laterite:#A6522C; --laterite-wash:rgba(166,82,44,.12);
+  --contour:#CFC9B6;
+  --display:"Bricolage Grotesque",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --kn:"Anek Kannada","Noto Sans Kannada",sans-serif;
+  --pad:clamp(20px,3.6vw,52px); --radius:3px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--sheet);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(var(--contour) 1px,transparent 1px),linear-gradient(90deg,var(--contour) 1px,transparent 1px);
+  background-size:64px 64px;opacity:.28}
+.wrap{position:relative;z-index:1}
+a{color:inherit}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--river);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* mockup switcher */
+.switch{position:sticky;top:0;z-index:60;display:flex;gap:2px;flex-wrap:wrap;padding:8px var(--pad);background:var(--ink)}
+.switch__tag{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:rgba(233,233,225,.5);align-self:center;margin-right:12px}
+.switch button{background:none;border:1px solid rgba(233,233,225,.22);color:rgba(233,233,225,.72);font-family:var(--mono);font-size:11px;padding:4px 8px;border-radius:2px}
+.switch button:hover{border-color:rgba(233,233,225,.55);color:#E9E9E1}
+.switch button[aria-current="true"]{background:#E9E9E1;color:var(--ink);border-color:#E9E9E1}
+.screen{display:none}
+.screen.is-on{display:block}
+
+/* chrome */
+.bar{display:flex;align-items:center;gap:26px;padding:14px var(--pad);border-bottom:1px solid var(--contour);background:var(--sheet)}
+.mark{display:flex;align-items:baseline;gap:9px;flex:none}
+.mark__name{font-family:var(--display);font-weight:800;font-size:16px;letter-spacing:-.02em}
+.mark__kn{font-family:var(--kn);font-size:13px;color:var(--ink-60)}
+.nav{display:flex;gap:4px;flex:1}
+.nav a{font-size:13.5px;padding:6px 12px;border-radius:2px;text-decoration:none;color:var(--ink-60);border:1px solid transparent}
+.nav a:hover{background:var(--river-wash);color:var(--ink)}
+.nav a[aria-current="page"]{color:var(--ink);font-weight:500;border-color:var(--contour);background:var(--sheet-2)}
+.avatar{width:28px;height:28px;border:1px solid var(--ink);border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-size:11px;flex:none}
+.crumb{display:flex;gap:8px;align-items:center;padding:10px var(--pad);border-bottom:1px solid var(--contour);font-family:var(--mono);font-size:11px;color:var(--ink-38);background:var(--sheet-2);flex-wrap:wrap}
+.crumb a{text-decoration:none}
+.crumb a:hover{color:var(--river)}
+.crumb b{font-weight:500;color:var(--ink)}
+.page{padding:var(--pad);max-width:1220px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-38);margin:0}
+.h1{font-family:var(--display);font-weight:800;font-size:clamp(29px,4.4vw,48px);line-height:1.03;letter-spacing:-.03em;margin:.35em 0 .3em}
+.h2{font-family:var(--display);font-weight:600;font-size:21px;letter-spacing:-.02em;margin:0 0 6px}
+.lede{font-size:16px;color:var(--ink-60);max-width:54ch;margin:0}
+.hint{font-size:12.5px;color:var(--ink-38)}
+.btn{display:inline-flex;align-items:center;gap:9px;background:var(--ink);color:var(--sheet-2);border:1px solid var(--ink);padding:11px 20px;border-radius:var(--radius);font-weight:500;font-size:14px;text-decoration:none}
+.btn:hover{background:var(--river);border-color:var(--river)}
+.btn--ghost{background:none;color:var(--ink)}
+.btn--ghost:hover{background:var(--river-wash);color:var(--ink);border-color:var(--river)}
+.btn--sm{padding:7px 13px;font-size:13px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border:1px solid var(--contour);border-radius:2px;color:var(--ink-60);background:var(--sheet-2)}
+.chip--river{border-color:var(--river);color:var(--river);background:var(--river-wash)}
+.chip--lat{border-color:var(--laterite);color:var(--laterite);background:var(--laterite-wash)}
+
+/* maps */
+.map{border:1px solid var(--ink);background:var(--sheet-2);border-radius:var(--radius);overflow:hidden;position:relative}
+.map svg{display:block;width:100%;height:auto;background:var(--sheet-3)}
+.map__head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--contour);background:var(--sheet-2)}
+.map__head b{font-family:var(--display);font-size:13px;font-weight:600}
+.map__foot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid var(--contour);font-family:var(--mono);font-size:11px;color:var(--ink-60);flex-wrap:wrap}
+.toggle{display:flex;border:1px solid var(--contour);border-radius:2px;overflow:hidden}
+.toggle button{background:var(--sheet-2);border:0;border-right:1px solid var(--contour);padding:4px 9px;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase}
+.toggle button:last-child{border-right:0}
+.toggle button[aria-pressed="true"]{background:var(--laterite);color:var(--sheet-2)}
+.toggle button[aria-pressed="true"].on-after{background:var(--river)}
+.mapland{fill:#E4E5DA;stroke:var(--ink);stroke-width:1.1}
+.mapcontour{fill:none;stroke:var(--contour);stroke-width:.8}
+.mapriver{fill:none;stroke:var(--river);stroke-width:1.4;opacity:.5}
+.route{fill:none;stroke-width:2;stroke-linejoin:round}
+.route--after{stroke:var(--river)}
+.route--before{stroke:var(--laterite);stroke-dasharray:5 4}
+.pin circle{fill:var(--sheet-2);stroke:var(--ink);stroke-width:1.6}
+.pin.is-hard circle{fill:var(--ink)}
+.pin.is-hard text{fill:var(--sheet-2)}
+.pin text{font-family:var(--mono);font-size:9px;text-anchor:middle;dominant-baseline:central;fill:var(--ink)}
+.pin__label{font-family:var(--mono);font-size:8.5px;fill:var(--ink-60);text-anchor:middle}
+.dot{fill:var(--river);cursor:pointer}
+.dot:hover{fill:var(--laterite)}
+.dotlabel{font-family:var(--mono);font-size:8px;fill:var(--ink-60);text-anchor:middle}
+
+/* landing */
+.hero{padding:clamp(44px,8vw,92px) var(--pad) 0;max-width:1220px}
+.hero__grid{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(26px,5vw,64px);align-items:end}
+@media(max-width:900px){.hero__grid{grid-template-columns:1fr}}
+.hero__sub{margin-top:22px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.how{display:flex;border-top:1px solid var(--contour);border-bottom:1px solid var(--contour);margin-top:clamp(36px,6vw,64px)}
+.how__cell{flex:1;padding:22px 24px 24px;border-right:1px solid var(--contour)}
+.how__cell:last-child{border-right:0}
+.how__cell h3{font-family:var(--display);font-size:15px;font-weight:600;margin:8px 0 5px}
+.how__cell p{margin:0;font-size:13.5px;color:var(--ink-60)}
+@media(max-width:760px){.how{flex-direction:column}.how__cell{border-right:0;border-bottom:1px solid var(--contour)}.how__cell:last-child{border-bottom:0}}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--contour);border:1px solid var(--contour);border-radius:var(--radius);overflow:hidden;margin-top:clamp(30px,5vw,52px)}
+@media(max-width:760px){.twocol{grid-template-columns:1fr}}
+.half{background:var(--sheet-2);padding:26px 28px 30px}
+.half h3{font-family:var(--display);font-size:24px;font-weight:800;letter-spacing:-.02em;margin:10px 0 2px}
+.half .kn{font-family:var(--kn);font-size:18px;color:var(--ink-60)}
+.half .what{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--river);margin:8px 0 12px}
+.half p{margin:0 0 16px;font-size:14px;color:var(--ink-60);max-width:42ch}
+.honesty{display:flex;gap:20px;flex-wrap:wrap;padding:18px 0 0;font-family:var(--mono);font-size:11px;color:var(--ink-38)}
+.footer{margin-top:clamp(36px,6vw,60px);border-top:1px solid var(--contour);padding:16px 0 34px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--ink-38)}
+
+/* forms */
+.field{margin-bottom:16px}
+.field label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-38);margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;padding:11px 13px;background:var(--sheet-2);border:1px solid var(--contour);border-radius:var(--radius);font:inherit;color:var(--ink)}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--river);outline:none;box-shadow:0 0 0 3px var(--river-wash)}
+.field .sub{font-size:12px;color:var(--ink-38);margin-top:5px}
+.steps{display:flex;border:1px solid var(--contour);border-radius:var(--radius);overflow:hidden;margin:20px 0 26px;max-width:680px}
+.steps button{flex:1;background:var(--sheet-2);border:0;border-right:1px solid var(--contour);padding:10px 12px;text-align:left}
+.steps button:last-child{border-right:0}
+.steps button[aria-current="true"]{background:var(--ink);color:var(--sheet-2)}
+.steps small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;opacity:.6}
+.steps b{font-weight:500;font-size:13.5px}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 26px;max-width:680px}
+@media(max-width:640px){.form-grid{grid-template-columns:1fr}}
+.span-2{grid-column:1/-1}
+.tagrow{display:flex;flex-wrap:wrap;gap:7px;margin-top:2px}
+.tag{border:1px solid var(--contour);background:var(--sheet-2);border-radius:2px;padding:6px 11px;font-size:13px}
+.tag[aria-pressed="true"]{background:var(--ink);color:var(--sheet-2);border-color:var(--ink)}
+.tag--lat[aria-pressed="true"]{background:var(--laterite);border-color:var(--laterite)}
+.fstep{display:none}
+.fstep.is-on{display:block}
+.form-actions{display:flex;gap:12px;align-items:center;margin-top:24px;max-width:680px;flex-wrap:wrap}
+.stepper{display:flex;align-items:center;gap:0;border:1px solid var(--contour);border-radius:var(--radius);background:var(--sheet-2);width:max-content}
+.stepper button{width:38px;height:40px;border:0;background:none;font-family:var(--mono);font-size:16px}
+.stepper button:hover{background:var(--river-wash)}
+.stepper output{min-width:44px;text-align:center;font-family:var(--mono);font-size:14px;border-left:1px solid var(--contour);border-right:1px solid var(--contour);padding:9px 0}
+.stepgroup{display:flex;gap:22px;flex-wrap:wrap}
+.stepgroup .field{margin-bottom:10px}
+.seg3{display:flex;border:1px solid var(--contour);border-radius:var(--radius);overflow:hidden;max-width:max-content}
+.seg3 button{background:var(--sheet-2);border:0;border-right:1px solid var(--contour);padding:9px 14px;font-size:13px}
+.seg3 button:last-child{border-right:0}
+.seg3 button[aria-current="true"]{background:var(--ink);color:var(--sheet-2)}
+.seg3 small{display:block;font-family:var(--mono);font-size:9.5px;opacity:.55;letter-spacing:.04em}
+.checkrow{display:flex;gap:8px;flex-wrap:wrap}
+.check{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--contour);background:var(--sheet-2);border-radius:2px;padding:7px 11px;font-size:13px}
+.check[aria-pressed="true"]{border-color:var(--river);background:var(--river-wash)}
+.check i{width:13px;height:13px;border:1.5px solid var(--ink-38);border-radius:2px;display:inline-block;font-style:normal}
+.check[aria-pressed="true"] i{background:var(--river);border-color:var(--river)}
+
+/* interstitial */
+.build{max-width:560px;margin:clamp(40px,8vw,90px) auto;padding:0 var(--pad)}
+.build__box{border:1px solid var(--ink);background:var(--sheet-2);border-radius:var(--radius);padding:26px 28px}
+.stage{display:flex;align-items:baseline;gap:12px;padding:9px 0;border-bottom:1px dashed var(--contour);opacity:0;animation:stagein .01s forwards}
+.stage:last-of-type{border-bottom:0}
+.stage b{font-family:var(--mono);font-size:12px;color:var(--river);min-width:20px}
+.stage span{font-size:14px}
+.stage small{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-38);white-space:nowrap}
+.is-on .stage:nth-child(2){animation-delay:.15s}
+.is-on .stage:nth-child(3){animation-delay:.7s}
+.is-on .stage:nth-child(4){animation-delay:1.3s}
+.is-on .stage:nth-child(5){animation-delay:2.0s}
+.is-on .stage:nth-child(6){animation-delay:2.7s}
+@keyframes stagein{to{opacity:1}}
+.build__after{opacity:0;animation:stagein .01s forwards;animation-delay:3.3s;margin-top:18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+@media (prefers-reduced-motion:reduce){.stage,.build__after{opacity:1}}
+
+/* plan chooser */
+.choose{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}
+@media(max-width:900px){.choose{grid-template-columns:1fr}}
+.pcard{border:1px solid var(--contour);background:var(--sheet-2);border-radius:var(--radius);padding:18px 18px 20px;display:flex;flex-direction:column;gap:10px;text-align:left}
+.pcard:hover{border-color:var(--river)}
+.pcard.is-reco{border-color:var(--ink)}
+.pcard h3{font-family:var(--display);font-size:18px;font-weight:600;margin:2px 0 0;letter-spacing:-.01em}
+.pcard p{margin:0;font-size:13.5px;color:var(--ink-60);flex:1}
+.pcard__chips{display:flex;gap:6px;flex-wrap:wrap}
+
+/* plan */
+.plan{display:grid;grid-template-columns:minmax(0,1fr) 336px}
+@media(max-width:1240px){.plan{grid-template-columns:1fr}}
+.plan__main{padding:var(--pad);min-width:0}
+.plan__side{border-left:1px solid var(--contour);background:var(--sheet-2);padding:18px;position:sticky;top:42px;height:calc(100vh - 42px);display:flex;flex-direction:column}
+@media(max-width:1240px){.plan__side{position:static;height:auto;border-left:0;border-top:1px solid var(--contour)}}
+.plan__head{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;margin-bottom:14px}
+.daytabs{display:flex;gap:2px;margin:14px 0 16px}
+.daytabs button{background:var(--sheet-2);border:1px solid var(--contour);border-radius:2px;padding:7px 14px;font-family:var(--mono);font-size:12px}
+.daytabs button[aria-current="true"]{background:var(--ink);color:var(--sheet-2);border-color:var(--ink)}
+.daygrid{display:grid;grid-template-columns:376px minmax(0,1fr);gap:26px;align-items:start}
+@media(max-width:980px){.daygrid{grid-template-columns:1fr}}
+.daygrid__map{position:sticky;top:60px}
+@media(max-width:980px){.daygrid__map{position:static}}
+.dayhead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding-bottom:13px;border-bottom:1px dashed var(--contour);margin-bottom:18px}
+.dayhead h3{font-family:var(--display);font-size:19px;font-weight:600;margin:0;letter-spacing:-.01em}
+.dayhead .kn{font-family:var(--kn);font-size:15px;color:var(--ink-60)}
+.rail{position:relative;padding-bottom:6px}
+.rail::before{content:"";position:absolute;left:83px;top:12px;bottom:12px;width:2px;background:var(--ink)}
+.leg{display:grid;grid-template-columns:60px 24px minmax(0,1fr);gap:0 12px;align-items:start;position:relative}
+.leg__time{font-family:var(--mono);font-size:12px;text-align:right;color:var(--ink-60);padding-top:11px;white-space:nowrap}
+.leg__node{position:relative;height:100%;display:flex;justify-content:center;padding-top:14px}
+.node{position:relative;z-index:2}
+.node--hard{width:11px;height:11px;background:var(--ink);border:2px solid var(--sheet)}
+.node--soft{width:11px;height:11px;border:2px solid var(--ink);border-radius:50%;background:var(--sheet)}
+.leg__body{padding:6px 0 15px}
+.stop{border:1px solid var(--contour);background:var(--sheet-2);border-radius:var(--radius);padding:12px 14px}
+.stop:hover{border-color:var(--river)}
+.stop.is-focus{border-color:var(--river);box-shadow:0 0 0 3px var(--river-wash)}
+.stop__top{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.stop__name{font-family:var(--display);font-size:15.5px;font-weight:600;letter-spacing:-.01em}
+.stop__meta{font-family:var(--mono);font-size:11px;color:var(--ink-38);white-space:nowrap}
+.stop__note{margin:6px 0 0;font-size:13px;color:var(--ink-60)}
+.stop__foot{display:flex;gap:6px;margin-top:9px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.stop__tags{display:flex;gap:6px;flex-wrap:wrap}
+.leg--move .leg__node::after{content:"";position:absolute;left:50%;transform:translateX(-50%);top:0;bottom:0;width:8px;background:repeating-linear-gradient(to bottom,var(--ink) 0 2px,transparent 2px 7px);opacity:.45;z-index:1}
+.move{display:flex;align-items:center;gap:9px;padding:6px 0 12px;font-family:var(--mono);font-size:11.5px;color:var(--ink-60)}
+.summary{margin-top:8px;border-top:1px solid var(--contour);padding-top:14px;display:flex;gap:24px;flex-wrap:wrap}
+.summary div span{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-38)}
+.summary div b{font-family:var(--display);font-size:18px;font-weight:600}
+.trace{margin-top:18px;border:1px dashed var(--contour);border-radius:var(--radius);background:var(--sheet-2)}
+.trace summary{cursor:pointer;padding:11px 14px;font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-60);list-style:none}
+.trace summary::-webkit-details-marker{display:none}
+.trace summary::before{content:"+ "}
+.trace[open] summary::before{content:"− "}
+.trace__body{padding:2px 14px 13px;font-family:var(--mono);font-size:12px;line-height:2;color:var(--ink-60)}
+.trace__body b{color:var(--ink);font-weight:500}
+
+/* chat */
+.chat__head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--contour);padding-bottom:10px;margin-bottom:12px}
+.chat__head b{font-family:var(--display);font-size:14.5px;font-weight:600}
+.chat__log{flex:1;overflow:auto;display:flex;flex-direction:column;gap:11px;padding-right:4px;min-height:200px}
+.msg{max-width:94%;font-size:13.5px;padding:10px 12px;border-radius:var(--radius);border:1px solid var(--contour);background:var(--sheet)}
+.msg--me{align-self:flex-end;background:var(--ink);color:var(--sheet-2);border-color:var(--ink)}
+.msg--sys{border-style:dashed;color:var(--ink-60);font-family:var(--mono);font-size:11.5px}
+.msg cite{display:block;margin-top:7px;font-family:var(--mono);font-size:10.5px;font-style:normal;color:var(--ink-38)}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px}
+.quick button{border:1px dashed var(--contour);background:none;border-radius:2px;padding:5px 10px;font-size:12px;color:var(--ink-60)}
+.quick button:hover{border-color:var(--river);color:var(--river);background:var(--river-wash)}
+.chat__in{display:flex;gap:8px;margin-top:11px;border-top:1px solid var(--contour);padding-top:12px}
+.chat__in input{flex:1;padding:10px 12px;background:var(--sheet);border:1px solid var(--contour);border-radius:var(--radius);font:inherit;min-width:0}
+
+/* katha */
+.kgrid{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:34px;align-items:start}
+@media(max-width:1000px){.kgrid{grid-template-columns:1fr}}
+.search{display:flex;gap:8px;margin:18px 0 22px;max-width:520px}
+.search input{flex:1;padding:12px 14px;background:var(--sheet-2);border:1px solid var(--ink);border-radius:var(--radius);font:inherit}
+.klist{border-top:1px solid var(--contour)}
+.kitem{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:13px 0;border-bottom:1px solid var(--contour)}
+.kitem__kind{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--contour);padding:3px 7px;border-radius:2px;color:var(--ink-38);background:var(--sheet-2);white-space:nowrap}
+.kitem__kind.is-place{border-color:var(--river);color:var(--river)}
+.kitem b{font-family:var(--display);font-size:15.5px;font-weight:600;display:block;letter-spacing:-.01em}
+.kitem span{font-size:12.5px;color:var(--ink-60)}
+.tourbar{display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end;border-bottom:1px solid var(--contour);padding-bottom:16px}
+.pick{display:flex;gap:2px}
+.pick button{background:var(--sheet-2);border:1px solid var(--contour);padding:7px 13px;font-family:var(--mono);font-size:12px;border-radius:2px}
+.pick button[aria-current="true"]{background:var(--river);color:var(--sheet-2);border-color:var(--river)}
+.pick__label{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-38);display:block;margin-bottom:6px}
+.kplay{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:34px;align-items:start;margin-top:22px}
+@media(max-width:1000px){.kplay{grid-template-columns:1fr}}
+.kplay__side{position:sticky;top:60px}
+@media(max-width:1000px){.kplay__side{position:static}}
+.progress{display:flex;gap:3px;margin:0 0 20px}
+.progress span{height:4px;flex:1;background:var(--contour)}
+.progress span.on{background:var(--river)}
+.seg{display:grid;grid-template-columns:104px minmax(0,1fr);gap:20px;padding:19px 0;border-bottom:1px solid var(--contour)}
+@media(max-width:700px){.seg{grid-template-columns:1fr;gap:8px}}
+.seg__side{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.seg__place{font-family:var(--mono);font-size:10.5px;color:var(--ink-38);line-height:1.35}
+.seg h4{font-family:var(--display);font-size:17.5px;font-weight:600;margin:0 0 8px;letter-spacing:-.01em}
+.seg p{margin:0 0 10px;max-width:62ch}
+.seg__src{font-family:var(--mono);font-size:10.5px;color:var(--ink-38)}
+.seg__deeper{background:none;border:1px dashed var(--contour);border-radius:2px;padding:5px 10px;font-family:var(--mono);font-size:10.5px;color:var(--river)}
+.seg__deeper:hover{border-color:var(--river);background:var(--river-wash)}
+.player{display:flex;align-items:center;gap:14px;padding:13px 15px;border:1px solid var(--ink);border-radius:var(--radius);background:var(--sheet-2);margin-top:22px;max-width:560px}
+.player__btn{width:33px;height:33px;border:1px solid var(--ink);border-radius:50%;background:var(--ink);color:var(--sheet-2);display:grid;place-items:center;flex:none}
+.player__bar{height:3px;background:var(--contour);border-radius:2px;margin-top:6px;overflow:hidden}
+.player__bar i{display:block;height:100%;width:34%;background:var(--river)}
+
+/* history / nofit */
+.hist{display:grid;grid-template-columns:1fr 1fr;gap:36px}
+@media(max-width:820px){.hist{grid-template-columns:1fr}}
+.row{display:grid;grid-template-columns:88px 1fr auto;gap:18px;align-items:center;padding:13px 0;border-bottom:1px solid var(--contour)}
+.rows{border-top:1px solid var(--contour)}
+.row__date{font-family:var(--mono);font-size:11.5px;color:var(--ink-38)}
+.row__t{font-weight:500}
+.row__m{font-size:12.5px;color:var(--ink-60)}
+@media(max-width:640px){.row{grid-template-columns:1fr auto}.row__date{display:none}}
+.doors{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--contour);border:1px solid var(--contour);border-radius:var(--radius);overflow:hidden;margin:24px 0 32px}
+@media(max-width:900px){.doors{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.doors{grid-template-columns:1fr}}
+.door{background:var(--sheet-2);border:0;text-align:left;padding:20px 20px 22px;display:block;width:100%}
+.door:hover{background:var(--river-wash)}
+.door__k{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--river)}
+.door h3{font-family:var(--display);font-size:17px;font-weight:600;margin:9px 0 4px;letter-spacing:-.01em}
+.door p{margin:0;font-size:13px;color:var(--ink-60)}
+.fitgrid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:32px;align-items:start}
+@media(max-width:900px){.fitgrid{grid-template-columns:1fr}}
+.verdict{border:1px solid var(--laterite);background:var(--laterite-wash);border-radius:var(--radius);padding:19px 21px}
+.verdict h3{font-family:var(--display);font-size:18px;font-weight:600;margin:0 0 9px;letter-spacing:-.01em}
+.calc{font-family:var(--mono);font-size:12.5px;line-height:1.9;margin:13px 0 0;border-top:1px dashed rgba(166,82,44,.4);padding-top:11px}
+.calc b{font-weight:500}
+.choices{display:grid;gap:11px;margin-top:20px}
+.choice{border:1px solid var(--contour);background:var(--sheet-2);border-radius:var(--radius);padding:14px 16px;display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap}
+.choice b{font-family:var(--display);font-size:15.5px;font-weight:600;display:block;margin-bottom:3px}
+.choice p{margin:0;font-size:13px;color:var(--ink-60)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="switch" aria-label="Mockup screens">
+  <span class="switch__tag">MOCKUP v3</span>
+  <button data-go="s1" aria-current="true">1 Landing</button>
+  <button data-go="s2">2 Sign in</button>
+  <button data-go="s3">3 Home</button>
+  <button data-go="s4">4 New trip</button>
+  <button data-go="s5">5 Building…</button>
+  <button data-go="s6">6 Pick a plan</button>
+  <button data-go="s7">7 Plan</button>
+  <button data-go="s8">8 Katha home</button>
+  <button data-go="s9">9 City Katha</button>
+  <button data-go="s10">10 Place Katha</button>
+  <button data-go="s11">11 Saved</button>
+  <button data-go="s12">12 Doesn't fit</button>
+</nav>
+
+<!-- ============ 1 LANDING ============ -->
+<section class="screen is-on" id="s1">
+  <div class="bar">
+    <div class="mark"><span class="mark__name">TRAVEL YANTRA</span><span class="mark__kn">ಪ್ರಯಾಣ ಯಂತ್ರ</span></div>
+    <div class="nav"></div>
+    <a class="btn btn--sm btn--ghost" href="#" data-go="s2">Sign in</a>
+  </div>
+  <div class="hero">
+    <div class="hero__grid">
+      <div>
+        <p class="eyebrow">Karnataka · door to door · <span style="font-family:var(--kn);text-transform:none;letter-spacing:0">ನಿಮ್ಮ ಪ್ರಯಾಣ, ನಮ್ಮ ಲೆಕ್ಕ</span></p>
+        <h1 class="h1">Plans that hold up<br>on the actual day.</h1>
+        <p class="lede">Tell us who's coming and what you want out of the trip. We build each day around opening hours, road time, and how far your amma can actually walk. Then we come along and tell you the stories.</p>
+        <div class="hero__sub">
+          <a class="btn" href="#" data-go="s4">Plan a trip →</a>
+          <a class="btn btn--ghost" href="#" data-go="s8">Hear a Katha</a>
+        </div>
+      </div>
+      <div class="map">
+        <div class="map__head"><b>Mysuru · Day 2</b><span class="chip">Sat 14 Sep</span></div>
+        <svg viewBox="0 0 400 250" role="img" aria-label="A planned day drawn on a map">
+          <g class="mapcontour"><path d="M20 200q80-40 150-20t210-40"/><path d="M20 170q90-38 160-16t200-42"/><path d="M20 140q86-32 158-12t202-38"/></g>
+          <path class="mapriver" d="M0 96q90 26 168 6t232 22"/>
+          <polyline class="route route--after" points="86,182 138,150 176,168 196,148 300,206 104,208"/>
+          <g class="pin"><circle cx="86" cy="182" r="10"/><text x="86" y="182">1</text></g>
+          <g class="pin"><circle cx="138" cy="150" r="10"/><text x="138" y="150">2</text></g>
+          <g class="pin is-hard"><circle cx="176" cy="168" r="11"/><text x="176" y="168">3</text></g>
+          <g class="pin"><circle cx="196" cy="148" r="10"/><text x="196" y="148">4</text></g>
+          <g class="pin"><circle cx="300" cy="206" r="10"/><text x="300" y="206">5</text></g>
+          <g class="pin"><circle cx="104" cy="208" r="10"/><text x="104" y="208">6</text></g>
+        </svg>
+        <div class="map__foot"><span>6 stops · 21 km · ends 6:40 pm</span><span class="chip chip--river">■ fixed time</span></div>
+      </div>
+    </div>
+
+    <div class="how">
+      <div class="how__cell"><p class="eyebrow">01</p><h3>Answer a short form</h3><p>Where, when, who's coming, what it should cost. Two minutes, and the "who" part matters — a trip with grandparents is a different trip.</p></div>
+      <div class="how__cell"><p class="eyebrow">02</p><h3>We do the math</h3><p>Opening hours, road time, budget, your pace. If something doesn't fit, we say so and show the working instead of pretending.</p></div>
+      <div class="how__cell"><p class="eyebrow">03</p><h3>Change anything</h3><p>Tell the chat. We fix that one day and leave the rest of your trip exactly where it was.</p></div>
+    </div>
+
+    <div class="twocol">
+      <div class="half">
+        <p class="what">Where you'll go, and when</p>
+        <h3>Trips</h3>
+        <p>A short form in, three honest plans out. Each one already checked against closing times, budgets, and your evenings. Pick one and argue with it in the chat.</p>
+        <a class="btn btn--sm" href="#" data-go="s4">Plan a trip →</a>
+      </div>
+      <div class="half">
+        <p class="what">What you're looking at, and why it matters</p>
+        <h3>Katha <span class="kn">ಕಥೆ</span></h3>
+        <p>A whole city, one temple, or just your Day 2. Two minutes or ten, quick or deep, spoken out loud if you like. Curses included, and labelled as curses.</p>
+        <a class="btn btn--sm btn--ghost" href="#" data-go="s8">Hear a Katha</a>
+      </div>
+    </div>
+
+    <div class="honesty">
+      <span>TIMINGS CHECKED &amp; DATED</span><span>ESTIMATES SAY "ESTIMATED"</span><span>LEGENDS SAY "LEGEND"</span><span>ಕನ್ನಡ · हिन्दी · ENGLISH</span>
+    </div>
+
+    <div class="footer">
+      <span>TRAVEL YANTRA · A FINAL-YEAR ENGINEERING PROJECT</span>
+      <span>INFORMATION SCIENCE &amp; ENGINEERING · BMSIT&amp;M, BENGALURU · 2026–27</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2 SIGN IN ============ -->
+<section class="screen" id="s2">
+  <div class="bar">
+    <div class="mark"><span class="mark__name">TRAVEL YANTRA</span><span class="mark__kn">ಪ್ರಯಾಣ ಯಂತ್ರ</span></div>
+    <div class="nav"></div>
+    <a class="btn btn--sm btn--ghost" href="#" data-go="s1">Back</a>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 100px)" class="splitwrap">
+    <div style="padding:var(--pad);display:flex;flex-direction:column;justify-content:center;max-width:520px">
+      <p class="eyebrow">Sign in</p>
+      <h2 class="h1" style="font-size:33px;margin-bottom:20px">Welcome back.</h2>
+      <div class="field"><label for="u">Email</label><input id="u" type="email" value="rohan@travelyantra.in"></div>
+      <div class="field"><label for="p">Password</label><input id="p" type="password" value="••••••••••"></div>
+      <a class="btn" href="#" data-go="s3">Sign in →</a>
+      <p class="hint" style="margin-top:14px">One seeded account in this build. Sign-up comes in Phase 2.</p>
+    </div>
+    <div style="border-left:1px solid var(--contour);background:var(--sheet-2);display:grid;place-items:center;padding:40px" aria-hidden="true">
+      <svg viewBox="0 0 400 400" fill="none" stroke="#1F5C6B" stroke-width="1" style="width:78%">
+        <g opacity=".5">
+          <path d="M40 300c60-10 90-70 160-70s110 60 160 52"/><path d="M55 265c58-14 88-62 145-62s105 52 145 44"/>
+          <path d="M72 230c52-16 80-54 128-54s96 44 130 38"/><path d="M92 196c44-16 68-46 108-46s84 36 112 32"/>
+          <path d="M114 162c36-14 54-38 86-38s68 30 92 26"/><path d="M140 128c26-10 38-26 60-26s50 20 68 18"/>
+          <path d="M168 96c16-6 22-16 32-16s30 12 42 12"/>
+        </g>
+        <circle cx="200" cy="80" r="3.5" fill="#A6522C" stroke="none"/>
+        <path d="M200 84v226" stroke="#17211E" stroke-dasharray="2 7" opacity=".45"/>
+        <text x="200" y="330" fill="#17211E" stroke="none" font-family="IBM Plex Mono" font-size="9" text-anchor="middle" opacity=".5">CHAMUNDI HILL · 1062 m</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3 HOME ============ -->
+<section class="screen" id="s3">
+  <div class="bar">
+    <div class="mark"><span class="mark__name">TRAVEL YANTRA</span><span class="mark__kn">ಪ್ರಯಾಣ ಯಂತ್ರ</span></div>
+    <div class="nav"><a href="#" data-go="s3" aria-current="page">Home</a><a href="#" data-go="s11">Trips</a><a href="#" data-go="s8">Katha</a></div>
+    <div class="avatar">RB</div>
+  </div>
+  <div class="page">
+    <p class="eyebrow">Thursday, 27 August</p>
+    <h2 class="h1" style="font-size:37px">Where to, Rohan?</h2>
+    <div class="doors">
+      <button class="door" data-go="s4"><span class="door__k">Trips</span><h3>Plan a trip</h3><p>A short form. Three plans that already fit.</p></button>
+      <button class="door" data-go="s11"><span class="door__k">Trips</span><h3>My trips</h3><p>Open one, change it, run it again.</p></button>
+      <button class="door" data-go="s8"><span class="door__k">Katha</span><h3>Hear a Katha</h3><p>A city, one monument, or your Day 2.</p></button>
+      <button class="door" data-go="s11"><span class="door__k">Katha</span><h3>My Kathas</h3><p>Everything you've heard, ready to replay.</p></button>
+    </div>
+    <p class="eyebrow" style="margin-bottom:6px">Recent</p>
+    <div class="rows">
+      <div class="row"><span class="row__date">14–16 SEP</span><div><div class="row__t">Mysuru &amp; Srirangapatna</div><div class="row__m">Trip · 3 days · 4 people · comfortable</div></div><a class="btn btn--sm btn--ghost" href="#" data-go="s7">Open</a></div>
+      <div class="row"><span class="row__date">02 SEP</span><div><div class="row__t">Hampi</div><div class="row__m">Katha · city · 5 min · quick</div></div><a class="btn btn--sm btn--ghost" href="#" data-go="s9">Replay</a></div>
+      <div class="row"><span class="row__date">21 AUG</span><div><div class="row__t">Chennakeshava Temple, Belur</div><div class="row__m">Katha · place · 10 min · deep</div></div><a class="btn btn--sm btn--ghost" href="#" data-go="s10">Replay</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4 NEW TRIP (3 real steps) ============ -->
+<section class="screen" id="s4">
+  <div class="bar">
+    <div class="mark"><span class="mark__name">TRAVEL YANTRA</span><span class="mark__kn">ಪ್ರಯಾಣ ಯಂತ್ರ</span></div>
+    <div class="nav"><a href="#" data-go="s3">Home</a><a href="#" data-go="s11" aria-current="page">Trips</a><a href="#" data-go="s8">Katha</a></div>
+    <div class="avatar">RB</div>
+  </div>
+  <div class="crumb"><a href="#" data-go="s3">Home</a> › <a href="#" data-go="s11">Trips</a> › <b>New trip</b></div>
+  <div class="page">
+    <p class="eyebrow">New trip</p>
+    <h2 class="h1" style="font-size:33px">Tell us about this one.</h2>
+
+    <div class="steps" role="tablist">
+      <button data-fstep="f1" aria-current="true"><small>STEP 1</small><b>Where &amp; when</b></button>
+      <button data-fstep="f2"><small>STEP 2</small><b>Who's going</b></button>
+      <button data-fstep="f3"><small>STEP 3</small><b>Money &amp; tastes</b></button>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="fstep is-on" id="f1">
+      <div class="form-grid">
+        <div class="field"><label for="w1">Starting from</label><input id="w1" value="Bengaluru"></div>
+        <div class="field"><label for="w2">Going to</label><input id="w2" value="Mysuru, Srirangapatna">
+          <div class="sub">Up to three places. If it's too many for the days, we'll say so.</div></div>
+        <div class="field"><label for="w3">Start date</label><input id="w3" type="date" value="2026-09-14"></div>
+        <div class="field"><label for="w4">Days</label><input id="w4" type="number" value="3" min="1" max="10"></div>
+        <div class="field"><label for="w5">When can you leave on day one?</label>
+          <select id="w5"><option>Early, before 7 am</option><option selected>Morning, 7–10</option><option>After lunch</option><option>Evening</option></select>
+          <div class="sub">Day 1 gets planned around this, not around a fantasy 6 am start.</div></div>
+        <div class="field"><label for="w6">Getting there</label>
+          <select id="w6"><option selected>Train — I'll book it myself</option><option>Bus</option><option>Flight</option><option>Own car</option><option>Work it out for me</option></select></div>
+        <div class="field span-2"><label>Getting around once you're there</label>
+          <div class="tagrow"><button class="tag" aria-pressed="true">Hired car / cab</button><button class="tag">Own car</button><button class="tag">Autos + walking</button></div>
+          <div class="sub">Changes how far apart your stops can be.</div></div>
+      </div>
+      <div class="form-actions"><button class="btn" data-fstep="f2">Next: who's going →</button></div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="fstep" id="f2">
+      <div class="stepgroup">
+        <div class="field"><label>Adults</label>
+          <div class="stepper"><button data-step="-1" aria-label="Fewer adults">−</button><output>2</output><button data-step="1" aria-label="More adults">+</button></div></div>
+        <div class="field"><label>Elders (60+)</label>
+          <div class="stepper"><button data-step="-1" aria-label="Fewer elders">−</button><output>1</output><button data-step="1" aria-label="More elders">+</button></div>
+          <div class="sub">We keep climbs short and the days gentler.</div></div>
+        <div class="field"><label>Children</label>
+          <div class="stepper"><button data-step="-1" aria-label="Fewer children">−</button><output>1</output><button data-step="1" aria-label="More children">+</button></div></div>
+      </div>
+      <div class="form-grid" style="margin-top:8px">
+        <div class="field span-2"><label>Children's ages</label>
+          <div class="tagrow"><button class="tag">Under 5</button><button class="tag" aria-pressed="true">5–12</button><button class="tag">Teens</button></div></div>
+        <div class="field span-2"><label>Walking</label>
+          <div class="tagrow"><button class="tag tag--lat" aria-pressed="true">Someone finds stairs hard</button><button class="tag">Wheelchair access needed</button><button class="tag">We're all fine on foot</button></div></div>
+        <div class="field span-2"><label>Pace</label>
+          <div class="seg3">
+            <button><span>Relaxed</span><small>3 things a day</small></button>
+            <button aria-current="true"><span>Comfortable</span><small>4 things a day</small></button>
+            <button><span>Packed</span><small>6 things. You asked.</small></button>
+          </div></div>
+        <div class="field"><label>Mornings</label>
+          <select><option>Early starts are fine</option><option selected>Easy mornings, please</option></select></div>
+        <div class="field"><label>Day should end by</label>
+          <select><option selected>7 pm</option><option>8 pm</option><option>9 pm</option><option>Whenever</option></select>
+          <div class="sub">We plan to this. It's a promise, not a hope.</div></div>
+        <div class="field span-2"><label>Food</label>
+          <div class="tagrow"><button class="tag" aria-pressed="true">No preference</button><button class="tag">Veg only</button><button class="tag">Jain</button></div></div>
+      </div>
+      <div class="form-actions"><button class="btn btn--ghost" data-fstep="f1">← Back</button><button class="btn" data-fstep="f3">Next: money &amp; tastes →</button></div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="fstep" id="f3">
+      <div class="form-grid">
+        <div class="field"><label for="m1">Budget for the trip</label><input id="m1" value="₹18,000">
+          <div class="tagrow" style="margin-top:8px"><button class="tag">₹10k</button><button class="tag" aria-pressed="true">₹18k</button><button class="tag">₹25k</button><button class="tag">₹35k</button></div></div>
+        <div class="field"><label>The budget covers</label>
+          <div class="checkrow">
+            <button class="check" aria-pressed="true"><i></i>Stay</button>
+            <button class="check" aria-pressed="true"><i></i>Food</button>
+            <button class="check" aria-pressed="true"><i></i>Tickets</button>
+            <button class="check" aria-pressed="true"><i></i>Getting around</button>
+            <button class="check"><i></i>Getting there</button>
+          </div>
+          <div class="sub">So the number actually means something.</div></div>
+        <div class="field span-2"><label>Stay style</label>
+          <div class="seg3"><button>Simple</button><button aria-current="true">Mid-range</button><button>Comfortable</button></div></div>
+        <div class="field span-2"><label>What you're here for</label>
+          <div class="tagrow">
+            <button class="tag" aria-pressed="true">Heritage</button><button class="tag" aria-pressed="true">Food</button><button class="tag">Temples</button>
+            <button class="tag">Nature</button><button class="tag">Waterfalls</button><button class="tag">Wildlife</button>
+            <button class="tag">Shopping</button><button class="tag">Photography</button><button class="tag">Quiet places</button></div></div>
+        <div class="field"><label for="m2">Must-see, if anything</label><input id="m2" value="Mysore Palace"></div>
+        <div class="field"><label for="m3">Skip, if anything</label><input id="m3" placeholder="e.g., zoos"></div>
+        <div class="field span-2"><label for="m4">Anything else, in your own words</label>
+          <textarea id="m4" rows="3">Amma tires by evening. And one really good breakfast, please.</textarea>
+          <div class="sub">This box is read carefully. Write like you'd tell a friend.</div></div>
+      </div>
+      <div class="form-actions"><button class="btn btn--ghost" data-fstep="f2">← Back</button><a class="btn" href="#" data-go="s5">Make my plan →</a><span class="hint">About four seconds.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5 BUILDING (the pipeline, visible) ============ -->
+<section class="screen" id="s5">
+  <div class="bar">
+    <div class="mark"><span class="mark__name">TRAVEL YANTRA</span><span class="mark__kn">ಪ್ರಯಾಣ ಯಂತ್ರ</span></div>
+    <div class="nav"><a href="#" data-go="s3">Home</a><a href="#" data-go="s11" aria-current="page">Trips</a><a href="#" data-go="s8">Katha</a></div>
+    <div class="avatar">RB</div>
+  </div>
+  <div class="build">
+    <p class="eyebrow" style="margin-bottom:10px">Making your plan</p>
+    <div class="build__box" id="buildbox">
+      <div class="stage" style="opacity:1"><b>✓</b><span>Reading your answers</span><small>3 cities · 4 people · ₹18,000</small></div>
+      <div class="stage"><b>✓</b><span>Picking places</span><small>41 candidates from 112</small></div>
+      <div class="stage"><b>✓</b><span>Sorting into days</span><small>3 clusters, no zig-zag</small></div>
+      <div class="stage"><b>✓</b><span>Ordering each day</span><small>34.8 km untangled to 21.4</small></div>
+      <div class="stage"><b>✓</b><span>Checking the rules</span><small>9 checks · 1 fix made</small></div>
+      <div class="stage"><b>✓</b><span>Writing it up for you</span><small>the only step that uses AI</small></div>
+    </div>
+    <div class="build__after">
+      <a class="btn" href="#" data-go="s6">See your three plans →</a>
+      <span class="hint">Total: 212 ms. The plan is computed, not guessed.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6 PICK A PLAN (three curated options) ============ -->
+<section class="screen" id="s6">
+  <div class="bar">
+    <div class="mark"><span class="mark__name">TRAVEL YANTRA</span><span class="mark__kn">ಪ್ರಯಾಣ ಯಂತ್ರ</span></div>
+    <div class="nav"><a href="#" data-go="s3">Home</a><a href="#" data-go="s11" aria-current="page">Trips</a><a href="#" data-go="s8">Katha</a></div>
+    <div class="avatar">RB</div>
+  </div>
+  <div class="crumb"><a href="#" data-go="s3">Home</a> › <a href="#" data-go="s11">Trips</a> › <b>Pick a plan</b></div>
+  <div class="page">
+    <p class="eyebrow">Mysuru &amp; Srirangapatna · 14–16 Sep · 4 people</p>
+    <h2 class="h1" style="font-size:33px">Three plans. Not thirty.</h2>
+    <p class="lede">All three fit your budget, your evenings, and your amma's knees. They just make different trades. Pick one; you can still change anything after.</p>
+
+    <div class="choose">
+      <button class="pcard is-reco" data-go="s7">
+        <span class="chip chip--river">Recommended</span>
+        <h3>The steady one</h3>
+        <p>Palace with a fixed slot, market in the morning, Chamundi at golden hour. Every day ends by seven. The one we'd take with parents.</p>
+        <div class="pcard__chips"><span class="chip">₹16,400</span><span class="chip">Comfortable</span><span class="chip">Plan B ready</span></div>
+      </button>
+      <button class="pcard" data-go="s7">
+        <span class="chip">Alternative</span>
+        <h3>The stone-heavy one</h3>
+        <p>Srirangapatna gets a full morning: Daria Daulat's murals, the Gumbaz, the riverside. More history, a little more driving.</p>
+        <div class="pcard__chips"><span class="chip">₹15,900</span><span class="chip">Comfortable</span></div>
+      </button>
+      <button class="pcard" data-go="s7">
+        <span class="chip">Alternative</span>
+        <h3>The packed one</h3>
+        <p>Everything on your list, plus Karanji Lake and St. Philomena's. It fits, but only just — you'd feel the clock around the palace slot.</p>
+        <div class="pcard__chips"><span class="chip">₹17,800</span><span class="chip chip--lat">Tight</span></div>
+      </button>
+    </div>
+    <p class="hint" style="margin-top:16px">Why only three? Because thirty options is how nobody decides anything.</p>
+  </div>
+</section>
+
+<!-- ============ 7 PLAN ============ -->
+<section class="screen" id="s7">
+  <div class="bar">
+    <div class="mark"><span class="mark__name">TRAVEL YANTRA</span><span class="mark__kn">ಪ್ರಯಾಣ ಯಂತ್ರ</span></div>
+    <div class="nav"><a href="#" data-go="s3">Home</a><a href="#" data-go="s11" aria-current="page">Trips</a><a href="#" data-go="s8">Katha</a></div>
+    <div class="avatar">RB</div>
+  </div>
+  <div class="crumb"><a href="#" data-go="s3">Home</a> › <a href="#" data-go="s11">Trips</a> › <a href="#" data-go="s6">Pick a plan</a> › <b>The steady one</b></div>
+
+  <div class="plan">
+    <div class="plan__main">
+      <div class="plan__head">
+        <div>
+          <p class="eyebrow">14–16 September · 4 people · the steady one</p>
+          <h2 class="h1" style="font-size:30px;margin:.2em 0 .3em">Mysuru &amp; Srirangapatna</h2>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <span class="chip chip--river">Comfortable</span><span class="chip">Plan B ready</span><span class="chip">₹16,400 of ₹18,000</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a class="btn btn--sm btn--ghost" href="#" data-go="s9">Katha for this day</a>
+          <a class="btn btn--sm btn--ghost" href="#" data-go="s6">Other two plans</a>
+        </div>
+      </div>
+
+      <div class="daytabs"><button>Day 1</button><button aria-current="true">Day 2</button><button>Day 3</button></div>
+
+      <div class="daygrid">
+        <div class="daygrid__map">
+          <div class="map">
+            <div class="map__head"><b>Day 2 · Mysuru</b><span class="chip">6 stops</span></div>
+            <svg viewBox="0 0 400 300" role="img" aria-label="Day two on the map, stops in visit order">
+              <g class="mapcontour"><path d="M14 244q84-42 156-22t216-42"/><path d="M14 210q92-40 166-18t206-44"/><path d="M14 176q90-34 164-14t208-40"/><path d="M14 142q88-30 160-10t212-38"/></g>
+              <path class="mapriver" d="M0 92q92 28 172 6t228 24"/>
+              <text x="352" y="86" class="dotlabel">KAVERI</text>
+              <polyline id="routeBefore" class="route route--before" points="86,212 300,236 138,180 196,178 176,198 104,238" style="display:none"/>
+              <polyline id="routeAfter" class="route route--after" points="86,212 138,180 176,198 196,178 300,236 104,238"/>
+              <g class="pin" data-stop="1"><circle cx="86" cy="212" r="11"/><text x="86" y="212">1</text></g><text x="86" y="234" class="pin__label">MYLARI</text>
+              <g class="pin" data-stop="2"><circle cx="138" cy="180" r="11"/><text x="138" y="180">2</text></g><text x="138" y="162" class="pin__label">MARKET</text>
+              <g class="pin is-hard" data-stop="3"><circle cx="176" cy="198" r="12"/><text x="176" y="198">3</text></g><text x="176" y="222" class="pin__label">PALACE</text>
+              <g class="pin" data-stop="4"><circle cx="196" cy="178" r="11"/><text x="196" y="178">4</text></g><text x="212" y="160" class="pin__label">RRR</text>
+              <g class="pin" data-stop="5"><circle cx="300" cy="236" r="11"/><text x="300" y="236">5</text></g><text x="300" y="258" class="pin__label">CHAMUNDI</text>
+              <g class="pin" data-stop="6"><circle cx="104" cy="238" r="11"/><text x="104" y="238">6</text></g><text x="104" y="260" class="pin__label">HOTEL</text>
+            </svg>
+            <div class="map__foot">
+              <span id="routeLabel">21.4 km · after untangling</span>
+              <span class="toggle">
+                <button id="btnBefore" aria-pressed="false">Before</button>
+                <button id="btnAfter" class="on-after" aria-pressed="true">After</button>
+              </span>
+            </div>
+          </div>
+          <details class="trace">
+            <summary>How this day was put together</summary>
+            <div class="trace__body">
+              candidates from your tags · <b>41 of 112</b><br>
+              grouped by geography · <b>3 days, no zig-zag</b><br>
+              first ordering (nearest next) · <b>34.8 km</b><br>
+              after untangling (2-opt) · <b>21.4 km</b><br>
+              rules checked · <b>9 · opening hours, budget, meals, your 7 pm</b><br>
+              fixes · <b>1 · zoo dropped, day ran long</b><br>
+              time to build · <b>212 ms · no AI in this part</b>
+            </div>
+          </details>
+        </div>
+
+        <div>
+          <div class="dayhead">
+            <h3>Saturday, 14 September</h3><span class="kn">ದಿನ ೨ · ಮೈಸೂರು</span><span class="chip">Ends 6:40 pm</span>
+          </div>
+          <div class="rail">
+            <div class="leg"><div class="leg__time">08:15</div><div class="leg__node"><span class="node node--soft"></span></div>
+              <div class="leg__body"><div class="stop"><div class="stop__top"><span class="stop__name">1 · Vinayaka Mylari</span><span class="stop__meta">45 min · ₹400</span></div>
+                <p class="stop__note">The good breakfast you asked for. Benne dosa, butter on top. Go before nine or you'll stand in line.</p>
+                <div class="stop__foot"><div class="stop__tags"><span class="chip">Food</span><span class="chip">Flexible</span></div><a class="btn btn--sm btn--ghost" href="#" data-go="s10">Katha</a></div></div></div></div>
+
+            <div class="leg leg--move"><div class="leg__time"></div><div class="leg__node"></div>
+              <div class="leg__body"><div class="move">auto · 10 min · 3.2 km · estimated</div></div></div>
+
+            <div class="leg"><div class="leg__time">09:20</div><div class="leg__node"><span class="node node--soft"></span></div>
+              <div class="leg__body"><div class="stop"><div class="stop__top"><span class="stop__name">2 · Devaraja Market</span><span class="stop__meta">50 min · free</span></div>
+                <p class="stop__note">Flowers first, then the sandalwood rows. The floor's uneven in spots, so we've put you in through the step-free gate.</p>
+                <div class="stop__foot"><div class="stop__tags"><span class="chip">Market</span><span class="chip">Step-free gate</span></div><a class="btn btn--sm btn--ghost" href="#" data-go="s10">Katha</a></div></div></div></div>
+
+            <div class="leg leg--move"><div class="leg__time"></div><div class="leg__node"></div>
+              <div class="leg__body"><div class="move">auto · 8 min · 2.1 km · estimated</div></div></div>
+
+            <div class="leg"><div class="leg__time">10:45</div><div class="leg__node"><span class="node node--hard"></span></div>
+              <div class="leg__body"><div class="stop is-focus"><div class="stop__top"><span class="stop__name">3 · Mysore Palace</span><span class="stop__meta">2 h · ₹480</span></div>
+                <p class="stop__note">The entry slot is fixed, so the whole day bends around this one. Shoes off at the door; free lockers on the left.</p>
+                <div class="stop__foot"><div class="stop__tags"><span class="chip chip--river">Must be on time</span><span class="chip">₹120 · checked 27 Aug</span></div><a class="btn btn--sm btn--ghost" href="#" data-go="s10">Katha</a></div></div></div></div>
+
+            <div class="leg"><div class="leg__time">13:10</div><div class="leg__node"><span class="node node--soft"></span></div>
+              <div class="leg__body"><div class="stop"><div class="stop__top"><span class="stop__name">4 · Lunch, Hotel RRR</span><span class="stop__meta">1 h · ₹700</span></div>
+                <p class="stop__note">Banana-leaf meals, five minutes on foot. The line moves quicker than it looks.</p></div></div></div>
+
+            <div class="leg leg--move"><div class="leg__time"></div><div class="leg__node"></div>
+              <div class="leg__body"><div class="move">car · 35 min · 13 km uphill · estimated</div></div></div>
+
+            <div class="leg"><div class="leg__time">15:20</div><div class="leg__node"><span class="node node--soft"></span></div>
+              <div class="leg__body"><div class="stop"><div class="stop__top"><span class="stop__name">5 · Chamundi Hill</span><span class="stop__meta">1 h 40 · ₹100</span></div>
+                <p class="stop__note">Up by road, not the thousand steps — that's the version that works for everyone. Nandi on the way down.</p>
+                <div class="stop__foot"><div class="stop__tags"><span class="chip">Temple</span><span class="chip">Car access</span></div><a class="btn btn--sm btn--ghost" href="#" data-go="s10">Katha</a></div></div></div></div>
+
+            <div class="leg"><div class="leg__time">18:40</div><div class="leg__node"><span class="node node--soft"></span></div>
+              <div class="leg__body"><div class="stop" style="border-style:dashed"><div class="stop__top"><span class="stop__name">6 · Back at the hotel</span><span class="stop__meta">before 7</span></div>
+                <p class="stop__note">As promised. The Sunday palace lights sit on Day 3, when they're actually on.</p></div></div></div>
+          </div>
+          <div class="summary">
+            <div><span>On foot</span><b>2.4 km</b></div><div><span>By road</span><b>21.4 km</b></div>
+            <div><span>Spend today</span><b>₹1,680</b></div><div><span>Ends</span><b>6:40 pm</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="plan__side">
+      <div class="chat__head"><b>Ask or change</b><span class="chip">Day 2</span></div>
+      <div class="chat__log">
+        <div class="msg msg--me">why is chamundi hill so late in the day</div>
+        <div class="msg">The palace slot is fixed at 10:45 and the drive up takes about 35 minutes, so earlier would cost you either lunch or the palace. Late afternoon is also just better up there — cooler, and the city view on the way down.</div>
+        <div class="msg msg--me">drop the market, one more food stop instead</div>
+        <div class="msg msg--sys">Day 2 rebuilt · Days 1 and 3 untouched</div>
+        <div class="msg">Done. The market's out, and Mahesh Prasad is in at 11:00 for filter coffee and Mysore pak. The day now ends at 6:15, so you've bought some slack too.<cite>1 removed · 1 added · 2 times shifted</cite></div>
+        <div class="msg msg--me">ಚಾಮುಂಡಿ ಬೆಟ್ಟದ ಕಥೆ ಏನು?</div>
+        <div class="msg">ಮಹಿಷಾಸುರನನ್ನು ಸಂಹರಿಸಿದ ಚಾಮುಂಡೇಶ್ವರಿಯ ಹೆಸರಿನಿಂದಲೇ ಈ ಊರಿಗೆ ಮೈಸೂರು ಎಂಬ ಹೆಸರು ಬಂತು ಎನ್ನುತ್ತಾರೆ.<cite>Karnataka Tourism · legend</cite></div>
+      </div>
+      <div class="quick">
+        <button>Make Day 2 lighter</button>
+        <button>One more food stop</button>
+        <button>ಕನ್ನಡದಲ್ಲಿ ಹೇಳಿ</button>
+      </div>
+      <div class="chat__in"><input placeholder="Ask, or ask for a change…"><button class="btn btn--sm">Send</button></div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ 8 KATHA HOME ============ -->
+<section class="screen" id="s8">
+  <div class="bar">
+    <div class="mark"><span class="mark__name">TRAVEL YANTRA</span><span class="mark__kn">ಪ್ರಯಾಣ ಯಂತ್ರ</span></div>
+    <div class="nav"><a href="#" data-go="s3">Home</a><a href="#" data-go="s11">Trips</a><a href="#" data-go="s8" aria-current="page">Katha</a></div>
+    <div class="avatar">RB</div>
+  </div>
+  <div class="crumb"><a href="#" data-go="s3">Home</a> › <b>Katha</b></div>
+  <div class="page">
+    <div class="kgrid">
+      <div>
+        <p class="eyebrow">Katha <span style="font-family:var(--kn)">ಕಥೆ</span></p>
+        <h2 class="h1" style="font-size:33px;margin-bottom:6px">What you're looking at,<br>and why it matters.</h2>
+        <p class="lede">Pick a city or a single monument. Say how long you've got. We fit the telling to your time, not the other way around.</p>
+        <div class="search"><input placeholder="Try “Hampi”, “Mysore Palace”, “Chennakeshava”…" value="belur"><button class="btn">Search</button></div>
+        <p class="eyebrow" style="margin-bottom:4px">4 results for “belur”</p>
+        <div class="klist">
+          <div class="kitem"><span class="kitem__kind">City</span><div><b>Belur</b><span>6 places · the Hoysala capital on the Yagachi</span></div><a class="btn btn--sm btn--ghost" href="#" data-go="s9">Listen</a></div>
+          <div class="kitem"><span class="kitem__kind is-place">Place</span><div><b>Chennakeshava Temple</b><span>Belur · begun 1117 · 12 min of material</span></div><a class="btn btn--sm btn--ghost" href="#" data-go="s10">Listen</a></div>
+          <div class="kitem"><span class="kitem__kind is-place">Place</span><div><b>Darpana Sundari</b><span>the lady with the mirror · 4 min of material</span></div><a class="btn btn--sm btn--ghost" href="#" data-go="s10">Listen</a></div>
+          <div class="kitem"><span class="kitem__kind">City</span><div><b>Halebidu</b><span>4 places · the capital that came after</span></div><a class="btn btn--sm btn--ghost" href="#" data-go="s9">Listen</a></div>
+        </div>
+      </div>
+      <div>
+        <div class="map">
+          <div class="map__head"><b>What we can tell you</b><span class="chip">112 places</span></div>
+          <svg viewBox="0 0 300 400" role="img" aria-label="Karnataka, with dots where Katha material exists">
+            <path class="mapland" d="M40 100 L60 70 L105 55 L150 45 L200 20 L232 8 L240 40 L222 70 L235 120 L218 150 L226 185 L250 215 L262 255 L278 300 L262 318 L235 330 L215 362 L196 384 L178 368 L160 350 L132 352 L100 340 L66 318 L44 270 L26 215 L20 175 L30 135 Z"/>
+            <path class="mapriver" d="M196 384q-20-40-22-64t-40-30-70 8"/>
+            <path class="mapriver" d="M226 185q-30 6-56-2t-64 6"/>
+            <circle class="dot" cx="163" cy="182" r="6"><title>Hampi — 25 places</title></circle><text x="163" y="169" class="dotlabel">HAMPI</text>
+            <circle class="dot" cx="232" cy="313" r="7"><title>Bengaluru — 20 places</title></circle><text x="232" y="332" class="dotlabel">BENGALURU</text>
+            <circle class="dot" cx="175" cy="350" r="7"><title>Mysuru — 28 places</title></circle><text x="167" y="368" class="dotlabel">MYSURU</text>
+            <circle class="dot" cx="127" cy="302" r="5"><title>Belur &amp; Halebidu</title></circle><text x="112" y="292" class="dotlabel">BELUR</text>
+            <circle class="dot" cx="121" cy="293" r="4"></circle>
+            <circle class="dot" cx="118" cy="343" r="5"><title>Coorg</title></circle><text x="100" y="357" class="dotlabel">COORG</text>
+            <text x="150" y="404" class="dotlabel" style="font-size:8.5px;letter-spacing:.18em">KARNATAKA</text>
+          </svg>
+          <div class="map__foot"><span>5 regions · 112 places</span><span>Tap a dot to start</span></div>
+        </div>
+        <p class="hint" style="margin:9px 2px 0">Everything on this map has at least one sourced paragraph behind it. The dots grow as the library does.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9 CITY KATHA ============ -->
+<section class="screen" id="s9">
+  <div class="bar">
+    <div class="mark"><span class="mark__name">TRAVEL YANTRA</span><span class="mark__kn">ಪ್ರಯಾಣ ಯಂತ್ರ</span></div>
+    <div class="nav"><a href="#" data-go="s3">Home</a><a href="#" data-go="s11">Trips</a><a href="#" data-go="s8" aria-current="page">Katha</a></div>
+    <div class="avatar">RB</div>
+  </div>
+  <div class="crumb"><a href="#" data-go="s3">Home</a> › <a href="#" data-go="s8">Katha</a> › <b>Mysuru</b> <span style="margin-left:8px" class="chip">built from your Day 2</span></div>
+  <div class="page">
+    <p class="eyebrow">City Katha</p>
+    <h2 class="h1" style="font-size:33px;margin-bottom:18px">Mysuru <span style="font-family:var(--kn);font-size:.6em;color:var(--ink-60)">ಮೈಸ�ೂರು</span></h2>
+
+    <div class="tourbar">
+      <div><span class="pick__label">How long</span><div class="pick"><button>2 min</button><button aria-current="true">5 min</button><button>10 min</button></div></div>
+      <div><span class="pick__label">How deep</span><div class="pick"><button aria-current="true">Quick</button><button>Deep</button></div></div>
+      <div><span class="pick__label">Language</span><div class="pick"><button aria-current="true">English</button><button>ಕನ್ನಡ</button><button>हिन्दी</button></div></div>
+    </div>
+
+    <div class="kplay">
+      <div>
+        <div class="progress" aria-label="5 segments" style="margin-top:20px"><span class="on"></span><span class="on"></span><span></span><span></span><span></span></div>
+
+        <div class="seg">
+          <div class="seg__side"><span class="chip chip--lat">Story</span><span class="seg__place">Talakad,<br>via the Palace</span><button class="seg__deeper" data-go="s10">Go deeper →</button></div>
+          <div>
+            <h4>The queen who went into the river</h4>
+            <p>In 1610, a widowed queen named Alamelamma was pursued to the banks of the Kaveri at Talakad. The new rulers of Mysuru wanted the temple jewels in her keeping. The story goes that she stood at the edge of the water and cursed them before she went in. Let Talakad turn to sand. Let Malangi become a whirlpool. Let the kings of Mysuru never bear children.</p>
+            <p>Talakad today is buried under dunes of sand. And the Wadiyar family has, generation after generation, adopted its heirs. Inside the palace there is an image of Alamelamma, and the family honours it to this day. They did not take chances.</p>
+            <p class="seg__src">As the legend goes · Karnataka Gazetteer, Mysore District</p>
+          </div>
+        </div>
+
+        <div class="seg">
+          <div class="seg__side"><span class="chip">Fact</span><span class="seg__place">Mysore Palace</span><button class="seg__deeper" data-go="s10">Go deeper →</button></div>
+          <div>
+            <h4>Three palaces burned before this one</h4>
+            <p>The palace in front of you is the fourth on this ground. The one before it was mostly wood, and in 1897 it caught fire in the middle of a royal wedding. The regent queen decided there would be no more wooden palaces and gave the job to Henry Irwin, down in Madras. Stone, iron and glass this time. Fifteen years. When you walk in, notice how little wood there is.</p>
+            <p class="seg__src">Mysore Palace Board · checked 27 Aug 2026</p>
+          </div>
+        </div>
+
+        <div class="seg">
+          <div class="seg__side"><span class="chip">Taste</span><span class="seg__place">Sayyaji Rao Road</span></div>
+          <div>
+            <h4>The sweet invented in this kitchen</h4>
+            <p>Mysore pak was improvised in the palace kitchen by a cook named Kakasura Madappa, who had gram flour, ghee and sugar to hand and a king waiting. Asked what it was called, he looked at it and said pak. His family still runs a small shop on Sayyaji Rao Road, and it usually has a queue. Ask for the soft kind. The crumbly one is for people who like their sweets to fight back.</p>
+            <p class="seg__src">Guru Sweet Mart, Mysuru</p>
+          </div>
+        </div>
+
+        <div class="player">
+          <button class="player__btn" id="ttsBtn" aria-label="Play"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg></button>
+          <div style="flex:1">
+            <div style="font-family:var(--mono);font-size:11px;color:var(--ink-38)" id="ttsLabel">SEGMENT 2 OF 5 · TAP TO LISTEN</div>
+            <div style="font-size:13.5px">Three palaces burned before this one</div>
+            <div class="player__bar"><i id="ttsBar"></i></div>
+          </div>
+          <span class="chip" id="ttsChip">Voice · Sarvam</span>
+        </div>
+      </div>
+
+      <div class="kplay__side">
+        <div class="map">
+          <div class="map__head"><b>Where you are</b><span class="chip">5 stops</span></div>
+          <svg viewBox="0 0 300 220" role="img" aria-label="Locator map for the Mysuru Katha">
+            <g class="mapcontour"><path d="M10 174q66-30 118-16t162-30"/><path d="M10 146q70-28 124-14t156-30"/></g>
+            <path class="mapriver" d="M0 62q70 20 128 4t172 18"/>
+            <circle class="dot" cx="62" cy="152" r="4.5" opacity=".45"/><text x="62" y="167" class="dotlabel">TALAKAD</text>
+            <circle class="dot" cx="132" cy="128" r="7"/><circle cx="132" cy="128" r="13" fill="none" stroke="#1F5C6B" stroke-width="1" opacity=".5"/><text x="132" y="110" class="dotlabel">PALACE</text>
+            <circle class="dot" cx="168" cy="120" r="4.5" opacity=".45"/><text x="182" y="112" class="dotlabel">SWEETS</text>
+            <circle class="dot" cx="228" cy="160" r="4.5" opacity=".45"/><text x="228" y="176" class="dotlabel">CHAMUNDI</text>
+            <circle class="dot" cx="98" cy="112" r="4.5" opacity=".45"/><text x="88" y="100" class="dotlabel">MARKET</text>
+          </svg>
+          <div class="map__foot"><span>Now at · Mysore Palace</span></div>
+        </div>
+        <p class="hint" style="margin:9px 2px 0">Dimmed pins are still to come.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 10 PLACE KATHA ============ -->
+<section class="screen" id="s10">
+  <div class="bar">
+    <div class="mark"><span class="mark__name">TRAVEL YANTRA</span><span class="mark__kn">ಪ್ರಯಾಣ ಯಂತ್ರ</span></div>
+    <div class="nav"><a href="#" data-go="s3">Home</a><a href="#" data-go="s11">Trips</a><a href="#" data-go="s8" aria-current="page">Katha</a></div>
+    <div class="avatar">RB</div>
+  </div>
+  <div class="crumb"><a href="#" data-go="s3">Home</a> › <a href="#" data-go="s8">Katha</a> › <a href="#" data-go="s9">Mysuru</a> › <b>Mysore Palace</b></div>
+  <div class="page">
+    <p class="eyebrow">Place Katha · one monument, properly</p>
+    <h2 class="h1" style="font-size:33px;margin-bottom:6px">Mysore Palace</h2>
+    <p class="lede" style="margin-bottom:18px">Amba Vilas · finished 1912 · Henry Irwin. Twelve minutes of material in the library. You decide how much of it you want.</p>
+
+    <div class="tourbar">
+      <div><span class="pick__label">How long</span><div class="pick"><button>2 min</button><button>5 min</button><button aria-current="true">10 min</button></div></div>
+      <div><span class="pick__label">How deep</span><div class="pick"><button>Quick</button><button aria-current="true">Deep</button></div></div>
+      <div><span class="pick__label">Language</span><div class="pick"><button aria-current="true">English</button><button>ಕನ್ನಡ</button><button>हिन्दी</button></div></div>
+    </div>
+
+    <div class="kplay">
+      <div>
+        <div class="progress" aria-label="6 segments" style="margin-top:20px"><span class="on"></span><span></span><span></span><span></span><span></span><span></span></div>
+
+        <div class="seg">
+          <div class="seg__side"><span class="chip chip--lat">Hook</span><span class="seg__place">Before you<br>go in</span></div>
+          <div>
+            <h4>Three palaces burned before this one</h4>
+            <p>The palace in front of you is the fourth one to stand on this ground. The one before it was mostly wood, and in 1897 it caught fire in the middle of a royal wedding. The family got out. The building did not. The regent queen, Kempananjammanni, decided there would be no more wooden palaces, and gave the job to Henry Irwin, the British consulting architect down in Madras. Stone, iron, and glass this time. It took fifteen years. So when you walk in, remember you are walking through someone's answer to a fire.</p>
+            <p class="seg__src">Mysore Palace Board</p>
+          </div>
+        </div>
+
+        <div class="seg">
+          <div class="seg__side"><span class="chip">Sensory</span><span class="seg__place">Kalyana<br>Mantapa</span></div>
+          <div>
+            <h4>Stand under the peacocks</h4>
+            <p>In the wedding hall, most people look straight ahead and keep moving. Stop instead, and look up. The ceiling is stained glass, turquoise and green, worked into peacock patterns, and it was made in Glasgow along with the cast iron pillars holding it up. Scottish foundry work, shipped across the sea, to sit above Mysuru weddings. Then look at a pillar up close. It is iron pretending to be carved stone, and it pretends well.</p>
+            <p class="seg__src">Mysore Palace Board</p>
+          </div>
+        </div>
+
+        <div class="seg">
+          <div class="seg__side"><span class="chip chip--lat">Story</span><span class="seg__place">Talakad</span></div>
+          <div>
+            <h4>The queen who went into the river</h4>
+            <p>In 1610, a widowed queen named Alamelamma was pursued to the Kaveri at Talakad over a set of temple jewels. The story goes that she cursed the Wadiyars before she went into the water: sand for Talakad, a whirlpool at Malangi, and no children for the kings of Mysuru. Talakad is buried in sand. The adoption record is real. And inside this palace, the family keeps an image of Alamelamma and honours it to this day. Make of that what you like. They did not take chances.</p>
+            <p class="seg__src">As the legend goes · Karnataka Gazetteer, Mysore District</p>
+          </div>
+        </div>
+
+        <div class="seg">
+          <div class="seg__side"><span class="chip">Practical</span><span class="seg__place">At the gate</span></div>
+          <div>
+            <h4>Fees, shoes, and the light switch</h4>
+            <p>Entry is one hundred and twenty rupees for Indian adults, checked on the twenty-seventh of August 2026. Some websites still say fifty and some say a hundred and fifty, so trust the counter, not the internet. Shoes off at the entrance, free lockers to the left, and no photos inside the main halls. The famous illumination is Sunday evenings, roughly seven to eight. The lights come on all at once, not gradually. People gasp. Every time.</p>
+            <p class="seg__src">Checked against Mysore Palace Board · 27 Aug 2026</p>
+          </div>
+        </div>
+
+        <div class="player">
+          <button class="player__btn" aria-label="Play"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg></button>
+          <div style="flex:1">
+            <div style="font-family:var(--mono);font-size:11px;color:var(--ink-38)">SEGMENT 1 OF 6 · DEEP</div>
+            <div style="font-size:13.5px">Three palaces burned before this one</div>
+            <div class="player__bar"><i style="width:12%"></i></div>
+          </div>
+          <span class="chip">Voice · Sarvam</span>
+        </div>
+      </div>
+
+      <div class="kplay__side">
+        <div class="map">
+          <div class="map__head"><b>Mysore Palace</b><span class="chip">12.3052° N</span></div>
+          <svg viewBox="0 0 300 200" role="img" aria-label="Locator map for Mysore Palace">
+            <g class="mapcontour"><path d="M10 160q66-24 118-12t162-24"/><path d="M10 132q70-22 124-10t156-24"/><path d="M10 104q68-20 122-8t158-22"/></g>
+            <rect x="118" y="78" width="64" height="44" fill="none" stroke="#17211E" stroke-width="1" opacity=".55"/>
+            <circle cx="150" cy="100" r="7" class="dot"/>
+            <circle cx="150" cy="100" r="16" fill="none" stroke="#1F5C6B" stroke-width="1" opacity=".55"/>
+            <circle cx="150" cy="100" r="27" fill="none" stroke="#1F5C6B" stroke-width="1" opacity=".3"/>
+            <text x="150" y="140" class="dotlabel">AMBA VILAS</text>
+            <text x="150" y="152" class="dotlabel" style="font-size:7px">SAYYAJI RAO ROAD →</text>
+          </svg>
+          <div class="map__foot"><span>Open today · closes 17:30</span></div>
+        </div>
+        <p class="hint" style="margin:9px 2px 0">On your Day 2 · <a href="#" data-go="s7">back to the plan</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 11 SAVED ============ -->
+<section class="screen" id="s11">
+  <div class="bar">
+    <div class="mark"><span class="mark__name">TRAVEL YANTRA</span><span class="mark__kn">ಪ್ರಯಾಣ ಯಂತ್ರ</span></div>
+    <div class="nav"><a href="#" data-go="s3">Home</a><a href="#" data-go="s11" aria-current="page">Trips</a><a href="#" data-go="s8">Katha</a></div>
+    <div class="avatar">RB</div>
+  </div>
+  <div class="crumb"><a href="#" data-go="s3">Home</a> › <b>Saved</b></div>
+  <div class="page">
+    <div class="hist">
+      <div>
+        <p class="eyebrow">Trips · where you'll go, and when</p>
+        <h2 class="h2" style="font-size:25px;margin:8px 0 14px">Four saved</h2>
+        <div class="rows">
+          <div class="row"><span class="row__date">14–16 SEP</span><div><div class="row__t">Mysuru &amp; Srirangapatna</div><div class="row__m">3 days · ₹16,400 · comfortable</div></div><a class="btn btn--sm btn--ghost" href="#" data-go="s7">Open</a></div>
+          <div class="row"><span class="row__date">21 AUG</span><div><div class="row__t">Belur &amp; Halebidu</div><div class="row__m">1 day · ₹3,200 · draft</div></div><a class="btn btn--sm btn--ghost" href="#" data-go="s7">Open</a></div>
+          <div class="row"><span class="row__date">09 AUG</span><div><div class="row__t">Hampi long weekend</div><div class="row__m">3 days · ₹11,900 · tight</div></div><a class="btn btn--sm btn--ghost" href="#" data-go="s7">Open</a></div>
+          <div class="row"><span class="row__date">28 JUL</span><div><div class="row__t">Coorg with parents</div><div class="row__m">2 days · ₹9,400 · comfortable</div></div><a class="btn btn--sm btn--ghost" href="#" data-go="s7">Open</a></div>
+        </div>
+      </div>
+      <div>
+        <p class="eyebrow">Katha · what you're looking at, and why</p>
+        <h2 class="h2" style="font-size:25px;margin:8px 0 14px">Three heard</h2>
+        <div class="rows">
+          <div class="row"><span class="row__date">02 SEP</span><div><div class="row__t">Hampi</div><div class="row__m">City · 5 min · quick · English</div></div><a class="btn btn--sm btn--ghost" href="#" data-go="s9">Replay</a></div>
+          <div class="row"><span class="row__date">27 AUG</span><div><div class="row__t">ಮೈಸೂರು ಅರಮನೆ</div><div class="row__m">Place · 10 min · deep · ಕನ್ನಡ</div></div><a class="btn btn--sm btn--ghost" href="#" data-go="s10">Replay</a></div>
+          <div class="row"><span class="row__date">21 AUG</span><div><div class="row__t">Chennakeshava Temple, Belur</div><div class="row__m">Place · 2 min · quick · English</div></div><a class="btn btn--sm btn--ghost" href="#" data-go="s10">Replay</a></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 12 DOESN'T FIT ============ -->
+<section class="screen" id="s12">
+  <div class="bar">
+    <div class="mark"><span class="mark__name">TRAVEL YANTRA</span><span class="mark__kn">ಪ್ರಯಾಣ ಯಂತ್ರ</span></div>
+    <div class="nav"><a href="#" data-go="s3">Home</a><a href="#" data-go="s11" aria-current="page">Trips</a><a href="#" data-go="s8">Katha</a></div>
+    <div class="avatar">RB</div>
+  </div>
+  <div class="crumb"><a href="#" data-go="s3">Home</a> › <a href="#" data-go="s11">Trips</a> › <b>Mysuru + Hampi, 1 day</b></div>
+  <div class="page">
+    <p class="eyebrow">Mysuru + Hampi · 1 day</p>
+    <h2 class="h1" style="font-size:31px">This one doesn't fit in a day.</h2>
+
+    <div class="fitgrid">
+      <div>
+        <div class="verdict">
+          <h3>Here's the math. Check it yourself.</h3>
+          <p style="margin:0;font-size:14px">Mysuru and Hampi sit on opposite sides of the state. The driving alone eats the day before you've seen a single stone.</p>
+          <p class="calc">
+            Mysuru → Hampi by road &nbsp;·&nbsp; <b>398 km &nbsp; 7 h 45 m</b> <span style="opacity:.6">estimated</span><br>
+            Your day, 08:00–20:00 &nbsp;·&nbsp; <b>12 h 00 m</b><br>
+            Left for actually seeing things &nbsp;·&nbsp; <b>4 h 15 m</b>, split across two cities<br>
+            Hampi alone deserves &nbsp;·&nbsp; <b>6 h 00 m</b> minimum
+          </p>
+        </div>
+        <div class="choices">
+          <div class="choice"><div><b>Two days instead of one</b><p>Mysuru on Saturday, overnight bus, Hampi on Sunday. You'd see both properly instead of neither.</p></div><a class="btn btn--sm" href="#" data-go="s7">Build this →</a></div>
+          <div class="choice"><div><b>Just Hampi, done well</b><p>One full day, five sites, no running. Sunrise from Matanga Hill if you're up for the climb.</p></div><a class="btn btn--sm btn--ghost" href="#" data-go="s7">Build this</a></div>
+          <div class="choice"><div><b>Just Mysuru, done well</b><p>Palace, market, Chamundi, Srirangapatna. Home before dark.</p></div><a class="btn btn--sm btn--ghost" href="#" data-go="s7">Build this</a></div>
+        </div>
+        <p class="hint" style="max-width:64ch;margin-top:18px">Think our road time is wrong? Say so in the chat and we'll show the working. We'd rather be corrected than build you a day that dies at 3 pm.</p>
+      </div>
+      <div>
+        <div class="map">
+          <div class="map__head"><b>The distance</b><span class="chip chip--lat">398 km</span></div>
+          <svg viewBox="0 0 300 400" role="img" aria-label="Mysuru and Hampi at opposite ends of Karnataka">
+            <path class="mapland" d="M40 100 L60 70 L105 55 L150 45 L200 20 L232 8 L240 40 L222 70 L235 120 L218 150 L226 185 L250 215 L262 255 L278 300 L262 318 L235 330 L215 362 L196 384 L178 368 L160 350 L132 352 L100 340 L66 318 L44 270 L26 215 L20 175 L30 135 Z"/>
+            <path d="M175 350 L163 182" stroke="#A6522C" stroke-width="2" stroke-dasharray="6 5" fill="none"/>
+            <circle cx="163" cy="182" r="7" fill="#A6522C"/><text x="163" y="168" class="dotlabel" style="fill:#A6522C">HAMPI</text>
+            <circle cx="175" cy="350" r="7" fill="#A6522C"/><text x="175" y="368" class="dotlabel" style="fill:#A6522C">MYSURU</text>
+            <text x="150" y="270" class="dotlabel" style="font-size:9px;fill:#A6522C">7 H 45 M</text>
+            <text x="150" y="398" class="dotlabel" style="font-size:8.5px;letter-spacing:.18em">KARNATAKA</text>
+          </svg>
+          <div class="map__foot"><span>Road time from our own table</span><span class="chip">estimated</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+<script>
+(function(){
+  var screens = document.querySelectorAll('.screen');
+  var tabs = document.querySelectorAll('.switch button');
+  function go(id){
+    screens.forEach(function(s){ s.classList.toggle('is-on', s.id === id); });
+    tabs.forEach(function(t){ t.setAttribute('aria-current', String(t.dataset.go === id)); });
+    if(id === 's5'){ restartBuild(); }
+    window.scrollTo({top:0});
+  }
+  function restartBuild(){
+    var box = document.getElementById('buildbox');
+    if(!box) return;
+    box.parentElement.classList.remove('is-on');
+    void box.offsetWidth;
+    box.parentElement.classList.add('is-on');
+  }
+  document.addEventListener('click', function(e){
+    var el = e.target.closest('[data-go]');
+    if(el){ e.preventDefault(); go(el.dataset.go); return; }
+
+    var fs = e.target.closest('[data-fstep]');
+    if(fs){
+      document.querySelectorAll('.fstep').forEach(function(p){ p.classList.toggle('is-on', p.id === fs.dataset.fstep); });
+      document.querySelectorAll('.steps button').forEach(function(b){ b.setAttribute('aria-current', String(b.dataset.fstep === fs.dataset.fstep)); });
+      return;
+    }
+
+    var st = e.target.closest('.stepper button');
+    if(st){
+      var out = st.parentElement.querySelector('output');
+      var v = parseInt(out.textContent,10) + parseInt(st.dataset.step,10);
+      out.textContent = Math.max(0, Math.min(12, v));
+      return;
+    }
+
+    var tag = e.target.closest('.tag, .check');
+    if(tag){ tag.setAttribute('aria-pressed', tag.getAttribute('aria-pressed') === 'true' ? 'false':'true'); return; }
+
+    var pick = e.target.closest('.pick button, .daytabs button, .seg3 button');
+    if(pick){
+      pick.parentElement.querySelectorAll('button').forEach(function(b){ b.setAttribute('aria-current','false'); });
+      pick.setAttribute('aria-current','true');
+      return;
+    }
+  });
+
+  // before/after route toggle
+  var before = document.getElementById('routeBefore');
+  var after  = document.getElementById('routeAfter');
+  var bB = document.getElementById('btnBefore');
+  var bA = document.getElementById('btnAfter');
+  var label = document.getElementById('routeLabel');
+  function show(which){
+    var isB = which === 'before';
+    before.style.display = isB ? '' : 'none';
+    after.style.display  = isB ? 'none' : '';
+    bB.setAttribute('aria-pressed', String(isB));
+    bA.setAttribute('aria-pressed', String(!isB));
+    label.textContent = isB ? '34.8 km · before untangling' : '21.4 km · after untangling';
+  }
+  if(bB){ bB.addEventListener('click', function(){ show('before'); }); }
+  if(bA){ bA.addEventListener('click', function(){ show('after'); }); }
+
+  // pin ↔ card
+  document.querySelectorAll('.pin[data-stop]').forEach(function(pin){
+    pin.style.cursor = 'pointer';
+    pin.addEventListener('click', function(){
+      var n = pin.dataset.stop;
+      document.querySelectorAll('#s7 .stop').forEach(function(s, i){
+        s.classList.toggle('is-focus', String(i+1) === n);
+      });
+    });
+  });
+
+  // fake TTS state for the demo
+  var tts = document.getElementById('ttsBtn');
+  if(tts){
+    var playing = false;
+    tts.addEventListener('click', function(){
+      playing = !playing;
+      document.getElementById('ttsLabel').textContent = playing ? 'PLAYING · ಕನ್ನಡ · SEGMENT 2 OF 5' : 'SEGMENT 2 OF 5 · TAP TO LISTEN';
+      document.getElementById('ttsChip').textContent = playing ? 'Sarvam · cached' : 'Voice · Sarvam';
+      document.getElementById('ttsBar').style.width = playing ? '62%' : '34%';
+    });
+  }
+})();
+</script>
+</body>
+</html>
