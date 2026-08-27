@@ -1,0 +1,95 @@
+﻿[0] TRAVEL YANTRA — MAJOR PROJECT REVIEW 1
+[1] 10-Minute Presentation Script  |  Slide-by-Slide Guide
+[2] BMSIT&M  |  Dept. of Information Science & Engineering  |  2025-26
+[3] Under the Guidance of: Prof. Shwetha T, Assistant Professor, Dept. of ISE
+[4] SLIDE 1 — Title Slide
+[5] Speaker: Nithin G  |  Duration: ~45 seconds
+[6] [START — All team members standing. Nithin speaks.]
+[7] Good morning, respected faculty, panel members, and everyone present. We are a team of four students from the Department of Information Science and Engineering — Nithin G, Pushkar Reddy S, Rishab Paul, and Rohan Balu — working under the expert guidance of Prof. Shwetha T.
+[8] The project we are presenting today is called — Travel Yantra — an AI-powered, personalised travel itinerary planner and virtual tour guide with full multilingual support.
+[9] Think of it as having a brilliant, multilingual travel agent in your pocket — one who speaks Kannada, Hindi, Tamil, Telugu, and Bengali and 100+ global languages — and never sleeps, never charges consultation fees, and doesn't judge you for choosing a ₹500 hotel over a Taj. [Pause for light smile from panel]
+[10] Over the next few minutes, we will walk you through our literature survey, the problem we identified, our proposed solution, and the methodology behind it.
+[11] SLIDE 2 — Problem Statement
+[12] Speaker: Pushkar  |  Duration: ~1.5 minutes
+[13] Thank you Nithin, Let me begin by painting you a picture. Imagine you want to plan a 5-day trip to Rajasthan. Where do you start?
+[14] You open MakeMyTrip for flights. Then switch to Booking.com for hotels. Then pull up TripAdvisor for attractions. Then Google Maps to figure out if your hotel is even near the fort. Then you call your cousin who visited last year... and still end up unsure.
+[15] This fragmented experience is the core problem. Studies show travellers spend 6–10 hours just assembling a single itinerary across multiple disconnected platforms. That's a full workday — wasted on logistics.
+[16] Now consider the Indian context specifically. India has 22 official languages and over 700 million people who are more comfortable communicating in their regional language than in English. Yet virtually all existing travel AI tools — ChatGPT, Gemini, even Google's travel features — work in English.
+[17] [To panel:] If I may ask — have any of you tried asking a travel chatbot a question in Kannada? The results are... let's say, creative. [Brief pause]
+[18] And once you're actually at a destination? There's no real-time intelligent guide to tell you the history of that temple, suggest the best local food nearby, or help you navigate — unless you can afford a human guide.
+[19] Our target users are domestic Indian tourists — particularly non-English speakers, international visitors, solo travellers, and families. These are people who deserve the same quality of travel experience regardless of the language they speak.
+[20] SLIDE 3 — Motivation
+[21] Speaker: Pushkar Reddy S  |  Duration: ~1 minute
+[22] Now let's look at why existing solutions have failed to solve this, and why now is the right time to build Travel Yantra.
+[23] Platforms like MakeMyTrip, Booking.com, and TripAdvisor are excellent at their individual jobs — but they don't talk to each other. You have to be the integration layer. That's not a user experience, that's homework.
+So why hasn't this been solved already? Because every existing tool only solves one piece of the puzzle.
+[24] MakeMyTrip books flights. TripAdvisor suggests places. ChatGPT gives ideas. But none of them talk to each other — and none of them speak Kannada, Telugu, or Hindi well enough to be useful.
+[25] Here's the scale of that problem: over 700 million Indians are more comfortable in their regional language than in English. Yet every major travel AI tool is English-only. That's not a gap — that's an entire country being left out.
+[26] Travel Yantra is built specifically to close that gap — one unified platform, multiple languages, zero platform-switching.
+[28] SLIDES 4 & 5 — Literature Survey (Tables)
+[29] Speaker: Rohan Balu  |  Duration: ~1.5 minutes for both table slides
+[30] I'll now walk you through our literature survey. We reviewed 12 key papers spanning AI planning systems, multilingual NLP, recommendation engines, and travel technology. Let me highlight the most impactful ones.
+[31] The most critical paper for our domain is TravelPlanner by Xie et al. (2024), which is reference number 1(Point to the presentation). They built a benchmark with 1,225 real travel planning queries and tested GPT-4, Gemini, and other top models on it. The result was sobering — GPT-4 achieved less than 1% final pass rate on complex multi-constraint travel plans. Let that sink in. 1%.
+[32] [To panel:] So when someone says 'just use ChatGPT for your travel plans,' the academic evidence suggests otherwise. Our system is designed specifically to address those failure modes.
+[33] The second key paper is Singh et al.'s Travel Optix (2024), Reference number 2 (Point to presentation) which used CrewAI multi-agent systems to generate itineraries in under 5 minutes — and outperformed standalone GPT-4 and Gemini. This validates our multi-agent approach. But they had no multilingual support and no voice interface — gaps that Travel Yantra directly fills.
+[34] For our NLP backbone, we drew from BERT (Devlin et al., 2019) and GPT-3 (Brown et al., 2020), Reference number 3, for language understanding. For our multilingual component — arguably our biggest technical differentiator — we rely on IndicTrans2 (Gala et al., 2023), Reference number 4 from AI4Bharat, which achieves BLEU scores of 20-30+ across Indian languages. For our recommendation engine, we use Neural Collaborative Filtering from He et al. (2017), Reference number 9, and for route optimisation, we implement Dijkstra's classic algorithm.
+[35] The multi-agent coordination strategy in our system is informed by AutoGen (Wu et al., 2023) reference number 6 and the ReAct framework (Yao et al., 2023) which enables our agents to interleave reasoning and tool use effectively.
+[36] SLIDE 6 — Literature Survey Summary / Comparison
+[37] Speaker: Rohan Balu  |  Duration: ~1 minute
+[38] This comparison table tells the story in one view. Look at the last column — Travel Yantra. While every existing system excels in one area, none of them have all the pieces.
+[39] TravelPlanner is a benchmark — great for research, not deployable. Travel Optix is a prototype that gets planning right but misses language support and voice. ChatGPT is conversational but can't book or speak Kannada. Google Maps gives you routes but not itineraries. MakeMyTrip does bookings but has no AI personalisation.
+[40] Travel Yantra is the only proposed system with: AI itinerary generation + real-time booking + multilingual support across 6 languages + WhatsApp + voice interface + a 4-agent architecture + cultural guidance. It's not one piece of the puzzle — it's the whole puzzle.
+[41] [To panel:] Does the panel have any questions on the literature survey before we move to our proposed solution?
+[42] SLIDE 7 — Research Gap
+[43] Speaker: Rishab Paul  |  Duration: ~30 seconds (transition slide)
+[44] Thank you Rohan. The comparison table makes the research gap obvious, but let me be precise about what we mean technically.
+[45] Three distinct gaps drive this project: First, a technical gap — no open architecture combines n8n workflow automation, Vapi voice AI, and WhatsApp Business API for travel in the Indian context. Second, a practical gap — no system learns your travel preferences across sessions. Every conversation starts from zero. Third, a linguistic gap — despite IndicTrans2's advancements, no deployed travel system has integrated it for real conversational use.
+[46] SLIDE 8 — Proposed System Overview
+[47] Speaker: Pushkar  |  Duration: ~45 seconds
+[48] Travel Yantra is a unified AI travel ecosystem. Think of it like the Avengers — but for travel planning. [Small smile] Four specialised agents, each an expert in their domain, coordinated by a central orchestration layer.
+[49] The Itinerary Agent handles planning. The Accommodation Agent handles hotels. The Transportation Agent handles routes and bookings. The Cultural Guidance Agent answers your questions at the site — in your language.
+[50] Users can access this system three ways: through a web application for full-featured planning, through WhatsApp for conversational access — reaching all 500 million WhatsApp users in India — and through voice calls using Vapi AI for completely hands-free interaction.
+[51] SLIDE 9 — Objectives
+[52] Speaker: Rishab  |  Duration: ~30 seconds
+[53] Our five core objectives are measurable and time-bound. We target 90% user satisfaction, 85%+ translation accuracy across multiple languages, 95% platform availability with sub-3-second response times, a 60% reduction in planning time, and sub-3-second virtual guide response latency. These aren't aspirational — they're engineering targets that will be measured quantitatively during evaluation.
+[54] SLIDE 10 — System Architecture
+[55] Speaker: Rohan Balu  |  Duration: ~45 seconds
+[56] The architecture has three distinct layers. The input layer captures user preferences through whichever channel they choose — web, WhatsApp, or voice. This feeds into the processing layer — the multi-agent AI engine orchestrated by n8n.
+[57] n8n acts like a conductor in an orchestra. It coordinates the four agents, manages API calls, handles errors gracefully, and ensures the system doesn't break if one API is temporarily unavailable. This is what makes our system fault-tolerant.
+[58] The data layer uses Supabase — an open-source PostgreSQL database with real-time sync. This is what enables persistent user profiles. When you come back for your next trip, the system already knows you prefer budget accommodations, vegetarian restaurants, and cultural sites over beaches.
+[59] [To panel:] Would you like me to elaborate on any specific component of the architecture?
+[60] SLIDE 11 — Methodology
+[61] Speaker: Rohan Balu  |  Duration: ~30 seconds
+[62] Our methodology combines four algorithms. LLM with Chain-of-Thought prompting ensures the LLM follows constraints like a chef following a recipe — step by step, not all at once. Neural Collaborative Filtering personalises recommendations based on your travel profile similarity with others. Dijkstra's algorithm — yes, the classic from 1959 — is still the gold standard for multi-stop route optimisation. And IndicTrans2 handles our multilingual translation with state-of-the-art Indic language accuracy.
+[63] We'll evaluate using Constraint Satisfaction Rate and Commonsense Violation Rate for itinerary quality, BLEU and METEOR scores for translation, and P95 latency for system performance.
+[64] SLIDE 12 — Tools & Technologies
+[65] Speaker: Rishab  |  Duration: ~30 seconds
+[66] Our technology stack is entirely built on production-ready, industry-standard tools. Python and FastAPI for the backend. React.js for the frontend. n8n for workflow automation. Vapi.ai for voice AI. Supabase for the database. And Meta's WhatsApp Business API for messaging integration.
+[67] An important note — all of these have generous free tiers or are open-source, which keeps our total project budget under ₹25,000. We're not building on expensive proprietary infrastructure. Everything here can be deployed, maintained, and scaled by a small team.
+[68] SLIDE 13 — Feasibility Study
+[69] Speaker: Pushkar Reddy S  |  Duration: ~30 seconds
+[70] Is this project feasible? Technically — yes. Every component we're using is production-ready and has been validated independently. Singh et al. proved that multi-agent travel planning works. Gala et al. proved IndicTrans2 achieves 20-30 BLEU on Indian languages. Vapi is in commercial production.
+[71] Economically — yes. Under ₹25,000 using open-source tools and free-tier APIs. Operationally, the WhatsApp channel alone gives us access to 500 million existing users without them needing to download a new app. That's operational viability on day one.
+[72] SLIDES 14–18 — SDG, WP/WK, Timeline, Outcomes, References
+[73] Speaker: Nithin  |  Duration: ~1 minute
+[74] [SDG Slide] Travel Yantra aligns with 5 UN Sustainable Development Goals. SDG 8 through boosting local tourism economies. SDG 9 through AI infrastructure innovation. SDG 10 — this is the most important one — through removing the language inequality barrier that excludes 700 million Indians from AI travel tools. SDG 11 through route optimization reducing carbon footprint. And SDG 17 through cross-sector digital collaboration.
+[75] [WP/WK Slide] The engineering problem we're solving maps to WP1 — complex multi-constraint optimization — and WP2 — heterogeneous API integration. The knowledge areas applied span mathematics, information technology, engineering design, and engineering practice.  
+[76] [Timeline Slide] We're currently at the end of Month 2 — core agent implementation and this review. Months 3-4 will deliver WhatsApp, voice, and multilingual integration. Month 5 is user testing. Month 6 is deployment. Each team member owns a specific module: I own the frontend and Supabase. Rohan Balu handles the AI architecture; Rishab owns the NLP pipelines; Pushkar owns WhatsApp and n8n; 
+[77] Rohan Balu  
+[78] [Expected Outcomes] Our mandatory outcome is a deployed product — a production-ready multi-channel travel planning system. We're also targeting a research publication in IEEE or ACM conferences on multi-agent AI for multilingual applications.
+[79] [References] Our 12 references span from Dijkstra's 1959 graph paper — the foundation of our routing algorithm — to 2024 papers on LLM-based travel planning benchmarks. All references follow IEEE format.
+[80] CLOSING STATEMENT
+[81] Speaker: Rohan Balu  |  All team members present
+[82] To summarise — we identified a critical problem: travel planning in India is fragmented, English-centric, and lacks intelligent real-time guidance. The literature confirms no single existing system addresses all of these simultaneously.
+[83] Travel Yantra proposes a unified solution: a multi-agent AI architecture with multilingual support, real-time booking, and multi-channel accessibility — targeting the 700 million+ Indians who deserve intelligent travel assistance in their own language.
+[84] We are technically ready, economically feasible, and operationally viable. We look forward to your feedback and questions. Thank you.
+[85] [All team members: ] "Thank you, we are open to questions."
+[86] ANTICIPATED Q&A — Preparation Notes
+[87] Q: How is your system different from just using ChatGPT?
+[88] A: ChatGPT is a single LLM with no real-time data, no booking capability, and no persistence. Our system is a 4-agent architecture with real-time API integration, multilingual support, booking links, WhatsApp access, voice interface, and user profile memory. The TravelPlanner paper (2024) showed GPT-4 achieves <1% success on complex travel planning — our specialized architecture is designed specifically to overcome those failures.
+[89] Q: How accurate is the multilingual translation?
+[90] A: We use IndicTrans2 from AI4Bharat, which achieves BLEU scores of 20-30+ across Indian language pairs on FLORES-200 benchmark. For travel-specific vocabulary, we'll fine-tune on domain data. Our target is 85%+ task-level accuracy, measured via BLEU and METEOR scores.
+[91] Q: What about data privacy? User travel data is sensitive.
+[92] A: We use Supabase with Row-Level Security (RLS) — each user can only access their own data. Authentication is JWT-based with token expiry. API keys are stored in environment variables, never in code. We comply with standard data protection practices and can implement additional encryption at rest.
+[93] Q: What is the novelty of your project?
+[94] A: The novelty lies in three areas: (1) Integration — no existing system combines these four channels with multi-agent AI for travel. (2) Language — we are the first to deploy IndicTrans2 specifically for conversational travel guidance in 5 Indian languages. (3) Architecture — the combination of n8n + Vapi + WhatsApp Business API for this domain is a novel open-architecture approach.
