@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block page %}trip{% endblock %}
+{% block title %}{{ req.title }} · Travel Yantra{% endblock %}
+{% block crumb %}<div class="crumb"><a href="/home">Home</a> › <a href="/saved">Trips</a> › <a href="/trips/{{ trip.id }}?pick">Pick a plan</a> › <b>{{ title }}</b></div>{% endblock %}
+{% block body %}
+  <div class="plan">
+    <div class="plan__main">
+      <div class="plan__head">
+        <div>
+          <p class="eyebrow">{{ req.start_date|daterange(req.days, true) }} · {{ req.party_size }} people · {{ title|lower }}</p>
+          <h2 class="h1" style="font-size:30px;margin:.2em 0 .3em">{{ req.title }}</h2>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <span class="chip {{ 'chip--lat' if plan.comfort == 'tight' else 'chip--river' }}" id="chip-comfort">{{ plan.comfort|capitalize }}</span>
+            {% if plan.has_plan_b %}<span class="chip">Plan B ready</span>{% endif %}
+            <span class="chip" id="chip-spend">{{ plan.total_spend|inr }} of {{ req.budget_inr|inr }}</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn--sm btn--ghost" id="katha-day">Katha for this day</button>
+          <a class="btn btn--sm btn--ghost" href="/trips/{{ trip.id }}?pick">Other two plans</a>
+        </div>
+      </div>
+
+      <div class="daytabs" id="daytabs">{% for d in plan.days %}<button data-day="{{ d.index }}" aria-current="{{ 'true' if loop.first else 'false' }}">Day {{ d.index }}</button>{% endfor %}</div>
+
+      <div class="daygrid">
+        <div class="daygrid__map">
+          <div class="map">
+            <div class="map__head"><b id="map-title"></b><span class="chip" id="map-stops"></span></div>
+            <div id="day-map"></div>
+            <div class="map__foot">
+              <span id="routeLabel"></span>
+              <span class="toggle">
+                <button id="btnListed" aria-pressed="false">As listed</button>
+                <button id="btnRouted" class="on-after" aria-pressed="true">As routed</button>
+              </span>
+            </div>
+          </div>
+          <details class="trace">
+            <summary>How this day was put together</summary>
+            <div class="trace__body" id="trace"></div>
+          </details>
+        </div>
+
+        <div>
+          <div class="dayhead" id="dayhead"></div>
+          <div class="rail" id="rail"></div>
+          <div class="summary" id="summary"></div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="plan__side">
+      <div class="chat__head"><b>Ask or change</b><span class="chip" id="chat-day">Day 1</span></div>
+      <div class="chat__log" id="chat-log"></div>
+      <div class="quick" id="quick"></div>
+      <div class="chat__in"><input id="chat-in" placeholder="Ask, or ask for a change…" autocomplete="off"><button class="btn btn--sm" id="chat-send">Send</button></div>
+    </aside>
+  </div>
+{% endblock %}

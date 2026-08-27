@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block page %}nofit{% endblock %}
+{% block title %}Doesn't fit · Travel Yantra{% endblock %}
+{% block crumb %}<div class="crumb"><a href="/home">Home</a> › <a href="/saved">Trips</a> › <b>{{ req.places|join(' + ') }}, {{ req.days|plural('day') }}</b></div>{% endblock %}
+{% block body %}
+  <div class="page">
+    <p class="eyebrow">{{ req.places|join(' + ') }} · {{ req.days|plural('day') }}</p>
+    <h2 class="h1" style="font-size:31px">This one doesn't fit in {{ 'a day' if req.days == 1 else req.days|plural('day') }}.</h2>
+
+    <div class="fitgrid">
+      <div>
+        <div class="verdict">
+          <h3>Here's the math. Check it yourself.</h3>
+          <p style="margin:0;font-size:14px">{{ prose }}</p>
+          <p class="calc">
+            {% for r in verdict.reasons %}{{ r.label }} &nbsp;·&nbsp; <b>{{ r|reason_value }}</b>{% if not loop.last %}<br>{% endif %}{% endfor %}
+          </p>
+        </div>
+        <div class="choices">
+          {% for a in verdict.alternatives %}
+          <div class="choice"><div><b>{{ a.title }}</b><p>{{ a.description }}</p></div><button class="btn btn--sm{% if not loop.first %} btn--ghost{% endif %}" data-alt="{{ loop.index0 }}">Build this{% if loop.first %} →{% endif %}</button></div>
+          {% else %}
+          <div class="choice"><div><b>No alternative we can compute</b><p>Change the days or the places and try again.</p></div><a class="btn btn--sm btn--ghost" href="/trips/new">Back to the form</a></div>
+          {% endfor %}
+        </div>
+        <p class="hint" style="max-width:64ch;margin-top:18px">Think our road time is wrong? Say so in the chat and we'll show the working. We'd rather be corrected than build you a day that dies at 3 pm.</p>
+        <p class="err" id="alt-error" hidden></p>
+      </div>
+      <div>
+        <div class="map">
+          <div class="map__head"><b>The distance</b><span class="chip chip--lat">{{ total_km }} km</span></div>
+          <div id="fit-map"></div>
+          <div class="map__foot"><span>Road time from our own table</span><span class="chip">{{ 'estimated' if estimated else 'from our table' }}</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block page %}katha_home{% endblock %}
+{% block title %}Katha · Travel Yantra{% endblock %}
+{% block crumb %}<div class="crumb"><a href="/home">Home</a> › <b>Katha</b></div>{% endblock %}
+{% block body %}
+  <div class="page">
+    <div class="kgrid">
+      <div>
+        <p class="eyebrow">Katha <span style="font-family:var(--kn)">ಕಥೆ</span></p>
+        <h2 class="h1" style="font-size:33px;margin-bottom:6px">What you're looking at,<br>and why it matters.</h2>
+        <p class="lede">Pick a city or a single monument. Say how long you've got. We fit the telling to your time, not the other way around.</p>
+        <form class="search" method="get" action="/katha" id="search"><input name="q" placeholder="Try “Hampi”, “Mysore Palace”, “Chennakeshava”…" value="{{ q }}" autocomplete="off"><button class="btn" type="submit">Search</button></form>
+        <p class="eyebrow" style="margin-bottom:4px" id="results-count"></p>
+        <div class="klist" id="results"></div>
+      </div>
+      <div>
+        <div class="map">
+          <div class="map__head"><b>What we can tell you</b><span class="chip">{{ places|plural('place') }}</span></div>
+          <div id="coverage-map"></div>
+          <div class="map__foot"><span>{{ coverage|length|plural('region') }} · {{ places|plural('place') }} · {{ paragraphs|plural('paragraph') }}</span><span>Tap a dot to start</span></div>
+        </div>
+        <p class="hint" style="margin:9px 2px 0">Everything on this map has at least one sourced paragraph behind it. The dots grow as the library does.</p>
+      </div>
+    </div>
+  </div>
+{% endblock %}

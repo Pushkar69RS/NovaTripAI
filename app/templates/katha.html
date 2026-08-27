@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block page %}katha{% endblock %}
+{% block title %}{{ scope_title }} · Katha · Travel Yantra{% endblock %}
+{% block crumb %}<div class="crumb"><a href="/home">Home</a> › <a href="/katha">Katha</a> › {% if katha.scope.kind != 'city' and city %}<a href="/katha?q={{ city }}">{{ city }}</a> › {% endif %}<b>{{ scope_title }}</b>{% if katha.scope.kind == 'day' and trip %} <span style="margin-left:8px" class="chip">built from your Day {{ katha.scope.id }}</span>{% endif %}</div>{% endblock %}
+{% block body %}
+  <div class="page">
+    <p class="eyebrow">{{ {'city': 'City Katha', 'place': 'Place Katha · one monument, properly', 'day': 'Day Katha · your stops, in order'}[katha.scope.kind] }}</p>
+    <h2 class="h1" style="font-size:33px;margin-bottom:{{ '6px' if katha.scope.kind == 'place' else '18px' }}">{{ scope_title }}{% if kn_title %} <span style="font-family:var(--kn);font-size:.6em;color:var(--ink-60)">{{ kn_title }}</span>{% endif %}</h2>
+    {% if katha.scope.kind == 'day' and trip_title %}<p class="lede" style="margin-bottom:18px">From your trip to {{ trip_title }}. {{ katha.total_words }} words of material for {{ katha.duration_min }} minutes.</p>
+    {% elif katha.scope.kind == 'place' %}<p class="lede" style="margin-bottom:18px">{{ katha.segments|length|plural('segment') }}, {{ katha.total_words }} words, {{ katha.depth }}. You decide how much of it you want.</p>{% endif %}
+
+    <div class="tourbar">
+      <div><span class="pick__label">How long</span><div class="pick" data-pick="duration_min">{% for m in [2, 5, 10] %}<button data-value="{{ m }}" aria-current="{{ 'true' if katha.duration_min == m else 'false' }}">{{ m }} min</button>{% endfor %}</div></div>
+      <div><span class="pick__label">How deep</span><div class="pick" data-pick="depth"><button data-value="quick" aria-current="{{ 'true' if katha.depth == 'quick' else 'false' }}">Quick</button><button data-value="deep" aria-current="{{ 'true' if katha.depth == 'deep' else 'false' }}">Deep</button></div></div>
+      <div><span class="pick__label">Language</span><div class="pick" data-pick="language"><button data-value="en" aria-current="{{ 'true' if katha.language == 'en' else 'false' }}">English</button><button data-value="kn" aria-current="{{ 'true' if katha.language == 'kn' else 'false' }}">ಕನ್ನಡ</button><button data-value="hi" aria-current="{{ 'true' if katha.language == 'hi' else 'false' }}">हिन्दी</button></div></div>
+    </div>
+    <p class="hint" id="pick-status" style="margin:8px 0 0" hidden></p>
+
+    <div class="kplay">
+      <div>
+        <div class="progress" aria-label="{{ segments|length|plural('segment') }}" style="margin-top:20px" id="progress">{% for s in segments %}<span{% if loop.first %} class="on"{% endif %}></span>{% endfor %}</div>
+
+        {% for s in segments %}
+        <div class="seg" data-seg="{{ loop.index0 }}" data-place="{{ s.place }}">
+          <div class="seg__side">
+            <span class="chip{% if s.chunk_type in ['hook', 'story'] %} chip--lat{% endif %}">{{ s.chunk_type|capitalize }}</span>
+            {% if s.is_legend %}<span class="chip chip--lat">Legend</span>{% endif %}
+            <span class="seg__place">{{ s.side }}</span>
+            {% if s.deeper %}<button class="seg__deeper" data-deeper="{{ s.deeper }}">Go deeper →</button>{% endif %}
+          </div>
+          <div class="seg__body{% if not s.narrated and katha.language != 'en' %} narr-pending{% endif %}">
+            <h4>{{ s.title }}</h4>
+            {% for p in s.paragraphs %}<p>{{ p }}</p>{% endfor %}
+            <p class="seg__src">{% if s.is_legend %}As the legend goes · {% endif %}{{ s.source or 'source on file' }}</p>
+          </div>
+        </div>
+        {% endfor %}
+
+        <div class="player">
+          <button class="player__btn" id="ttsBtn" aria-label="Play"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4l13 8-13 8z"/></svg></button>
+          <div style="flex:1">
+            <div style="font-family:var(--mono);font-size:11px;color:var(--ink-38)" id="ttsLabel">SEGMENT 1 OF {{ segments|length }} · TAP TO LISTEN</div>
+            <div style="font-size:13.5px" id="ttsTitle">{{ segments[0].title if segments else '' }}</div>
+            <div class="player__bar"><i id="ttsBar" style="width:0%"></i></div>
+          </div>
+          <span class="chip" id="ttsChip">Voice · Sarvam</span>
+        </div>
+      </div>
+
+      <div class="kplay__side">
+        <div class="map">
+          <div class="map__head"><b id="loc-title">{{ 'Where you are' if katha.scope.kind != 'place' else scope_title }}</b><span class="chip" id="loc-chip"></span></div>
+          <div id="locator"></div>
+          <div class="map__foot"><span id="loc-foot"></span></div>
+        </div>
+        <p class="hint" style="margin:9px 2px 0">{% if katha.scope.kind == 'place' %}{% if trip %}On your trip · <a href="/trips/{{ trip.id }}">back to the plan</a>{% else %}One place, in the order the library tells it.{% endif %}{% elif katha.scope.kind == 'day' and trip %}Dimmed pins are still to come · <a href="/trips/{{ trip.id }}?day={{ katha.scope.id }}">back to the plan</a>{% else %}Dimmed pins are still to come.{% endif %}</p>
+      </div>
+    </div>
+  </div>
+{% endblock %}

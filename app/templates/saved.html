@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block page %}saved{% endblock %}
+{% block title %}Saved · Travel Yantra{% endblock %}
+{% block crumb %}<div class="crumb"><a href="/home">Home</a> › <b>Saved</b></div>{% endblock %}
+{% block body %}
+  <div class="page">
+    <div class="hist">
+      <div>
+        <p class="eyebrow">Trips · where you'll go, and when</p>
+        <h2 class="h2" style="font-size:25px;margin:8px 0 14px">{{ trips|length|plural('trip') }} saved</h2>
+        <div class="rows">
+          {% for r in trips %}
+          <div class="row"><span class="row__date">{{ r.date }}</span><div><div class="row__t">{{ r.title }}</div><div class="row__m">{{ r.meta }}</div></div><a class="btn btn--sm btn--ghost" href="{{ r.href }}">{{ r.action }}</a></div>
+          {% else %}
+          <div class="row"><span class="row__date"></span><div><div class="row__t">No trips yet</div><div class="row__m">A short form in, three plans out.</div></div><a class="btn btn--sm btn--ghost" href="/trips/new">Plan a trip</a></div>
+          {% endfor %}
+        </div>
+      </div>
+      <div id="kathas">
+        <p class="eyebrow">Katha · what you're looking at, and why</p>
+        <h2 class="h2" style="font-size:25px;margin:8px 0 14px">{{ kathas|length }} heard</h2>
+        <div class="rows">
+          {% for r in kathas %}
+          <div class="row"><span class="row__date">{{ r.date }}</span><div><div class="row__t">{{ r.title }}</div><div class="row__m">{{ r.meta }}</div></div><a class="btn btn--sm btn--ghost" href="{{ r.href }}">{{ r.action }}</a></div>
+          {% else %}
+          <div class="row"><span class="row__date"></span><div><div class="row__t">Nothing heard yet</div><div class="row__m">A city, one monument, or your Day 2.</div></div><a class="btn btn--sm btn--ghost" href="/katha">Hear a Katha</a></div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

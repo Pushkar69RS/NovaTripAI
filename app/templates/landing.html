@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block page %}landing{% endblock %}
+{% block body %}
+  <div class="hero">
+    <div class="hero__grid">
+      <div>
+        <p class="eyebrow">Karnataka · door to door · <span style="font-family:var(--kn);text-transform:none;letter-spacing:0">ನಿಮ್ಮ ಪ್ರಯಾಣ, ನಮ್ಮ ಲೆಕ್ಕ</span></p>
+        <h1 class="h1">Plans that hold up<br>on the actual day.</h1>
+        <p class="lede">Tell us who's coming and what you want out of the trip. We build each day around opening hours, road time, and how far your amma can actually walk. Then we come along and tell you the stories.</p>
+        <div class="hero__sub">
+          <a class="btn" href="/trips/new">Plan a trip →</a>
+          <a class="btn btn--ghost" href="/katha">Hear a Katha</a>
+        </div>
+      </div>
+      <div>
+        {% if day %}
+        <div class="map">
+          <div class="map__head"><b>{{ day.city }} · Day {{ day.index }}</b><span class="chip">{{ day.date|weekday_date }}</span></div>
+          <div id="landing-map"></div>
+          <div class="map__foot"><span>{{ summary.stops|plural('stop') }} · {{ summary.km }} km · ends {{ summary.ends }}</span>{% if summary.hard %}<span class="chip chip--river">■ fixed time</span>{% endif %}</div>
+        </div>
+        <p class="hint" style="margin:9px 2px 0">Drawn from the live plan for {{ trip.request.places|join(' & ') }}, {{ trip.request.start_date|daterange(trip.request.days) }} · {{ trip.plan.metrics.route_km_naive }} km as listed, {{ trip.plan.metrics.route_km_after }} km as routed · built in {{ trip.plan.metrics.build_ms }} ms, no AI in that part.</p>
+        {% else %}
+        <div class="map">
+          <div class="map__head"><b>No trip yet</b><span class="chip">empty</span></div>
+          <div style="padding:40px 20px;text-align:center"><p class="hint">The first plan you make will be drawn here, from its own numbers.</p></div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="how">
+      <div class="how__cell"><p class="eyebrow">01</p><h3>Answer a short form</h3><p>Where, when, who's coming, what it should cost. Two minutes, and the "who" part matters — a trip with grandparents is a different trip.</p></div>
+      <div class="how__cell"><p class="eyebrow">02</p><h3>We do the math</h3><p>Opening hours, road time, budget, your pace. If something doesn't fit, we say so and show the working instead of pretending.</p></div>
+      <div class="how__cell"><p class="eyebrow">03</p><h3>Change anything</h3><p>Tell the chat. We fix that one day and leave the rest of your trip exactly where it was.</p></div>
+    </div>
+
+    <div class="twocol">
+      <div class="half">
+        <p class="what">Where you'll go, and when</p>
+        <h3>Trips</h3>
+        <p>A short form in, three honest plans out. Each one already checked against closing times, budgets, and your evenings. Pick one and argue with it in the chat.</p>
+        <a class="btn btn--sm" href="/trips/new">Plan a trip →</a>
+      </div>
+      <div class="half">
+        <p class="what">What you're looking at, and why it matters</p>
+        <h3>Katha <span class="kn">ಕಥೆ</span></h3>
+        <p>A whole city, one temple, or just your Day 2. Two minutes or ten, quick or deep, spoken out loud if you like. Curses included, and labelled as curses.</p>
+        <a class="btn btn--sm btn--ghost" href="/katha">Hear a Katha</a>
+      </div>
+    </div>
+
+    <div class="honesty">
+      <span>TIMINGS CHECKED &amp; DATED</span><span>ESTIMATES SAY "ESTIMATED"</span><span>LEGENDS SAY "LEGEND"</span><span>ಕನ್ನಡ · हिन्दी · ENGLISH</span>
+    </div>
+
+    <div class="footer">
+      <span>TRAVEL YANTRA · A FINAL-YEAR ENGINEERING PROJECT</span>
+      <span>INFORMATION SCIENCE &amp; ENGINEERING · BMSIT&amp;M, BENGALURU · 2026–27</span>
+    </div>
+  </div>
+{% endblock %}

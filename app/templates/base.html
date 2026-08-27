@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Travel Yantra{% endblock %}</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/static/fonts.css">
+<link rel="stylesheet" href="/static/ty.css">
+</head>
+<body data-page="{% block page %}{% endblock %}">
+<div class="wrap">
+  <div class="bar">
+    <div class="mark"><a href="{{ '/home' if account else '/' }}"><span class="mark__name">TRAVEL YANTRA</span></a><span class="mark__kn">ಪ್ರಯಾಣ ಯಂತ್ರ</span></div>
+    {% if account %}
+    <div class="nav">
+      <a href="/home"{% if nav == 'home' %} aria-current="page"{% endif %}>Home</a>
+      <a href="/saved"{% if nav == 'trips' %} aria-current="page"{% endif %}>Trips</a>
+      <a href="/katha"{% if nav == 'katha' %} aria-current="page"{% endif %}>Katha</a>
+    </div>
+    <a class="avatar" href="/signout" title="{{ account.name }} · sign out">{{ account.initials }}</a>
+    {% else %}
+    <div class="nav"></div>
+    {% block barlink %}<a class="btn btn--sm btn--ghost" href="/signin">Sign in</a>{% endblock %}
+    {% endif %}
+  </div>
+  {% block crumb %}{% endblock %}
+  {% block body %}{% endblock %}
+</div>
+<script id="page-data" type="application/json">{{ data|tojson }}</script>
+<script src="/static/ty.js"></script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block page %}signin{% endblock %}
+{% block title %}Sign in · Travel Yantra{% endblock %}
+{% block barlink %}<a class="btn btn--sm btn--ghost" href="/">Back</a>{% endblock %}
+{% block body %}
+  <div style="display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 100px)" class="splitwrap">
+    <form method="post" action="/signin" style="padding:var(--pad);display:flex;flex-direction:column;justify-content:center;max-width:520px">
+      <p class="eyebrow">Sign in</p>
+      <h2 class="h1" style="font-size:33px;margin-bottom:20px">Welcome back.</h2>
+      <div class="field"><label for="u">Email</label><input id="u" name="email" type="email" value="{{ email or 'rohan@travelyantra.in' }}" autocomplete="username"></div>
+      <div class="field"><label for="p">Password</label><input id="p" name="password" type="password" autocomplete="current-password" autofocus></div>
+      <input type="hidden" name="next" value="{{ next }}">
+      {% if error %}<p class="err" style="margin:0 0 14px">{{ error }}</p>{% endif %}
+      <div><button class="btn" type="submit">Sign in →</button></div>
+      <p class="hint" style="margin-top:14px">One seeded account in this build. Sign-up comes in Phase 2.</p>
+    </form>
+    <div style="border-left:1px solid var(--contour);background:var(--sheet-2);display:grid;place-items:center;padding:40px" aria-hidden="true">
+      <svg viewBox="0 0 400 400" fill="none" stroke="#1F5C6B" stroke-width="1" style="width:78%">
+        <g opacity=".5">
+          <path d="M40 300c60-10 90-70 160-70s110 60 160 52"/><path d="M55 265c58-14 88-62 145-62s105 52 145 44"/>
+          <path d="M72 230c52-16 80-54 128-54s96 44 130 38"/><path d="M92 196c44-16 68-46 108-46s84 36 112 32"/>
+          <path d="M114 162c36-14 54-38 86-38s68 30 92 26"/><path d="M140 128c26-10 38-26 60-26s50 20 68 18"/>
+          <path d="M168 96c16-6 22-16 32-16s30 12 42 12"/>
+        </g>
+        <circle cx="200" cy="80" r="3.5" fill="#A6522C" stroke="none"/>
+        <path d="M200 84v226" stroke="#17211E" stroke-dasharray="2 7" opacity=".45"/>
+        <text x="200" y="330" fill="#17211E" stroke="none" font-family="IBM Plex Mono" font-size="9" text-anchor="middle" opacity=".5">CHAMUNDI HILL · 1062 m</text>
+      </svg>
+    </div>
+  </div>
+{% endblock %}

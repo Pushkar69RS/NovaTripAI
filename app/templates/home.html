@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block page %}home{% endblock %}
+{% block title %}Home · Travel Yantra{% endblock %}
+{% block body %}
+  <div class="page">
+    <p class="eyebrow">{{ today }}</p>
+    <h2 class="h1" style="font-size:37px">Where to, {{ account.first }}?</h2>
+    <div class="doors">
+      <a class="door" href="/trips/new"><span class="door__k">Trips</span><h3>Plan a trip</h3><p>A short form. Three plans that already fit.</p></a>
+      <a class="door" href="/saved"><span class="door__k">Trips</span><h3>My trips</h3><p>Open one, change it, run it again.</p></a>
+      <a class="door" href="/katha"><span class="door__k">Katha</span><h3>Hear a Katha</h3><p>A city, one monument, or your Day 2.</p></a>
+      <a class="door" href="/saved#kathas"><span class="door__k">Katha</span><h3>My Kathas</h3><p>Everything you've heard, ready to replay.</p></a>
+    </div>
+    <p class="eyebrow" style="margin-bottom:6px">Recent</p>
+    <div class="rows">
+      {% for r in recent %}
+      <div class="row"><span class="row__date">{{ r.date }}</span><div><div class="row__t">{{ r.title }}</div><div class="row__m">{{ r.meta_home }}</div></div><a class="btn btn--sm btn--ghost" href="{{ r.href }}">{{ r.action }}</a></div>
+      {% else %}
+      <div class="row"><span class="row__date"></span><div><div class="row__t">Nothing yet</div><div class="row__m">Your trips and Kathas will line up here.</div></div><a class="btn btn--sm btn--ghost" href="/trips/new">Plan a trip</a></div>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}

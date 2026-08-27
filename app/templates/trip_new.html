@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block page %}trip_new{% endblock %}
+{% block title %}New trip · Travel Yantra{% endblock %}
+{% block crumb %}<div class="crumb"><a href="/home">Home</a> › <a href="/saved">Trips</a> › <b>New trip</b></div>{% endblock %}
+{% block body %}
+  {% set p = defaults.preferences %}
+  <div class="page" id="form-page">
+    <p class="eyebrow">New trip</p>
+    <h2 class="h1" style="font-size:33px">Tell us about this one.</h2>
+
+    <div class="steps" role="tablist">
+      <button data-fstep="f1" aria-current="true"><small>STEP 1</small><b>Where &amp; when</b></button>
+      <button data-fstep="f2" aria-current="false"><small>STEP 2</small><b>Who's going</b></button>
+      <button data-fstep="f3" aria-current="false"><small>STEP 3</small><b>Money &amp; tastes</b></button>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="fstep is-on" id="f1">
+      <div class="form-grid">
+        <div class="field"><label for="w1">Starting from</label><input id="w1" value="{{ defaults.origin_city }}"></div>
+        <div class="field"><label for="w2">Going to</label><input id="w2" value="{{ defaults.places|join(', ') }}">
+          <div class="sub">Up to three places. If it's too many for the days, we'll say so.</div></div>
+        <div class="field"><label for="w3">Start date</label><input id="w3" type="date" value="{{ defaults.start_date }}"></div>
+        <div class="field"><label for="w4">Days</label><input id="w4" type="number" value="{{ defaults.days }}" min="1" max="10"></div>
+        <div class="field"><label for="w5">When can you leave on day one?</label>
+          <select id="w5"><option value="07:00">Early, before 7 am</option><option value="09:00" selected>Morning, 7–10</option><option value="14:00">After lunch</option><option value="18:00">Evening</option></select>
+          <div class="sub">Day 1 gets planned around this, not around a fantasy 6 am start.</div></div>
+        <div class="field"><label for="w6">Getting there</label>
+          <select id="w6"><option value="train"{% if defaults.transport == 'train' %} selected{% endif %}>Train — I'll book it myself</option><option value="bus"{% if defaults.transport == 'bus' %} selected{% endif %}>Bus</option><option value="flight">Flight</option><option value="car"{% if defaults.transport == 'car' %} selected{% endif %}>Own car</option><option value="any"{% if defaults.transport == 'any' %} selected{% endif %}>Work it out for me</option></select>
+          <div class="sub">No flights between these cities in our table yet; pick Flight and we plan the fastest ground leg.</div></div>
+        <div class="field span-2"><label>Getting around once you're there</label>
+          <div class="tagrow" id="around" data-single><button class="tag" aria-pressed="true">Hired car / cab</button><button class="tag" aria-pressed="false">Own car</button><button class="tag" aria-pressed="false">Autos + walking</button></div>
+          <div class="sub">Changes how far apart your stops can be.</div></div>
+      </div>
+      <div class="form-actions"><button class="btn" data-fstep="f2">Next: who's going →</button></div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="fstep" id="f2">
+      <div class="stepgroup">
+        <div class="field"><label>Adults</label>
+          <div class="stepper" data-min="1"><button data-step="-1" aria-label="Fewer adults">−</button><output id="adults">{{ p.get('adults', '2') }}</output><button data-step="1" aria-label="More adults">+</button></div></div>
+        <div class="field"><label>Elders (60+)</label>
+          <div class="stepper" data-min="0"><button data-step="-1" aria-label="Fewer elders">−</button><output id="elders">{{ p.get('elders', '0') }}</output><button data-step="1" aria-label="More elders">+</button></div>
+          <div class="sub">We keep climbs short and the days gentler.</div></div>
+        <div class="field"><label>Children</label>
+          <div class="stepper" data-min="0"><button data-step="-1" aria-label="Fewer children">−</button><output id="children">{{ p.get('children', '0') }}</output><button data-step="1" aria-label="More children">+</button></div></div>
+      </div>
+      <div class="form-grid" style="margin-top:8px">
+        <div class="field span-2"><label>Children's ages</label>
+          <div class="tagrow" id="ages"><button class="tag" aria-pressed="false">Under 5</button><button class="tag" aria-pressed="true">5–12</button><button class="tag" aria-pressed="false">Teens</button></div></div>
+        <div class="field span-2"><label>Walking</label>
+          <div class="tagrow" id="walking" data-single><button class="tag tag--lat" aria-pressed="true">Someone finds stairs hard</button><button class="tag" aria-pressed="false">Wheelchair access needed</button><button class="tag" aria-pressed="false">We're all fine on foot</button></div></div>
+        <div class="field span-2"><label>Pace</label>
+          <div class="seg3" id="pace">
+            <button data-value="relaxed" aria-current="{{ 'true' if defaults.pace == 'relaxed' else 'false' }}"><span>Relaxed</span><small>3 things a day</small></button>
+            <button data-value="comfortable" aria-current="{{ 'true' if defaults.pace == 'comfortable' else 'false' }}"><span>Comfortable</span><small>4 things a day</small></button>
+            <button data-value="packed" aria-current="{{ 'true' if defaults.pace == 'packed' else 'false' }}"><span>Packed</span><small>6 things. You asked.</small></button>
+          </div></div>
+        <div class="field"><label for="mornings">Mornings</label>
+          <select id="mornings"><option>Early starts are fine</option><option selected>Easy mornings, please</option></select></div>
+        <div class="field"><label for="endby">Day should end by</label>
+          <select id="endby"><option value="19:00" selected>7 pm</option><option value="20:00">8 pm</option><option value="21:00">9 pm</option><option value="">Whenever</option></select>
+          <div class="sub">We plan to this. It's a promise, not a hope.</div></div>
+        <div class="field span-2"><label>Food</label>
+          <div class="tagrow" id="food" data-single><button class="tag" aria-pressed="true">No preference</button><button class="tag" aria-pressed="false">Veg only</button><button class="tag" aria-pressed="false">Jain</button></div></div>
+      </div>
+      <div class="form-actions"><button class="btn btn--ghost" data-fstep="f1">← Back</button><button class="btn" data-fstep="f3">Next: money &amp; tastes →</button></div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="fstep" id="f3">
+      <div class="form-grid">
+        <div class="field"><label for="m1">Budget for the trip</label><input id="m1" value="{{ defaults.budget_inr|inr }}">
+          <div class="tagrow" id="budget-chips" data-single style="margin-top:8px"><button class="tag" data-budget="10000" aria-pressed="false">₹10k</button><button class="tag" data-budget="18000" aria-pressed="true">₹18k</button><button class="tag" data-budget="25000" aria-pressed="false">₹25k</button><button class="tag" data-budget="35000" aria-pressed="false">₹35k</button></div></div>
+        <div class="field"><label>The budget covers</label>
+          <div class="checkrow" id="covers">
+            <button class="check" aria-pressed="true"><i></i>Stay</button>
+            <button class="check" aria-pressed="true"><i></i>Food</button>
+            <button class="check" aria-pressed="true"><i></i>Tickets</button>
+            <button class="check" aria-pressed="true"><i></i>Getting around</button>
+            <button class="check" aria-pressed="false"><i></i>Getting there</button>
+          </div>
+          <div class="sub">So the number actually means something.</div></div>
+        <div class="field span-2"><label>Stay style</label>
+          <div class="seg3" id="stay"><button aria-current="false">Simple</button><button aria-current="true">Mid-range</button><button aria-current="false">Comfortable</button></div></div>
+        <div class="field span-2"><label>What you're here for</label>
+          <div class="tagrow" id="interests">
+            {% for label, tag in [('Heritage','heritage'),('Food','food'),('Temples','spiritual'),('Nature','nature'),('Waterfalls','waterfall'),('Wildlife','wildlife'),('Shopping','shopping'),('Photography','photography'),('Quiet places','quiet')] %}
+            <button class="tag" data-tag="{{ tag }}" aria-pressed="{{ 'true' if tag in defaults.interest_tags else 'false' }}">{{ label }}</button>
+            {% endfor %}
+          </div></div>
+        <div class="field"><label for="m2">Must-see, if anything</label><input id="m2" value="{{ p.get('must_see', '') }}"></div>
+        <div class="field"><label for="m3">Skip, if anything</label><input id="m3" placeholder="e.g., zoos" value="{{ p.get('skip', '') }}"></div>
+        <div class="field span-2"><label for="m4">Anything else, in your own words</label>
+          <textarea id="m4" rows="3">{{ defaults.notes or '' }}</textarea>
+          <div class="sub">This box is read carefully. Write like you'd tell a friend.</div></div>
+      </div>
+      <div class="form-actions"><button class="btn btn--ghost" data-fstep="f2">← Back</button><button class="btn" id="make-plan">Make my plan →</button><span class="hint" id="make-hint">About four seconds.</span></div>
+    </div>
+  </div>
+
+  <!-- BUILDING: the pipeline, visible. Every number is filled from PlanMetrics. -->
+  <div class="build" id="build" hidden>
+    <p class="eyebrow" style="margin-bottom:10px">Making your plan</p>
+    <div class="build__box" id="buildbox">
+      <div class="stage" style="opacity:1"><b>✓</b><span>Reading your answers</span><small id="st-read"></small></div>
+      <div class="stage"><b>✓</b><span>Picking places</span><small id="st-pick"></small></div>
+      <div class="stage"><b>✓</b><span>Sorting into days</span><small id="st-sort"></small></div>
+      <div class="stage"><b>✓</b><span>Ordering each day</span><small id="st-order"></small></div>
+      <div class="stage"><b>✓</b><span>Checking the rules</span><small id="st-check"></small></div>
+      <div class="stage"><b>✓</b><span>Writing it up for you</span><small>templates · no AI in this part</small></div>
+    </div>
+    <div class="build__after">
+      <a class="btn" id="see-plans" href="#">See your three plans →</a>
+      <span class="hint" id="build-total"></span>
+    </div>
+  </div>
+{% endblock %}
