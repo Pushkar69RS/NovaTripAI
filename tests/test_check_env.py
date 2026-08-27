@@ -17,6 +17,9 @@ def test_db_url_shape() -> None:
         == "FAIL"
     )
     assert check_db_url(f"postgresql://postgres.x:pw@{POOLER}:5432/postgres") == "PASS"
+    assert (
+        check_db_url(f"postgresql://postgres.x:p@ss@{POOLER}:5432/postgres") == "FAIL"
+    )
     assert check_db_url(f"postgresql://postgres.x:pw@{POOLER}:6543/postgres") == "WARN"
     assert (
         check_db_url("postgresql://postgres:pw@db.x.supabase.co:5432/postgres")

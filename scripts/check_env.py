@@ -31,6 +31,8 @@ DB_HINTS = [
         "wrong project ref in the username (postgres.<ref>) or wrong pooler region",
     ),
     ("could not translate host name", "wrong host"),
+    ("failed to resolve host", "wrong host"),
+    ("getaddrinfo failed", "wrong host"),
     (
         "unreachable",
         "likely the IPv6-only direct connection; switch to the session pooler URL",
@@ -80,6 +82,11 @@ def check_db_url(url: str) -> str:
         f"  host={mask(host)} port={port} user={mask(u.username)} db={db} "
         f"password={mask(u.password)}"
     )
+    if u.netloc.count("@") > 1:
+        out(
+            "  FAIL password contains an unencoded '@' (libpq splits the URL there); use %40"
+        )
+        return "FAIL"
     status = "PASS"
     if POOLER_HOST not in host:
         out(
