@@ -8,7 +8,7 @@ pooler on 5432); OpenRouter (classify deepseek/deepseek-chat; narrate_plan and n
 google/gemini-3.1-flash-lite); Sarvam bulbul:v3 for speech; embeddings local (multilingual-e5-small).
 Gates: `uv run ruff check .`, `uv run ruff format --check .`, `uv run pytest` — all pass (101 tests).
 Preflight: `uv run python scripts/check_env.py` before any DB or LLM task.
-Run: `uv run uvicorn app.main:app --port 8000`; `uv run python scripts/demo_seed.py` creates or finds the
+Run: `uv run uvicorn app.main:app --port 8080`; `uv run python scripts/demo_seed.py` creates or finds the
 canonical demo trip and prints its URL. Measured OpenRouter spend for the whole project to date: $0.0214.
 DB: poi 112, poi_edge 58, intercity_leg 40, advisory 1, doc_chunk 311 rows of which 257 live (54 retired),
 app_user 4, trip and tour rows owned by their creator, eval_run 9.

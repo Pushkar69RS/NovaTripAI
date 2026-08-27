@@ -398,8 +398,8 @@ def slide_abstract(prs) -> None:
                 0,
                 (
                     "Problem Identified: Generic large language models are fluent but "
-                    "unreliable planners — under one percent of multi-constraint plans "
-                    "pass on the TravelPlanner benchmark — and free-form generation "
+                    "unreliable planners — GPT-4 passes 0.6 percent of multi-constraint "
+                    "plans on the TravelPlanner benchmark — and free-form generation "
                     "invents opening hours, fees and history that a traveller cannot check."
                 ),
             ),
@@ -483,10 +483,12 @@ def slide_introduction(prs) -> None:
             (
                 0,
                 (
-                    "Related work in one line: TravelPlanner (Xie et al., 2024) showed "
-                    "that a single language model fails multi-constraint travel planning; "
-                    "ChinaTravel (ICLR 2026) showed that pairing a language model with a "
-                    "solver recovers the accuracy. Our architecture follows that finding "
+                    "Related work in one line: TravelPlanner (Xie et al., ICML 2024) "
+                    "showed that a single language model fails multi-constraint travel "
+                    "planning; Hao et al. (NAACL 2025) recovered the accuracy on that "
+                    "same benchmark by handing the constraints to a solver; and "
+                    "ChinaTravel (Shao et al., ICLR 2026) reproduced the effect on a "
+                    "second, harder benchmark. Our architecture follows that finding "
                     "rather than restating the problem."
                 ),
             ),
@@ -518,14 +520,14 @@ def slide_problem(prs) -> None:
                 (
                     "Booking and review platforms each solve one slice — flights, hotels, "
                     "reviews, maps — and leave the traveller to be the integration layer. "
-                    "None of them sequence a day against opening hours."
+                    "Not one of them sequences a day against opening hours."
                 ),
             ),
             (
                 0,
                 (
-                    "General-purpose chat models are fluent but measured to pass under "
-                    "one percent of multi-constraint travel plans, and they state fees "
+                    "General-purpose chat models are fluent, but measured at a 0.6 percent "
+                    "pass rate on multi-constraint travel plans, and they state fees "
                     "and timings with a confidence they have not earned."
                 ),
             ),
@@ -639,14 +641,14 @@ def slide_objectives(prs) -> None:
 # --------------------------------------------------------------------------- #
 
 PIPELINE = [
-    ("1. Structured intake", "form: who, when,\nbudget, pace, tastes", False),
-    ("2. Candidate selection", "SQL + interest tags +\nknowledge-graph edges", False),
-    ("3. Day clustering", "k-means over (lat, lng),\nfixed seed", False),
-    ("4. Ordering", "nearest neighbour, then\n2-opt under hour windows", False),
-    ("5. Validator", "hours, closures, day end,\nmeal gap, travel, budget", False),
-    ("6. Repair loop", "drops one flexible stop,\nrebuilds that day only", False),
-    ("7. Reasons", "one plain sentence per\nstop, from templates", False),
-    ("8. Narration", "Katha and chat replies,\nfact-checked after", True),
+    ("1 Intake", "form: who, when,\nbudget, pace, tastes", False),
+    ("2 Candidates", "SQL + interest tags +\nknowledge-graph edges", False),
+    ("3 Cluster", "k-means over (lat, lng),\nfixed seed", False),
+    ("4 Route", "nearest neighbour, then\n2-opt under hour windows", False),
+    ("5 Validate", "hours, closures, day end,\nmeal gap, travel, budget", False),
+    ("6 Repair", "drops one flexible stop,\nrebuilds that day only", False),
+    ("7 Reasons", "one plain sentence per\nstop, from templates", False),
+    ("8 Narrate", "Katha and chat replies,\nfact-checked after", True),
 ]
 
 
@@ -683,7 +685,7 @@ def slide_methodology(prs) -> None:
         y = top + row * (h + 0.80)
         for col in range(4):
             index = row * 4 + col
-            _stage, detail, is_llm = PIPELINE[index]
+            stage, detail, is_llm = PIPELINE[index]
             x = 0.55 + col * (w + gap)
             box(
                 slide,
@@ -691,7 +693,7 @@ def slide_methodology(prs) -> None:
                 y,
                 w,
                 h,
-                f"{head}\n{detail}",
+                f"{stage}\n{detail}",
                 fill=WHITE,
                 line=ORANGE if is_llm else BLUE,
                 line_width=1.75,
@@ -843,74 +845,73 @@ def slide_methodology_2(slide) -> None:
         color=RGBColor(0x33, 0x33, 0x33),
     )
 
-    # right: why a solver
+    # right: why a solver. Two benchmarks, two papers, one finding.
     label(
         slide,
         5.35,
-        1.60,
+        1.58,
         4.1,
         0.25,
         "Why a solver and not the model alone",
         size=11,
         bold=True,
     )
+    # 100% of a benchmark maps to `span` inches. 0.6% would be invisible, so
+    # every bar keeps a minimum sliver and its value is printed beside it.
+    span = 2.45
+    groups = [
+        (
+            1.92,
+            "TravelPlanner (Xie et al., ICML 2024) — final pass rate [1]",
+            [("GPT-4-Turbo", 0.6, RED), ("LLM + SMT solver [2]", 97.0, BLUE)],
+        ),
+        (
+            2.98,
+            "ChinaTravel (Shao et al., ICLR 2026) — constraint satisfaction [3]",
+            [("Purely neural", 2.6, RED), ("Neuro-symbolic", 37.0, BLUE)],
+        ),
+    ]
+    for top, caption, entries in groups:
+        label(slide, 5.35, top, 4.1, 0.24, caption, size=8.5, italic=True, color=GREY)
+        for i, (name, value, colour) in enumerate(entries):
+            y = top + 0.26 + i * 0.35
+            width = max(value / 100 * span, 0.05)
+            bar(slide, 6.72, y, width, 0.26, fill=colour, text="")
+            label(slide, 5.35, y + 0.02, 1.30, 0.24, name, size=9, align=PP_ALIGN.RIGHT)
+            label(
+                slide,
+                6.79 + width,
+                y + 0.01,
+                1.0,
+                0.24,
+                f"{value:g}%",
+                size=9.5,
+                bold=True,
+            )
     label(
         slide,
         5.35,
-        1.92,
+        4.02,
         4.1,
-        0.3,
-        "Final pass rate on multi-constraint travel planning",
-        size=9.5,
-        color=RGBColor(0x33, 0x33, 0x33),
+        1.5,
+        "Pure language-model agents score in the low single digits on both "
+        "benchmarks. Pairing the model with a solver raises that by more than an "
+        "order of magnitude on both. These are the published figures, not ours, "
+        "and they are why the planner here is a solver and the model is kept out "
+        "of the decision.",
+        size=10,
+        color=INK,
     )
-    bar(slide, 5.35, 2.28, 0.30, 0.34, fill=RED, text="")
     label(
         slide,
-        5.72,
-        2.31,
-        3.6,
-        0.3,
-        "~1%   Single LLM agent (GPT-4)",
+        5.35,
+        5.50,
+        4.1,
+        0.6,
+        "Our own constraint result on the demonstration trip — 37 of 37 checks "
+        "passed — is on the results slide.",
         size=10,
         bold=True,
-    )
-    label(
-        slide,
-        5.35,
-        2.66,
-        4.1,
-        0.25,
-        "TravelPlanner, Xie et al., 2024 [1]",
-        size=8.5,
-        italic=True,
-        color=GREY,
-    )
-    bar(slide, 5.35, 3.02, 3.55, 0.34, fill=BLUE, text="~97%")
-    label(
-        slide,
-        5.35,
-        3.42,
-        4.1,
-        0.25,
-        "LLM paired with a solver — ChinaTravel, ICLR 2026 [2]",
-        size=8.5,
-        italic=True,
-        color=GREY,
-    )
-    label(
-        slide,
-        5.35,
-        3.80,
-        4.1,
-        1.9,
-        "Both figures are as reported by those papers. They are the reason the "
-        "planner in this project is a solver and the model is kept out of the "
-        "decision: the failure mode being avoided is measured, not assumed.\n\n"
-        "Our own constraint result on the demonstration trip — 37 of 37 checks "
-        "passed — is reported on the results slide.",
-        size=10.5,
-        color=INK,
     )
 
 
@@ -1392,10 +1393,10 @@ def slide_publication(prs) -> None:
             (
                 1,
                 (
-                    "Modelled on ChinaTravel (ICLR 2026), which built the equivalent "
-                    "benchmark for Chinese travel and showed that a language model paired "
-                    "with a solver reaches roughly ninety-seven percent where a single "
-                    "model reaches about one percent."
+                    "Modelled on ChinaTravel (Shao et al., ICLR 2026), the equivalent "
+                    "open-ended benchmark for Chinese travel, on which neuro-symbolic "
+                    "agents reach 37.0 percent constraint satisfaction against 2.6 "
+                    "percent for purely neural ones — roughly a tenfold gap."
                 ),
             ),
             (
@@ -1443,46 +1444,46 @@ def slide_publication(prs) -> None:
 REFERENCES = [
     (
         "J. Xie, K. Zhang, J. Chen, T. Zhu, R. Lou, Y. Tian, Y. Xiao and Y. Su, "
-        "“TravelPlanner: A Benchmark for Real-World Planning with Language Agents,” in "
-        "Proc. 41st Int. Conf. Machine Learning (ICML), 2024."
+        "“TravelPlanner: A Benchmark for Real-World Planning with Language Agents,” "
+        "in Proc. 41st Int. Conf. Machine Learning (ICML), 2024."
     ),
     (
-        "X.-Y. Shao et al., “ChinaTravel: A Real-World Benchmark for Language Agents in "
-        "Chinese Travel Planning,” in Proc. Int. Conf. Learning Representations (ICLR), 2026."
+        "Y. Hao, Y. Chen, Y. Zhang and C. Fan, “Large Language Models Can Solve "
+        "Real-World Planning Rigorously with Formal Verification Tools,” in Proc. "
+        "2025 Conf. North American Chapter of the ACL (NAACL), 2025, pp. 3499–3557."
     ),
     (
-        "P. Lewis et al., “Retrieval-Augmented Generation for Knowledge-Intensive NLP "
-        "Tasks,” in Adv. Neural Inf. Process. Syst. (NeurIPS), vol. 33, 2020, pp. 9459–9474."
+        "J.-J. Shao, B.-W. Zhang, X.-W. Yang, B. Chen, L.-Z. Guo and Y.-F. Li, "
+        "“ChinaTravel: An Open-Ended Travel Planning Benchmark with Compositional "
+        "Constraint Validation for Language Agents,” in Proc. Int. Conf. Learning "
+        "Representations (ICLR), 2026."
     ),
     (
-        "J. Gala et al., “IndicTrans2: Towards High-Quality and Accessible Machine "
-        "Translation Models for all 22 Scheduled Indian Languages,” Trans. Machine "
-        "Learning Research, 2023."
+        "P. Lewis et al., “Retrieval-Augmented Generation for Knowledge-Intensive "
+        "NLP Tasks,” in Adv. Neural Inf. Process. Syst. (NeurIPS), vol. 33, 2020, "
+        "pp. 9459–9474."
     ),
     (
-        "L. Wang, N. Yang, X. Huang, L. Yang, R. Majumder and F. Wei, “Multilingual E5 "
-        "Text Embeddings: A Technical Report,” arXiv:2402.05672, 2024."
+        "L. Wang, N. Yang, X. Huang, L. Yang, R. Majumder and F. Wei, “Multilingual "
+        "E5 Text Embeddings: A Technical Report,” arXiv:2402.05672, 2024."
     ),
     (
         "G. V. Cormack, C. L. A. Clarke and S. Buettcher, “Reciprocal Rank Fusion "
-        "Outperforms Condorcet and Individual Rank Learning Methods,” in Proc. 32nd Int. "
-        "ACM SIGIR Conf., 2009, pp. 758–759."
+        "Outperforms Condorcet and Individual Rank Learning Methods,” in Proc. 32nd "
+        "Int. ACM SIGIR Conf., 2009, pp. 758–759."
     ),
     (
         "G. A. Croes, “A Method for Solving Traveling-Salesman Problems,” Operations "
         "Research, vol. 6, no. 6, pp. 791–812, 1958."
     ),
     (
-        "D. Arthur and S. Vassilvitskii, “k-means++: The Advantages of Careful Seeding,” "
-        "in Proc. 18th ACM-SIAM Symp. Discrete Algorithms (SODA), 2007, pp. 1027–1035."
+        "D. Arthur and S. Vassilvitskii, “k-means++: The Advantages of Careful "
+        "Seeding,” in Proc. 18th ACM-SIAM Symp. Discrete Algorithms (SODA), 2007, "
+        "pp. 1027–1035."
     ),
     (
         "S. P. Lloyd, “Least Squares Quantization in PCM,” IEEE Trans. Information "
         "Theory, vol. 28, no. 2, pp. 129–137, 1982."
-    ),
-    (
-        "E. W. Dijkstra, “A Note on Two Problems in Connexion with Graphs,” Numerische "
-        "Mathematik, vol. 1, pp. 269–271, 1959."
     ),
 ]
 
@@ -1496,6 +1497,28 @@ def slide_references(slide) -> None:
         space=4,
     )
     place(body_of(slide), left=0.5, top=1.02, width=8.96, height=5.95)
+
+
+#: Text that means a Python value leaked into a slide instead of its label.
+LEAKED = ("<function", "0x0", "object at", "None")
+
+
+def check(path: Path) -> None:
+    """Fail loudly if any shape carries a repr rather than the text intended."""
+    from pptx import Presentation as _Presentation
+
+    bad = [
+        (i, shape.name, needle, shape.text_frame.text[:60])
+        for i, slide in enumerate(_Presentation(str(path)).slides, 1)
+        for shape in slide.shapes
+        if shape.has_text_frame
+        for needle in LEAKED
+        if needle in shape.text_frame.text
+    ]
+    if bad:
+        for entry in bad:
+            print(f"  LEAKED {entry}")
+        raise SystemExit(f"{len(bad)} shape(s) carry a leaked Python value")
 
 
 def main() -> int:
@@ -1530,6 +1553,7 @@ def main() -> int:
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     prs.save(str(OUT))
+    check(OUT)
     print(f"{OUT.relative_to(ROOT)}  —  {len(prs.slides)} slides")
     return 0
 

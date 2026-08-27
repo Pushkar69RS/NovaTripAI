@@ -23,7 +23,8 @@ Team: Nithin G (1BY23IS140) | Pushkar Reddy S (1BY23IS167) | Rishab Paul (1BY23I
 | **Question and answer** | | **2:00** |
 | **Total** | | **9:51** |
 
-**Before you start.** Server running on `127.0.0.1:8000`. Signed in as
+**Before you start.** Server running on `127.0.0.1:8080`
+(`uv run uvicorn app.main:app --port 8080`). Signed in as
 `rohan@travelyantra.in`. `uv run python scripts/demo_seed.py` has been run.
 Browser tab 1 on `/trips/new`. **Browser tab 2 already open on the Mysuru +
 Hampi verdict page** — do not build that one live, it costs fifteen seconds you
@@ -93,9 +94,9 @@ budget, and how far the oldest person in the group can walk. These are hard
 constraints and they interact — you fix one and you break another.
 
 Booking platforms each solve one slice and leave you to be the integration
-layer. General chat models are fluent, but the published benchmark says they
-pass under one percent of multi-constraint plans, and they will state an entry
-fee they have no way of knowing.
+layer. General chat models are fluent, but the published benchmark puts GPT-4 at
+nought point six percent of multi-constraint plans passed, and they will state an
+entry fee they have no way of knowing.
 
 So the engineering problem is not "generate an itinerary". It is: compute an
 itinerary against its constraints, and be able to show the working.
@@ -156,10 +157,16 @@ If a check fails, the repair loop drops the lowest-scoring flexible stop of the
 least-repaired day and rebuilds that one day. The fixed-time anchor — the palace
 slot — is never dropped. Every other day is left byte-for-byte identical.
 
-On the right is why we did it this way rather than trusting the model. The
-TravelPlanner benchmark measured a single model at about one percent. ChinaTravel
-measured a model paired with a solver at about ninety-seven. Those are their
-numbers, not ours. We are following a published finding, not guessing.
+On the right is why we did it this way rather than trusting the model. Two
+different benchmarks, two different research groups, the same finding. On
+TravelPlanner, GPT-4 passes nought point six percent of plans; hand the same
+constraints to a solver, as Hao and colleagues did, and it passes ninety-seven.
+On ChinaTravel, a purely neural agent satisfies two point six percent of
+constraints; the neuro-symbolic version satisfies thirty-seven.
+
+Pure language models score in the low single digits on both. Adding a solver
+moves it by more than an order of magnitude on both. Those are their numbers,
+not ours — we are following a published finding, not guessing.
 
 ---
 
@@ -194,8 +201,8 @@ Rather than read them to you, I would like to show you the system running.
   of a hundred and twelve places. Three clusters, one per day. Thirty-four point
   nine eight kilometres as listed, brought down to thirty point nine as routed.
   Thirty-seven of thirty-seven checks passed. Three repairs."
-- Say the last line: "**The plan is computed, not guessed.** Eleven
-  milliseconds, and no AI in this part."
+- Say the last line, reading the build time off the screen: "**The plan is
+  computed, not guessed.** A few milliseconds, and no AI in this part."
 
 **[0:38–0:50] Three plans**
 - Click **See your three plans**.
@@ -312,7 +319,8 @@ and we are on localhost today.
 
 Our publication target is a benchmark we are calling IndiaTravel — the first
 India-specific benchmark for travel-planning AI agents, modelled on ChinaTravel
-from ICLR 2026.
+from ICLR 2026, where neuro-symbolic agents reach thirty-seven percent
+constraint satisfaction against two point six percent for purely neural ones.
 
 The novelty is the constraint set, because Indian constraints have no
 counterpart in the existing benchmarks: temple darshan windows and midday
@@ -368,8 +376,8 @@ and speak the corpus paragraph itself. Fourteen of fourteen segments passed for
 this demo. It is a fact-check, not a hope.
 
 **Q4. Is this just ChatGPT with a wrapper?**
-No, and the difference is measurable. A wrapper would inherit the one percent
-pass rate from the TravelPlanner benchmark. Our itinerary comes out of a solver
+No, and the difference is measurable. A wrapper would inherit the nought-point-six
+percent pass rate GPT-4 gets on the TravelPlanner benchmark. Our itinerary comes out of a solver
 that checks thirty-seven constraints and either passes them or refuses the
 request. You can unplug our model entirely and still get a valid, routed,
 constraint-checked itinerary — you would just lose the storytelling.
@@ -418,6 +426,14 @@ needs rows in a table, so a new city is a data task, not a code task. The guide
 is the harder half, because every paragraph has to be written and sourced before
 it can be spoken. That is deliberate: it is exactly the constraint that stops it
 inventing history about a place it has never read about.
+
+**Q11. Objective 1 targets ninety percent user satisfaction. Did you measure it?**
+No, and we should be straight about that. Satisfaction is a human judgement and
+it needs a user study with real travellers, which is Review-2 work. What we can
+measure today is constraint satisfaction — thirty-seven of thirty-seven checks
+on the demonstration trip — because that is the objective property a solver can
+actually prove. We would rather report the number we have than dress up a number
+we have not collected.
 
 ---
 

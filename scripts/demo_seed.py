@@ -26,7 +26,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def main() -> int:
     load_dotenv(ROOT / ".env")
-    base = os.environ.get("BASE_URL", "http://127.0.0.1:8000").rstrip("/")
+    base = os.environ.get("BASE_URL", "http://127.0.0.1:8080").rstrip("/")
     with psycopg.connect(os.environ["SUPABASE_DB_URL"]) as conn:
         trip_id = find_demo_trip(conn)
         if trip_id is None:
