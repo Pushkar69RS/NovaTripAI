@@ -13,3 +13,6 @@ build/
 
 # Keep the rulebook despite a global claude.md ignore
 !CLAUDE.md
+
+# Generated audio cache (scripts/warm_tts.py); large, rebuildable
+var/
