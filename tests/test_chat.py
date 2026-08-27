@@ -88,6 +88,64 @@ def test_a_malformed_edit_becomes_a_clarifying_question(world) -> None:
     assert snapshot(plan) == before  # nothing was mangled on the way
 
 
+def test_a_kind_of_place_resolves_to_the_best_unused_one_of_that_kind(world) -> None:
+    _, plan, _, by_city = world
+    edit = resolve(
+        EditInstruction(action="add", target="one more food stop", day_index=2),
+        plan,
+        by_city,
+    )
+    assert isinstance(edit, EditInstruction)
+    chosen = next(p for p in by_city["Mysuru"] if p.name == edit.target)
+    assert chosen.category == "food"
+    assert chosen.id not in {s.poi_id for d in plan.days for s in d.stops}
+
+    still_unclear = resolve(
+        EditInstruction(action="add", target="something nice", day_index=2),
+        plan,
+        by_city,
+    )
+    assert isinstance(still_unclear, Clarification)
+
+    # the model may leave the target empty; the traveller's own words decide
+    parsed = parse_classification(
+        '{"kind": "edit", "action": "add", "target": null, "day_index": 2}',
+        "Add one more food stop to day 2",
+    )
+    assert isinstance(parsed, EditInstruction) and parsed.message
+    from_words = resolve(parsed, plan, by_city)
+    assert isinstance(from_words, EditInstruction)
+    assert (
+        next(p for p in by_city["Mysuru"] if p.name == from_words.target).category
+        == "food"
+    )
+
+
+def test_a_day_named_in_the_message_beats_the_model() -> None:
+    edit = parse_classification(
+        '{"kind": "edit", "action": "add", "target": "food stop", "day_index": 1}',
+        "Add one more food stop to day 2",
+    )
+    assert isinstance(edit, EditInstruction) and edit.day_index == 2
+    silent = parse_classification(
+        '{"kind": "edit", "action": "remove", "target": "zoo", "day_index": 3}',
+        "drop the zoo",
+    )
+    assert isinstance(silent, EditInstruction) and silent.day_index == 3
+
+
+def test_the_quick_chip_words_read_as_edits(world) -> None:
+    _, plan, _, _ = world
+    lighter = classify(
+        "Make Day 2 lighter",
+        plan,
+        llm=fake(
+            '{"kind": "edit", "action": "change_pace", "day_index": 2, "value": "lighter"}'
+        ),
+    )
+    assert isinstance(lighter, EditInstruction) and lighter.action == "change_pace"
+
+
 def test_a_well_formed_edit_resolves_to_a_real_stop(world) -> None:
     _, plan, _, by_city = world
     stop = plan.days[2].stops[-1]

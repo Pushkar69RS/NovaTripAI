@@ -24,14 +24,15 @@ from pydantic import BaseModel, Field, ValidationError
 from app.llm.client import complete
 from app.llm.models import MODELS
 from app.llm.narrate import Llm, answer_question
-from app.planner.engine import Loaded, rebuild_day, scored_pool
+from app.planner.engine import Loaded, feeds_at_midday, rebuild_day, scored_pool
 from app.planner.models import Day, Plan, Poi, TripRequest
 from app.rag.retrieve import Filters, Hit, TripContext, search
 
 EDIT_WORDS = re.compile(
     r"\b(remove|drop|skip|delete|cancel|take out|add|include|put in|replace|swap|"
     r"instead of|move|shift|later|earlier|start at|push|relaxed|comfortable|"
-    r"packed|slower|faster|pace|less rushed|more time)\b",
+    r"packed|slower|faster|pace|less rushed|more time|lighter|gentler|heavier|"
+    r"one more)\b",
     re.IGNORECASE,
 )
 PACE_WORDS = {
@@ -39,14 +40,51 @@ PACE_WORDS = {
     "slow": "relaxed",
     "slower": "relaxed",
     "easy": "relaxed",
+    "lighter": "relaxed",
+    "gentler": "relaxed",
     "comfortable": "comfortable",
     "normal": "comfortable",
     "packed": "packed",
     "fast": "packed",
     "faster": "packed",
     "busy": "packed",
+    "heavier": "packed",
 }
 SHIFT_MINUTES = 60  # what "later" and "earlier" mean when no time is given
+#: "one more food stop" names a kind of place, not a place. Words -> poi.category.
+CATEGORY_WORDS: dict[str, tuple[str, ...]] = {
+    "food": (
+        "food",
+        "eat",
+        "lunch",
+        "breakfast",
+        "dinner",
+        "meal",
+        "restaurant",
+        "cafe",
+        "coffee",
+        "snack",
+        "dosa",
+        "sweet",
+    ),
+    "temple": ("temple", "shrine"),
+    "market": ("market", "bazaar", "shop", "shopping"),
+    "museum": ("museum", "gallery"),
+    "nature": (
+        "nature",
+        "lake",
+        "park",
+        "garden",
+        "gardens",
+        "falls",
+        "waterfall",
+        "bird",
+        "birds",
+        "sanctuary",
+    ),
+    "viewpoint": ("view", "viewpoint", "sunset", "sunrise", "hill", "hilltop"),
+    "monument": ("monument", "palace", "fort", "ruins", "mausoleum", "tomb"),
+}
 
 
 class Question(BaseModel):
@@ -60,6 +98,7 @@ class EditInstruction(BaseModel):
     target: str | None = None
     day_index: int | None = Field(default=None, ge=1)
     value: str | None = None
+    message: str | None = None  # the traveller's words, for "a kind of place"
 
 
 class Clarification(BaseModel):
@@ -113,7 +152,8 @@ CLASSIFY_SYSTEM = (
     'An edit: {"kind": "edit", "action": "<remove|add|replace|shift_time|'
     'change_pace>", "target": "<stop or place name or null>", "day_index": '
     '<number or null>, "value": "<see below or null>"}\n'
-    "remove: target is the stop to drop. add: target is the place to add. "
+    "remove: target is the stop to drop. add: target is the place to add, or "
+    "the kind of place if none is named (for example: food stop, a temple). "
     "replace: target is the stop to drop and value is the place to add. "
     "shift_time: value is the new start time as HH:MM, or the word later or "
     "earlier. change_pace: value is relaxed, comfortable or packed.\n"
@@ -160,8 +200,14 @@ def parse_classification(
         return Clarification(question=_unclear(message))
     if data.get("kind") == "question":
         return Question(text=str(data.get("text") or message))
+    # A day the traveller named outright beats whatever the model read into it.
+    named_day = re.search(r"\bday\s*(\d{1,2})\b", message, re.IGNORECASE)
+    if named_day:
+        data["day_index"] = int(named_day.group(1))
     try:
-        return EditInstruction.model_validate({**data, "kind": "edit"})
+        return EditInstruction.model_validate(
+            {**data, "kind": "edit", "message": message or None}
+        )
     except ValidationError:
         return Clarification(question=_unclear(message))
 
@@ -194,6 +240,23 @@ def _match(wanted: str, names: list[str]) -> list[str]:
     if by_word:
         return by_word
     return [low[m] for m in difflib.get_close_matches(w, list(low), n=3, cutoff=0.6)]
+
+
+def _by_category(wanted: str, pois: list[Poi], taken: set[int]) -> Poi | None:
+    """The best unused place of the kind the words name, or None.
+
+    A food stop that can serve lunch beats a breakfast-only one: the day is
+    rebuilt around the stops it already has, and a place shut by noon would
+    only be dropped again by the validator.
+    """
+    words = set(re.findall(r"[a-z]+", wanted.lower()))
+    kinds = [k for k, ws in CATEGORY_WORDS.items() if words & set(ws)]
+    if not kinds:
+        return None
+    free = [p for p in pois if p.category in kinds and p.id not in taken]
+    return (
+        max(free, key=lambda p: (feeds_at_midday(p), p.score, -p.id)) if free else None
+    )
 
 
 def _parse_time(value: str, current: time | None) -> time | None:
@@ -230,6 +293,16 @@ def resolve(
     day = plan.days[edit.day_index - 1]
     stop_names = [s.name for s in day.stops]
     place_names = [p.name for p in city_pois.get(day.city, [])]
+    taken = {s.poi_id for d in plan.days for s in d.stops}
+
+    def a_kind_of(wanted: str | None) -> str | None:
+        # A named target that was not found is matched on its own words; a
+        # missing target ("one more food stop") on the traveller's message.
+        words = wanted or edit.message
+        if not words:
+            return None
+        found = _by_category(words, city_pois.get(day.city, []), taken)
+        return found.name if found else None
 
     def one(wanted: str | None, names: list[str], what: str) -> str | Clarification:
         if not wanted:
@@ -257,12 +330,16 @@ def resolve(
         already = set(stop_names)
         target = one(edit.target, [n for n in place_names if n not in already], "place")
         if isinstance(target, Clarification):
+            target = a_kind_of(edit.target) or target
+        if isinstance(target, Clarification):
             return target
         edit = edit.model_copy(update={"target": target})
     if edit.action == "replace":
         value = one(
             edit.value, [n for n in place_names if n not in stop_names], "place"
         )
+        if isinstance(value, Clarification):
+            value = a_kind_of(edit.value) or value
         if isinstance(value, Clarification):
             return value
         edit = edit.model_copy(update={"value": value})
