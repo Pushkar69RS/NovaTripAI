@@ -38,14 +38,14 @@ QUESTIONS: list[tuple[str, str, list[str]]] = [
         "en",
         "Who designed the Mysore Palace after the fire?",
         [
-            "Who built it, and what it cost",
-            "The palace you are looking at is the fourth one",
+            "What kind of building is this, exactly",
+            "Three palaces burned before this one",
         ],
     ),
     (
         "en",
         "What time does the Mysore Palace illumination start on Sunday?",
-        ["Sunday night, ninety-seven thousand bulbs"],
+        ["Fees, shoes, and the light switch"],
     ),
     (
         "en",
@@ -55,74 +55,73 @@ QUESTIONS: list[tuple[str, str, list[str]]] = [
     (
         "en",
         "Who invented Mysore pak and where is it sold now?",
-        ["A sweet invented because a king was bored", "Ask for the soft one"],
+        ["The sweet invented in this kitchen"],
     ),
     (
         "en",
         "What was the curse Alamelamma laid on the Mysore kings?",
-        ["A woman cursed this dynasty and the sand came"],
+        ["The queen who went into the river"],
     ),
     (
         "en",
         "Where is Tipu Sultan's mechanical tiger kept today?",
-        ["The tiger that ate a man, by clockwork"],
+        ["The tiger that eats a soldier"],
     ),
     (
         "en",
         "How did Tipu Sultan die at Srirangapatna?",
         [
-            "The island where an empire changed hands",
-            "The spot where they found the body",
+            "An island with a short temper",
+            "Why the river did not save the fort",
         ],
     ),
     (
         "en",
         "Who founded the Vijayanagara empire and in what year?",
-        ["Two brothers, one river, 1336"],
+        ["Two brothers and a river"],
     ),
     (
         "en",
         "What happened to Hampi after the battle of Talikota?",
-        ["One battle, and then five months of taking the city apart"],
+        ["Six months of burning"],
     ),
     (
         "en",
         "Which temple at Hampi has pillars that make musical notes?",
-        ["Fifty-six pillars that were tuned"],
+        ["The pillars that play"],
     ),
     (
         "en",
         "Which temple in Hampi is still used for worship?",
-        ["Worship here has not stopped in twelve hundred years"],
+        ["The temple that never stopped"],
     ),
     (
         "en",
         "What did the Portuguese traveller Domingo Paes say about the city?",
         [
-            "A Portuguese horse trader wrote it all down",
-            "Rome, and a city nobody in Europe believed",
+            "Gems on the ground like grain",
         ],
     ),
     (
         "en",
         "Which hill near Hampi is said to be the birthplace of Hanuman?",
-        ["Hanuman was born on that hill"],
+        ["The monkey kingdom across the river"],
     ),
     ("en", "Why is the Hoysala dynasty called Hoysala?", ["Strike, Sala"]),
     (
         "en",
         "Who was the model for the lady with the mirror at Belur?",
-        ["Darpana Sundari, the lady with the mirror"],
+        ["Find the lady with the mirror"],
     ),
     (
         "en",
         "What kind of stone lets Hoysala carvers cut such fine detail?",
-        ["Soft when it comes out of the ground"],
+        ["Soft stone, hard stone"],
     ),
     (
         "en",
         "Why does the Halebidu temple have no tower?",
-        ["The temple that was never finished"],
+        ["The city they renamed Old Ruins"],
     ),
     ("en", "How did Bangalore get its name?", ["The town of boiled beans"]),
     (
@@ -133,58 +132,62 @@ QUESTIONS: list[tuple[str, str, list[str]]] = [
     (
         "en",
         "How did coffee first reach India?",
-        ["Seven beans in a beard", "You are drinking a smuggled crop"],
+        ["Seven beans in a robe"],
     ),
     (
         "en",
         "Where does the river Kaveri rise?",
-        ["A river starts in a tank the size of a room"],
+        ["Where the Kaveri begins", "Climb the steps behind the tank"],
     ),
     # Kannada
     (
         "kn",
         "ಮೈಸೂರು ಅರಮನೆಯನ್ನು ಯಾರು ಕಟ್ಟಿಸಿದರು?",
         [
-            "Who built it, and what it cost",
-            "The palace you are looking at is the fourth one",
+            "What kind of building is this, exactly",
+            "Three palaces burned before this one",
         ],
     ),
     (
         "kn",
         "ಚಾಮುಂಡಿ ಬೆಟ್ಟದ ನಂದಿ ವಿಗ್ರಹ ಯಾವಾಗ ಕೆತ್ತಲಾಯಿತು?",
-        ["Carved out of the hill it sits on", "The oil, and why the stone is black"],
+        ["A bull carved from one stone", "The oil, and why the stone is black"],
     ),
     (
         "kn",
         "ಮೈಸೂರು ಪಾಕ್ ಯಾರು ಕಂಡುಹಿಡಿದರು?",
-        ["A sweet invented because a king was bored", "Ask for the soft one"],
+        ["The sweet invented in this kitchen"],
     ),
     (
         "kn",
         "ಹಂಪಿಯ ಕಲ್ಲಿನ ರಥ ಎಲ್ಲಿದೆ?",
-        ["The chariot is on the back of the fifty rupee note"],
+        ["The chariot on the fifty rupee note"],
     ),
     (
         "kn",
         "ಬಾಬಾ ಬುಡನ್ ಕಾಫಿ ಬೀಜಗಳನ್ನು ಹೇಗೆ ತಂದರು?",
-        ["Seven beans in a beard", "You are drinking a smuggled crop"],
+        ["Seven beans in a robe"],
     ),
-    ("kn", "ಕಾವೇರಿ ನದಿ ಎಲ್ಲಿ ಹುಟ್ಟುತ್ತದೆ?", ["A river starts in a tank the size of a room"]),
+    (
+        "kn",
+        "ಕಾವೇರಿ ನದಿ ಎಲ್ಲಿ ಹುಟ್ಟುತ್ತದೆ?",
+        ["Where the Kaveri begins", "Climb the steps behind the tank"],
+    ),
     # Hinglish
     (
         "hi",
         "Hampi mein stone chariot kahan par hai?",
-        ["The chariot is on the back of the fifty rupee note"],
+        ["The chariot on the fifty rupee note"],
     ),
     (
         "hi",
         "Mysore palace ke andar camera le ja sakte hain kya?",
-        ["Shoes off, camera in the locker"],
+        ["Fees, shoes, and the light switch"],
     ),
     (
         "hi",
         "Coorg mein pandi curry kaise banate hain?",
-        ["Pandi curry, kachampuli and akki roti"],
+        ["Pandi curry and the sour secret"],
     ),
 ]
 
@@ -198,32 +201,32 @@ KEYWORD_QUERIES: list[tuple[str, str, list[str]]] = [
     (
         "kw",
         "Talikota 1565",
-        ["One battle, and then five months of taking the city apart"],
+        ["Six months of burning"],
     ),
     (
         "kw",
         "Kadalekai Parishe",
         [
             "The groundnut fair, on the last Monday of Karthika",
-            "The bull that kept eating the groundnuts",
+            "The bull and the groundnuts",
         ],
     ),
-    ("kw", "Darpana Sundari", ["Darpana Sundari, the lady with the mirror"]),
+    ("kw", "Darpana Sundari", ["Find the lady with the mirror"]),
     ("kw", "Rashk-e-Jannat", ["Two storeys of teak in the middle of a market"]),
-    ("kw", "kachampuli", ["Pandi curry, kachampuli and akki roti"]),
+    ("kw", "kachampuli", ["Pandi curry and the sour secret"]),
     ("kw", "Gandaberunda", ["The double-headed bird over the gate"]),
     ("kw", "Dasoja Chavana Balligavi", ["The men who signed the stone"]),
     (
         "kw",
         "Brahmakundike Tula Sankramana",
-        ["A river starts in a tank the size of a room"],
+        ["Where the Kaveri begins", "Climb the steps behind the tank"],
     ),
     (
         "kw",
         "Kakasura Madappa",
-        ["A sweet invented because a king was bored", "Ask for the soft one"],
+        ["The sweet invented in this kitchen"],
     ),
-    ("kw", "chloritic schist soapstone", ["Soft when it comes out of the ground"]),
+    ("kw", "chloritic schist soapstone", ["Soft stone, hard stone"]),
 ]
 
 # Questions the corpus cannot answer. The refusal gate has to return nothing.

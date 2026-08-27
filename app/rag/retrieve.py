@@ -76,7 +76,9 @@ class Hit(BaseModel):
 
 def _where(filters: Filters, extra: str = "") -> tuple[str, dict[str, Any]]:
     """Shared WHERE fragment so both retrievers filter identically."""
-    clauses = [extra] if extra else []
+    # Retired rows are paragraphs no source file carries any more. They stay in
+    # the table (deleting is Rohan's call) and never reach a Katha.
+    clauses = ["NOT retired"] + ([extra] if extra else [])
     params: dict[str, Any] = {}
     if filters.city:
         clauses.append("city = %(city)s")
@@ -90,7 +92,7 @@ def _where(filters: Filters, extra: str = "") -> tuple[str, dict[str, Any]]:
     if filters.exclude_ids:
         clauses.append("id <> ALL(%(exclude_ids)s)")
         params["exclude_ids"] = list(filters.exclude_ids)
-    return (" AND ".join(clauses) if clauses else "TRUE"), params
+    return " AND ".join(clauses), params
 
 
 def dense(db: Any, query: str, filters: Filters, limit: int = OVERFETCH) -> list[dict]:

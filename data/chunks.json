@@ -3,67 +3,12 @@
   {
    "poi": "Mysore Palace",
    "city": "Mysuru",
-   "title": "The palace you are looking at is the fourth one",
-   "body": "Look up. What you see is not the old palace. It is the fourth building on this ground. The first was wood, inside a fort, put up by the Wadiyars in the fourteenth century. Wood burns. In 1897 the palace caught fire during a royal wedding and most of it went. The regent queen decided not to patch it. She sent for a British architect, Henry Irwin, and told him to build in stone. Work ran from 1897 to 1912. So when people say this palace is six hundred years old, they are talking about the site, not the walls. The walls in front of you are about a hundred and fourteen years old.",
-   "chunk_type": "hook",
-   "is_legend": false,
-   "source_name": "Re-Thinking The Future, Mysore Palace by Henry Irwin",
-   "source_url": "https://www.re-thinkingthefuture.com/case-studies/a2768-mysore-palace-by-henry-irwin-buckingham-palace-of-india",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Mysore Palace",
-   "city": "Mysuru",
-   "title": "Who built it, and what it cost",
-   "body": "The palace has a formal name: Amba Vilas. Henry Irwin designed it. He was a British architect who had already worked on public buildings in Madras and Simla. The commission came from Maharani Kempananjammanni, regent for the young Krishnaraja Wadiyar the Fourth. The style is called Indo-Saracenic. That is a mix: domes and arches from Mughal building, columns and proportions from European building, and detail from Hindu temple carving. Records put the cost at about forty-one lakh rupees, finished in 1912. Keep that number in mind as you walk. It bought grey granite, pink marble domes, stained glass shipped from Glasgow, and cast iron pillars.",
-   "chunk_type": "fact",
-   "is_legend": false,
-   "source_name": "Maps of India, The Royal History of Mysore Palace",
-   "source_url": "https://www.mapsofindia.com/my-india/india/the-royal-history-of-mysore-palace",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Mysore Palace",
-   "city": "Mysuru",
-   "title": "Stand under the Kalyana Mantapa dome",
-   "body": "Walk into the octagonal wedding hall and stop. Now look straight up. The ceiling is stained glass in peacock patterns, held in a cast iron frame. The frame was made in Glasgow and shipped out in pieces. Below your feet the floor is laid in small tiles, and the pattern in the floor answers the pattern in the glass. Stand in the centre and turn slowly. The light changes colour as it comes down. Late morning is when the colours are strongest, because the sun is high enough to come through the dome rather than the side windows. Give it a full minute before you move on.",
-   "chunk_type": "sensory",
-   "is_legend": false,
-   "source_name": "travel-yantra field notes",
-   "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Mysore Palace",
-   "city": "Mysuru",
    "title": "The Dasara procession painted on the wall",
    "body": "In the long corridor there is a set of oil paintings that show the Dasara procession as it looked in the 1930s. Walk along them slowly. You are looking at a crowd portrait. The artists painted real people, and many of them are recognisable to families in this city even now. Follow the line of elephants. The one carrying the golden howdah is the point of the whole thing. In those days the Maharaja rode in it. Since 1971 the howdah carries the idol of Chamundeshwari instead. The route in the painting is still the route the procession takes today.",
    "chunk_type": "story",
    "is_legend": false,
    "source_name": "travel-yantra field notes",
    "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Mysore Palace",
-   "city": "Mysuru",
-   "title": "Sunday night, ninety-seven thousand bulbs",
-   "body": "On Sunday evenings and public holidays the whole outside of the palace is lit with bulbs outlining every arch, dome and edge. The lighting usually runs about seven to a quarter to eight in the evening. It is worth planning your day around. Stand well back, near the Jayamarthanda gate, so you can take in the full width. The switch-on is sudden. There is a noise from the crowd when it happens. If you are here on a Sunday, do the inside of the palace in the afternoon and keep the evening free rather than trying to do both at once.",
-   "chunk_type": "practical",
-   "is_legend": false,
-   "source_name": "CasualWalker, Mysore Palace visit guide",
-   "source_url": "https://casualwalker.com/mysore-palace-amba-vilas-palace-in-chamrajpura-mysore-the-royal-residence-of-mysore-maharaja-one-of-the-largest-and-magnificent-palaces-of-india-visit-timings-entry-fee-history-arc",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Mysore Palace",
-   "city": "Mysuru",
-   "title": "Shoes off, camera in the locker",
-   "body": "Two things catch people out here. You leave your shoes at a counter before you go inside, so wear something you can slip off, and expect the stone to be hot in the afternoon. Cameras are not allowed inside the palace rooms. There is a camera counter just past the entry gate where you hand yours in. You can photograph the outside and the grounds freely. Opening hours are usually ten in the morning to half past five, every day. Allow ninety minutes for the inside if the queue is short, longer on a weekend.",
-   "chunk_type": "practical",
-   "is_legend": false,
-   "source_name": "CasualWalker, Mysore Palace visit guide",
-   "source_url": "https://casualwalker.com/mysore-palace-amba-vilas-palace-in-chamrajpura-mysore-the-royal-residence-of-mysore-maharaja-one-of-the-largest-and-magnificent-palaces-of-india-visit-timings-entry-fee-history-arc",
    "last_verified": "2026-08-28"
   },
   {
@@ -107,17 +52,6 @@
    "chunk_type": "taste",
    "is_legend": false,
    "source_name": "travel-yantra field notes",
-   "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Chamundeshwari Temple",
-   "city": "Mysuru",
-   "title": "The city is named after the one who lost",
-   "body": "Here is something odd about this place. Mysuru is named after a buffalo demon called Mahishasura. Not after the goddess who killed him. The old name is Mahishuru, the town of Mahisha. He held this land and no god could put him down, so the gods pooled their strength and made Chamundeshwari. She fought him on this hill and won. The city then kept his name. You will see his statue near the top of the hill, painted, holding a sword and a snake. Most cities are named for a victor. This one is named for the one who lost.",
-   "chunk_type": "hook",
-   "is_legend": true,
-   "source_name": "Devi Mahatmya and local tradition, general reference",
    "source_url": null,
    "last_verified": "2026-08-28"
   },
@@ -168,56 +102,12 @@
   {
    "poi": "Nandi Statue, Chamundi Hills",
    "city": "Mysuru",
-   "title": "Carved out of the hill it sits on",
-   "body": "This Nandi was not carried up here. It was cut out of a boulder that was already on this slope. Fifteen feet high, about twenty-four feet long, one piece of granite. The date is 1659, under Dodda Devaraja Wodeyar. Walk around the back and you can still see where the rock meets the ground without a join. Look at the bell collar and the chains around the neck. Those chains are carved, not hung. Someone stood on this hillside for years taking granite away with a chisel until a bull was left behind.",
-   "chunk_type": "fact",
-   "is_legend": false,
-   "source_name": "Exotic India Art, Who Built the Nandi Statue",
-   "source_url": "https://www.exoticindiaart.com/blog/who-built-nandi-statue",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Nandi Statue, Chamundi Hills",
-   "city": "Mysuru",
    "title": "The oil, and why the stone is black",
    "body": "Put your hand near the stone, not on it. It looks wet. That is oil. People have been rubbing this Nandi with oil and charcoal for centuries, and the granite has drunk it. That is why a grey rock reads black. Look at the shoulders and the top of the head, where hands reach easily. Those are the darkest and the smoothest. The parts nobody can reach are still rough and grey. You are looking at three hundred and sixty years of touch, mapped onto a stone surface. Do not add to it. The oil is doing slow damage.",
    "chunk_type": "sensory",
    "is_legend": false,
    "source_name": "Agate Travel, Nandi Bull Mysore",
    "source_url": "https://agatetravel.com/nandi-bull-mysore-india.html",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Chamundi Hills 1000 Steps",
-   "city": "Mysuru",
-   "title": "The steps are not a shortcut",
-   "body": "There are around a thousand steps from the foot of the hill to the temple. People climb them barefoot as an offering. Be clear about what this is. It takes a fit person an hour going up, longer coming down, and the stone is uneven and hot after ten in the morning. If anyone in the party has bad knees or a heart condition, take the road. The bus and taxi road goes all the way to the top and the Nandi is at step number seven hundred, so you can drive up and walk down to it in ten minutes.",
-   "chunk_type": "practical",
-   "is_legend": false,
-   "source_name": "travel-yantra field notes",
-   "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Chamundi Hills 1000 Steps",
-   "city": "Mysuru",
-   "title": "Start before six if you are climbing",
-   "body": "If you are doing the steps, leave the bottom before six in the morning. Two reasons. The stone is cool, and the light comes up sideways across the city while you climb. There are small shrines cut into the rock on the way and people stop at each one, so you will not be alone even at that hour. Carry water. There are stalls but they are spaced out. At the top there is tea and there are coconuts. Coming down the same way is harder on the knees than going up, which surprises people every time.",
-   "chunk_type": "practical",
-   "is_legend": false,
-   "source_name": "travel-yantra field notes",
-   "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": null,
-   "city": "Mysuru",
-   "title": "A woman cursed this dynasty and the sand came",
-   "body": "In 1610 a widow named Alamelamma held jewels that belonged to the temple at Srirangapatna. Raja Wadiyar wanted them. His men came for her. She went to the bank of the Kaveri at Talakad and said three things before she jumped in. Let Talakad turn to sand. Let Malangi become a whirlpool. Let the kings of Mysore never bear sons. Talakad today is buried under dunes. There is a whirlpool in the river at Malangi. And the Wadiyar line has adopted heirs again and again over four centuries. Three facts and a curse. Whether one caused the others is not something this story can tell you.",
-   "chunk_type": "story",
-   "is_legend": true,
-   "source_name": "Karnataka.com, The Legend of Talakad",
-   "source_url": "https://www.karnataka.com/talakad/talakad-legend",
    "last_verified": "2026-08-28"
   },
   {
@@ -229,50 +119,6 @@
    "is_legend": false,
    "source_name": "Karnataka.com, The Legend of Talakad",
    "source_url": "https://www.karnataka.com/talakad/talakad-legend",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": null,
-   "city": "Mysuru",
-   "title": "The golden idol the king made afterwards",
-   "body": "The story does not end at the river. Raja Wadiyar, who had sent the men, had a golden image made of Alamelamma and placed it in the palace. It is brought out and worshipped during Dasara. Think about what that means. A ruling house that took a woman's jewels and drove her to the water then installed her as a figure to be honoured, and kept doing it for four hundred years. Guilt is one reading. Insurance is another. In 2015 the family spoke publicly of building a temple for her at Talakad. The account is still open.",
-   "chunk_type": "story",
-   "is_legend": true,
-   "source_name": "Karnataka.com, The Legend of Talakad",
-   "source_url": "https://www.karnataka.com/talakad/talakad-legend",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Guru Sweet Mart (Mysore Pak)",
-   "city": "Mysuru",
-   "title": "A sweet invented because a king was bored",
-   "body": "Mysore pak was made in the palace kitchen. The Maharaja, Mummadi Krishnaraja Wadiyar, was tired of what the cooks were sending up and asked for something new. A cook called Kakasura Madappa took gram flour, ghee and sugar syrup, cooked it hard, poured it out and cut it. The king liked it and asked what it was called. Madappa had not named it, so he said Mysore pak on the spot. Pak means the syrup. His descendants still make it, in a small shop on Sayyaji Rao Road by the Devaraja Market building. Same family, same recipe, coal-fired pans.",
-   "chunk_type": "story",
-   "is_legend": false,
-   "source_name": "Karnataka Tourism, Guru Sweet Mart",
-   "source_url": "https://www.karnatakatourism.org/en/experiences/guru-sweet-mart",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Guru Sweet Mart (Mysore Pak)",
-   "city": "Mysuru",
-   "title": "Ask for the soft one",
-   "body": "There are two kinds sold under the same name. The hard, dry, porous slab you get in most sweet shops, and the soft one that collapses when you press it. Guru Sweet Mart makes the soft kind. Ask for ghee Mysore pak. It comes warm if you get there after a fresh batch, and it will leave your fingers greasy, which is the point. Eat it the same day. It does not keep well once the ghee sets. The shop is small and there is usually a crowd at the counter, so decide what you want before you get to the front.",
-   "chunk_type": "taste",
-   "is_legend": false,
-   "source_name": "Karnataka Tourism, Guru Sweet Mart",
-   "source_url": "https://www.karnatakatourism.org/en/experiences/guru-sweet-mart",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Devaraja Market",
-   "city": "Mysuru",
-   "title": "Follow your nose to the flower rows",
-   "body": "Go in through the Sayyaji Rao Road side and keep walking until the smell changes. First it is vegetables, damp and green. Then it turns sharp with limes and chillies. Then it goes sweet, and you are in the flower section. Mysore mallige, the local jasmine, is sold by length, not by weight. The women measure it against their forearm. Buy a mozham, about a forearm's length. It costs very little and the scent will fill a car. Buy it in the evening. Jasmine opens after dark and the smell doubles.",
-   "chunk_type": "sensory",
-   "is_legend": false,
-   "source_name": "travel-yantra field notes",
-   "source_url": null,
    "last_verified": "2026-08-28"
   },
   {
@@ -303,17 +149,6 @@
    "title": "The pyramids of colour by the entrance",
    "body": "Near the entrance there are cones of powder stacked into neat pyramids: vermilion, turmeric, deep pink, indigo. Those are kumkuma and rangoli powders. They are there to be bought by the spoon, not photographed, though everyone photographs them. Ask before you take a picture and most sellers will say yes and then rebuild a cone for you. The building itself is from 1886 and has been under threat of demolition more than once. Parts of the roof have fallen. Walk the outer corridor to see the old iron columns still holding it up.",
    "chunk_type": "sensory",
-   "is_legend": false,
-   "source_name": "travel-yantra field notes",
-   "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Hotel Mylari (Mylari Dosa), Nazarbad",
-   "city": "Mysuru",
-   "title": "The dosa here is not crisp, and that is correct",
-   "body": "If you have eaten dosa elsewhere you are expecting something thin and brittle. This is not that. The Mysuru dosa at Mylari is thick, soft, pale and heavy with ghee. It folds rather than cracks. It comes with a white coconut chutney and no sambar, and you eat it with your hand. Order two to start. They are smaller than they look. The shop is plain, the seating is tight, and they stop when the batter runs out, usually late morning. Do not go at eleven expecting to be fed.",
-   "chunk_type": "taste",
    "is_legend": false,
    "source_name": "travel-yantra field notes",
    "source_url": null,
@@ -432,28 +267,6 @@
   {
    "poi": "Srirangapatna Fort and Water Gate",
    "city": "Mysuru",
-   "title": "The island where an empire changed hands",
-   "body": "You are standing on an island in the Kaveri. On the fourth of May 1799 the British army broke through this wall and by evening Tipu Sultan was dead. That single day handed south India to the East India Company. Before it, Mysore under Hyder Ali and Tipu had fought the British four times over thirty years and twice won. After it, no Indian power south of the Krishna could resist them. Walk the breach. It is still there, on the north-west face, where the river ran shallow in May and the wall had been weakened by artillery.",
-   "chunk_type": "hook",
-   "is_legend": false,
-   "source_name": "V&A Museum, Tippoo's Tiger object history",
-   "source_url": "https://collections.vam.ac.uk/item/O61949/tippoos-tiger-mechanical-organ-unknown",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Srirangapatna Fort and Water Gate",
-   "city": "Mysuru",
-   "title": "The spot where they found the body",
-   "body": "There is a marked place near the water gate where Tipu's body was found under a pile of dead men and horses. He had been fighting on foot. The British officers who found him described him as still warm. Stand at the gate and look at the passage. It is narrow, it slopes, and it was crowded with retreating soldiers when the assault came through. Nothing here is grand. It is a low stone tunnel with a plaque. That is more honest than a monument would be. Read the plaque, then walk back out and look at the wall thickness.",
-   "chunk_type": "sensory",
-   "is_legend": false,
-   "source_name": "Archaeological Survey of India site marker",
-   "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Srirangapatna Fort and Water Gate",
-   "city": "Mysuru",
    "title": "Why the river did not save the fort",
    "body": "The Kaveri wraps around this island, which should make it hard to take. It did, twice. The difference in 1799 was timing. The British attacked in May, at the end of the dry season, when the river was at its lowest and could be waded. They had also spent weeks bombarding one section of wall from across the water. Tipu knew the weak point and was told to strengthen it. The work was not finished. Look at where the ground falls towards the river on the western side and you can see the whole plan of the assault in the landscape.",
    "chunk_type": "fact",
@@ -476,34 +289,12 @@
   {
    "poi": "Daria Daulat Bagh (Tipu Sultan's Summer Palace), Srirangapatna",
    "city": "Mysuru",
-   "title": "The wall where Tipu's army is winning",
-   "body": "On the west wall of the verandah there is a mural of the battle of Pollilur, 1780. Hyder Ali's forces are destroying a British column. Look for the British officers biting their moustaches, which was the painter's way of showing dismay. Colonel Baillie is in a palanquin. The whole wall is a victory painting, and it was still on the wall when the British took the building nineteen years later. They did not scrub it off. Walk the length of it slowly. It is painted in registers, so read it like a strip, left to right.",
-   "chunk_type": "story",
-   "is_legend": false,
-   "source_name": "Archaeological Survey of India, Daria Daulat Bagh",
-   "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Daria Daulat Bagh (Tipu Sultan's Summer Palace), Srirangapatna",
-   "city": "Mysuru",
    "title": "No photographs inside, and why the light is dim",
    "body": "Photography is not allowed inside the building. That is not fussiness. These are painted plaster surfaces, they have been repainted and restored more than once, and light is what is killing them. The interior is deliberately kept dark for the same reason. Give your eyes a minute after you step in from the garden. The small museum upstairs holds prints, coins and Tipu's belongings, including copies of the letters. Allow forty-five minutes. It is usually open through the middle of the day when other sites on the island close. Bags are checked at the door.",
    "chunk_type": "practical",
    "is_legend": false,
    "source_name": "Archaeological Survey of India site rules",
    "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": null,
-   "city": "Mysuru",
-   "title": "The tiger that ate a man, by clockwork",
-   "body": "Tipu Sultan called himself the Tiger of Mysore and meant it. His soldiers wore tiger stripes. His guns had tiger mouths. And in the music room of his palace on this island he kept a life-sized wooden tiger crouched over a European soldier. Turn the handle and an organ inside the tiger growled while the man's arm lifted and dropped and a pipe made a wailing sound. The British found it in 1799. Lord Wellesley shipped it to London in 1800. It is in the Victoria and Albert Museum now, object number 2545, and you can go and turn the handle no longer, but you can see it.",
-   "chunk_type": "hook",
-   "is_legend": false,
-   "source_name": "V&A Museum, Tippoo's Tiger",
-   "source_url": "https://collections.vam.ac.uk/item/O61949/tippoos-tiger-mechanical-organ-unknown",
    "last_verified": "2026-08-28"
   },
   {
@@ -718,67 +509,12 @@
   {
    "poi": null,
    "city": "Mysuru",
-   "title": "Why this city smells different",
-   "body": "Stop somewhere in the old part of the city and breathe in properly. There are three smells layered here and each has a reason. Jasmine, because Mysore mallige grows in the fields just outside and comes into Devaraja Market before dawn. Sandalwood, because the Mysore kings held a monopoly on it and built an oil factory here in 1916. And incense, because those two industries made this a natural place to roll agarbatti, which the city still does at scale. The smell of Mysuru is an industrial history you can breathe.",
-   "chunk_type": "hook",
-   "is_legend": false,
-   "source_name": "travel-yantra field notes",
-   "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": null,
-   "city": "Mysuru",
-   "title": "Buy your dosa where the queue is local",
-   "body": "Mysuru has a specific breakfast grammar. The dosa is soft and thick, not crisp. It is served with white coconut chutney and no sambar. There is more ghee than you expect and that is not an accident, it is the dish. The good places are small, cash-heavy, open early and closed by late morning. If a place is open at three in the afternoon serving dosa, it is serving something else. Mylari in Nazarbad is the name people argue about. There are two shops with similar names on the same stretch and locals have strong opinions about which is the real one.",
-   "chunk_type": "taste",
-   "is_legend": false,
-   "source_name": "travel-yantra field notes",
-   "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": null,
-   "city": "Mysuru",
-   "title": "Three earlier palaces stood where you are standing",
-   "body": "Count them. The first palace on this ground was a wooden fort building from the fourteenth century. It was struck by lightning in 1638 and rebuilt. That second one was pulled down and rebuilt again in 1793 after the Wadiyars returned to power. The third burned in 1897. The one you can see is the fourth. Each was built on the ruins of the last because the site was fixed by the temples inside the walls, not by convenience. That is why the palace is where it is, in the middle of the traffic, rather than on a comfortable hill.",
-   "chunk_type": "fact",
-   "is_legend": false,
-   "source_name": "Maps of India, The Royal History of Mysore Palace",
-   "source_url": "https://www.mapsofindia.com/my-india/india/the-royal-history-of-mysore-palace",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": null,
-   "city": "Mysuru",
    "title": "Dasara is ten days, not one",
    "body": "If you are here in September or October, know how the festival is shaped. It runs ten days. The first nine are worship, music and wrestling, spread across the palace, the hill and venues around the city. The tenth day, Vijayadashami, is the procession: caparisoned elephants, the golden howdah, a route from the palace to the Bannimantap grounds, and a torchlight parade in the evening. Hotel rates triple and the roads shut. If you want the spectacle, book months ahead. If you want the city, come in November instead. The wrestling bouts through the week are free to watch.",
    "chunk_type": "practical",
    "is_legend": false,
    "source_name": "Mysuru Dasara, general reference",
    "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Vittala Temple and Stone Chariot",
-   "city": "Hampi",
-   "title": "The chariot is on the back of the fifty rupee note",
-   "body": "Take out a fifty rupee note and look at the back. That stone chariot is the one in front of you. It is a shrine to Garuda, the eagle who carries Vishnu, and it is built as a temple car made of stone. The wheels used to turn. They were cemented in place some years ago because people kept spinning them and the stone was wearing. It is not carved from a single rock, whatever you are told. It is blocks, fitted so well that the joints are hard to find. Walk round the back and look for them.",
-   "chunk_type": "hook",
-   "is_legend": false,
-   "source_name": "Karnataka.com, Vittala Temple",
-   "source_url": "https://www.karnataka.com/hampi/vittala-temple",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Vittala Temple and Stone Chariot",
-   "city": "Hampi",
-   "title": "Fifty-six pillars that were tuned",
-   "body": "In the great hall to the east there is a cluster of slender pillars around the thicker ones. They are cut from single blocks of resonant stone and each one sounds a different note when struck. People call them the saregama pillars. You cannot tap them now. Decades of tapping cracked several, so the Archaeological Survey has stopped it. Look instead. Notice the pillars are different thicknesses and lengths. That is the tuning. Someone tested the rock, cut it, tested it again. This is stone masonry doing the job of instrument making.",
-   "chunk_type": "fact",
-   "is_legend": false,
-   "source_name": "Karnataka.com, Vittala Temple",
-   "source_url": "https://www.karnataka.com/hampi/vittala-temple",
    "last_verified": "2026-08-28"
   },
   {
@@ -872,17 +608,6 @@
   {
    "poi": "Virupaksha Temple",
    "city": "Hampi",
-   "title": "Worship here has not stopped in twelve hundred years",
-   "body": "Everything else at Hampi is a ruin. This is not. Virupaksha has been a working temple since about the seventh century and it never closed, not after Talikota, not after the city emptied. The army that broke this capital in 1565 left this temple standing and in use. Walk in past the tall gopura and there is a priest, a queue, a bell, an elephant. Whatever you think of the rest of the site, understand that you are stepping into a building that has been doing the same job continuously for twelve hundred years.",
-   "chunk_type": "hook",
-   "is_legend": false,
-   "source_name": "Karnataka Tourism, Virupaksha Temple",
-   "source_url": "https://karnatakatourism.org/en/attractions/virupaksha-temple",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Virupaksha Temple",
-   "city": "Hampi",
    "title": "Pampa, Pampapathi, Hampi",
    "body": "The local goddess here is Pampa, a river goddess, and Shiva married her. As her husband he is Pampapathi, lord of Pampa. The place took her name: Pampa-kshetra, worn down over centuries into Hampi. So the name of this town is the name of a goddess, shortened. Virupaksha is Shiva's other name here, the one with oblique eyes. The annual marriage festival of Virupaksha and Pampa is still celebrated and it fills these courtyards. The name of the ruin field you have come to photograph is really the name of a wedding.",
    "chunk_type": "story",
@@ -894,34 +619,12 @@
   {
    "poi": "Virupaksha Temple",
    "city": "Hampi",
-   "title": "The upside-down tower on the wall",
-   "body": "Go into the inner courtyard, find the small dark chamber on the west side, and wait for your eyes to adjust. On the back wall there is an image of the main gopura, upside down. It is not painted. It comes through a small hole in the opposite wall. The whole temple gateway is being projected onto that wall by a pinhole. Somebody built a working camera obscura into a temple, either on purpose or by accident, hundreds of years ago. It is faint. Give it two minutes in the dark and it appears.",
-   "chunk_type": "hook",
-   "is_legend": false,
-   "source_name": "Archaeological Survey of India, Hampi site notes",
-   "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Virupaksha Temple",
-   "city": "Hampi",
    "title": "The gopura is nine storeys and it leans on old bones",
    "body": "The eastern tower is about fifty metres high, nine tiers of brick and plaster figures on a stone base. Lakkana Dandesha, a chieftain under Deva Raya the Second, built the central hall and this gateway in the fifteenth century. The shrine at the core is far older. That is the pattern again: an old, small, dark sanctum with successive kings piling height on the outside. Stand at the far end of the bazaar street and look back. The tower is designed to be read from a distance, which is why the detail gets bigger as it goes up.",
    "chunk_type": "fact",
    "is_legend": false,
    "source_name": "Karnataka.com, Virupaksha Temple",
    "source_url": "https://www.karnataka.com/hampi/virupaksha-temple",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Virupaksha Temple",
-   "city": "Hampi",
-   "title": "Lakshmi the elephant, and the rules about her",
-   "body": "There is usually a temple elephant here who will take a coin and touch your head. Understand what you are joining in. She is a working animal in a hot stone courtyard. If you want to see her at her best, go early, around seven, when she is taken down to the river to be bathed. That happens on the steps below the temple and it is free, unhurried and much better than the courtyard transaction. Some visitors choose not to pay for the blessing at all. That is a reasonable choice and nobody will mind.",
-   "chunk_type": "practical",
-   "is_legend": false,
-   "source_name": "travel-yantra field notes",
-   "source_url": null,
    "last_verified": "2026-08-28"
   },
   {
@@ -980,61 +683,6 @@
    "last_verified": "2026-08-28"
   },
   {
-   "poi": null,
-   "city": "Hampi",
-   "title": "Two brothers, one river, 1336",
-   "body": "In 1336 two brothers, Harihara and Bukka, founded a city on the south bank of the Tungabhadra. That is the start of the Vijayanagara empire. They were officers who had been taken north as prisoners and came back to build a state that would hold the Deccan against the Delhi Sultanate. It worked for two hundred and thirty years. At its height the empire ran from the Krishna river to the southern tip of the peninsula. The boulders you are standing among were the capital of the largest kingdom in the south.",
-   "chunk_type": "fact",
-   "is_legend": false,
-   "source_name": "Prepp, Vijayanagara Kingdom notes",
-   "source_url": "https://prepp.in/news/e-492-vijayanagara-kingdom-1336-1672-ce-medieval-india-history-notes",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": null,
-   "city": "Hampi",
-   "title": "One battle, and then five months of taking the city apart",
-   "body": "On the twenty-sixth of January 1565 the Vijayanagara army met a coalition of Deccan sultanates at Talikota. Vijayanagara lost. The regent Rama Raya was captured and killed on the field. Then the victors came to the capital. What followed was not a night of looting. Accounts describe months of systematic demolition: temples broken, images smashed, buildings fired. The city was never reoccupied. That is why Hampi is what it is. Most ruined cities decay. This one was taken apart by hand, and then simply left. No later dynasty tried to rebuild on the site.",
-   "chunk_type": "story",
-   "is_legend": false,
-   "source_name": "Prepp, Vijayanagara Kingdom notes",
-   "source_url": "https://prepp.in/news/e-492-vijayanagara-kingdom-1336-1672-ce-medieval-india-history-notes",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": null,
-   "city": "Hampi",
-   "title": "A Portuguese horse trader wrote it all down",
-   "body": "Around 1520 a Portuguese man named Domingo Paes walked these streets and wrote what he saw. He said the city was as large as Rome and the best provided city in the world. He described markets stocked with every grain and spice, and rubies and diamonds and pearls sold openly in the bazaars by the heap. A decade or so later Fernao Nuniz wrote a second account. Between them, those two traders are our closest eyewitness record. When you stand in an empty colonnade here, that is what you are standing in.",
-   "chunk_type": "story",
-   "is_legend": false,
-   "source_name": "BA Notes, Paes and Nuniz on Vijayanagara",
-   "source_url": "https://banotes.org/history-writing-india/vijayanagara-empire-domingo-paes-fernao-nuniz-16th-century",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": null,
-   "city": "Hampi",
-   "title": "Krishnadevaraya, 1509 to 1529",
-   "body": "If Hampi has a high-water mark it is these twenty years. Krishnadevaraya of the Tuluva line took the throne in 1509. He won campaigns north into Gulbarga and Bidar and east into Odisha, he rebuilt and endowed temples across the empire, and he wrote poetry in Telugu himself. Most of the building you will photograph here was raised or extended under him: the Vittala expansions, the Krishna temple, the Hazara Rama refinements. He died in 1529. Thirty-six years later the empire was gone. That is how narrow the window was.",
-   "chunk_type": "fact",
-   "is_legend": false,
-   "source_name": "Prepp, Vijayanagara Kingdom notes",
-   "source_url": "https://prepp.in/news/e-492-vijayanagara-kingdom-1336-1672-ce-medieval-india-history-notes",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Anjanadri Hill (Anjaneya Hill)",
-   "city": "Hampi",
-   "title": "Hanuman was born on that hill",
-   "body": "Look north across the river at the hill with the white temple on top. Tradition holds that Hanuman was born there, to his mother Anjana, which is why it is called Anjanadri. This whole landscape is identified with Kishkindha, the monkey kingdom of the Ramayana, where Rama met Sugriva and Hanuman. The boulders are said to be what is left of a fight between two brothers. You can climb it. There are about five hundred and seventy steps to the top and the view back over the river and the boulder field is the best in the region.",
-   "chunk_type": "story",
-   "is_legend": true,
-   "source_name": "Ghumakkadi, Anegundi and Kishkindha",
-   "source_url": "https://ghumakkadi.com/destination/anegundi-kishkindha",
-   "last_verified": "2026-08-28"
-  },
-  {
    "poi": "Anjanadri Hill (Anjaneya Hill)",
    "city": "Hampi",
    "title": "Five hundred and seventy steps, and no shade",
@@ -1059,44 +707,11 @@
   {
    "poi": "Coracle Ride on the Tungabhadra",
    "city": "Hampi",
-   "title": "A round basket boat that has not changed",
-   "body": "The coracle is a bowl of woven bamboo, waterproofed, about two metres across, with no bow and no stern. It spins as it goes and it cannot be steered in a straight line. That is not bad boatmanship, it is the design. The shape works because this river is shallow and full of rock, and a round hull bounces off instead of catching. Boats like this are described in accounts of the Vijayanagara river crossings. Sit down in the middle, keep your weight low, and let the boatman work. Do not stand up while it is moving.",
-   "chunk_type": "fact",
-   "is_legend": false,
-   "source_name": "travel-yantra field notes",
-   "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Coracle Ride on the Tungabhadra",
-   "city": "Hampi",
    "title": "Late afternoon on the water, near the Vittala end",
    "body": "The best stretch is the one below the Vittala temple, where the old stone bridge piers stand in the water and there are carved lingas cut into the rock at the river's edge. Go in the last hour of light. The rock is warm, the water is dark, and the boatman will spin the coracle on purpose to make you laugh, which is part of the deal. Agree the price and the length of the ride before you get in. Life jackets are not always offered. Ask for one. Bring a dry bag for your phone.",
    "chunk_type": "sensory",
    "is_legend": false,
    "source_name": "travel-yantra field notes",
-   "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Matanga Hill",
-   "city": "Hampi",
-   "title": "The highest point, and the best sunrise",
-   "body": "Matanga is the highest hill inside the Hampi site, and from the small temple on top you can see the whole city plan at once: Virupaksha and its bazaar to the west, the Achyutaraya complex and its street below you, the river curving north, the Vittala road east. Named for the sage Matanga, whose hermitage the Ramayana places here. The climb from the Achyutaraya side takes about twenty-five minutes. Start in the dark for sunrise. Do not do the descent in the dark, and do not do this route alone at dawn; go with company or a guide.",
-   "chunk_type": "sensory",
-   "is_legend": false,
-   "source_name": "travel-yantra field notes",
-   "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Lotus Mahal (Zenana Enclosure)",
-   "city": "Hampi",
-   "title": "A building that is neither temple nor mosque",
-   "body": "Look at the arches. They are lobed, cusped, Islamic in shape. Now look at the roof. It is a set of pyramidal towers, straight out of a Hindu temple. This building does both at once and it was not confused about it. The Vijayanagara court employed Muslim officers and architects and borrowed freely. The name Lotus Mahal is modern, from the shape of the arches and the plan. What it was actually for is not certain: a council chamber, or a room in the women's quarter where the court could sit in the cool. Two storeys, open on all sides, built to move air.",
-   "chunk_type": "fact",
-   "is_legend": false,
-   "source_name": "Archaeological Survey of India, Hampi site notes",
    "source_url": null,
    "last_verified": "2026-08-28"
   },
@@ -1108,17 +723,6 @@
    "chunk_type": "story",
    "is_legend": false,
    "source_name": "Archaeological Survey of India, Hampi conservation notes",
-   "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Elephant Stables",
-   "city": "Hampi",
-   "title": "Eleven domes, and no two the same",
-   "body": "Count the chambers. Eleven, in a long row, each with a big arched door and a dome on top. Now look along the roofline. The domes alternate: ribbed, fluted, plain, octagonal. Nobody had to do that. A stable does not need variety. The central chamber is larger, with a raised platform above it, probably for musicians during processions. Each bay held one elephant, and there are hooks in the ceilings where the chains ran. Stand at one end and sight down the row. The rhythm of the domes is the whole point of the building.",
-   "chunk_type": "sensory",
-   "is_legend": false,
-   "source_name": "Archaeological Survey of India, Hampi site notes",
    "source_url": null,
    "last_verified": "2026-08-28"
   },
@@ -1422,42 +1026,9 @@
   {
    "poi": "Chennakeshava Temple, Belur",
    "city": "Chikmagalur",
-   "title": "One temple, one hundred and three years",
-   "body": "The Hoysala king Vishnuvardhana consecrated this in 1117 to mark beating the Cholas at Talakad. He called it Vijaya Narayana. But it was not finished in his lifetime, or his son's. Work carried on for about a hundred and three years and it was his grandson, Veera Ballala the Second, who saw the end of it. Three generations of one family paid stonemasons to keep going on one building. Stand at the front and take that in before you look at any detail. Everything you are about to see was cut by hand, over a century, on a single commission.",
-   "chunk_type": "hook",
-   "is_legend": false,
-   "source_name": "Hassan District, Government of Karnataka",
-   "source_url": "https://hassan.nic.in/en/tourist-place/chennakeshava-temple-belur",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Chennakeshava Temple, Belur",
-   "city": "Chikmagalur",
    "title": "The men who signed the stone",
    "body": "Hoysala sculptors put their names on their work. The master craftsmen here were Dasoja and his son Chavana, from Balligavi in what is now Shivamogga district, a centre of Chalukya art. Look at the base of the bracket figures and the pillar capitals and you will find short inscriptions in old Kannada. That is a signature. This matters, because in most of medieval India we have no idea who carved anything. Here the men are named, the fathers and sons are recorded, and in some cases you can follow one hand from bracket to bracket.",
    "chunk_type": "fact",
-   "is_legend": false,
-   "source_name": "Hassan District, Government of Karnataka",
-   "source_url": "https://hassan.nic.in/en/tourist-place/chennakeshava-temple-belur",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Chennakeshava Temple, Belur",
-   "city": "Chikmagalur",
-   "title": "Darpana Sundari, the lady with the mirror",
-   "body": "Of the bracket figures on this temple, one is the one everybody comes for. She is called Darpana Sundari, the beauty with the mirror, and she stands holding it up and looking into it. Local tradition says the model was Shantala Devi, Vishnuvardhana's queen, herself a trained dancer. Look at what the sculptor did with her weight: hip thrown out, one heel raised, the whole body in a curve. Then look at the mirror. It is turned towards her, not towards you. You are watching someone who is not performing for you.",
-   "chunk_type": "story",
-   "is_legend": false,
-   "source_name": "Hassan District, Government of Karnataka",
-   "source_url": "https://hassan.nic.in/en/tourist-place/chennakeshava-temple-belur",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Chennakeshava Temple, Belur",
-   "city": "Chikmagalur",
-   "title": "Forty-two brackets, and what to look for",
-   "body": "The bracket figures, madanikas or shilabalikas, sit high up under the eaves at an angle. There are more than forty. They are dancers, hunters, a woman with a parrot, a woman pulling a thorn from her foot, a woman with a monkey tugging at her clothes. Each one is cut almost free of the wall, held on by a thin stone strut. Look for the drill work: the necklaces have separate beads with holes through them, and on some figures a chain hangs loose from the stone. Those were made by drilling into solid rock and cutting away from inside.",
-   "chunk_type": "sensory",
    "is_legend": false,
    "source_name": "Hassan District, Government of Karnataka",
    "source_url": "https://hassan.nic.in/en/tourist-place/chennakeshava-temple-belur",
@@ -1488,28 +1059,6 @@
   {
    "poi": "Chennakeshava Temple, Belur",
    "city": "Chikmagalur",
-   "title": "Still a working temple, so cover up",
-   "body": "This is not a dead monument. Daily worship continues here and has done for nine hundred years. That means shoes off at the entrance to the compound, shoulders and knees covered, and the sanctum closed during the midday break, usually around one to three. The complex is generally open from about half past seven in the morning to half past seven at night. Go early. The tour buses arrive from Hassan mid-morning and the compound is small enough that fifty extra people change the experience. A guide will expect the same of you and will say so at the gate.",
-   "chunk_type": "practical",
-   "is_legend": false,
-   "source_name": "Temples in Karnataka, Belur Chennakeshava",
-   "source_url": "https://templeinkarnataka.com/belur-sri-chennakeshava-swamy-temple",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Chennakeshava Temple, Belur",
-   "city": "Chikmagalur",
-   "title": "Hire the guide, this once",
-   "body": "Normally you can skip the guide. Not here. The carving is dense, it is high up, much of it is small, and without someone pointing you will walk past ninety percent of it. Take a licensed guide from the counter at the gate and agree the price first. Ask specifically for the erotic panels on the lower band, the Darpana Sundari, the drilled chains, and the panel where the same figure reads as different animals from different angles. An hour with a guide here is worth three hours alone. Agree the language before you start.",
-   "chunk_type": "practical",
-   "is_legend": false,
-   "source_name": "travel-yantra field notes",
-   "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Chennakeshava Temple, Belur",
-   "city": "Chikmagalur",
    "title": "The gopura is not Hoysala",
    "body": "The tall brick and plaster gateway you walked through does not match the temple. It is Vijayanagara work, added in the sixteenth century, four hundred years after the temple. Once you know that, the whole compound reads correctly: a low, wide, dark, densely carved stone building from the twelfth century, with a tall painted tower stuck on the front by a later empire that wanted its name here too. Turn round at the temple steps and look back at the gopura. The two buildings are not speaking the same language.",
    "chunk_type": "fact",
@@ -1527,39 +1076,6 @@
    "is_legend": false,
    "source_name": "travel-yantra field notes",
    "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": null,
-   "city": "Chikmagalur",
-   "title": "Strike, Sala",
-   "body": "A young man called Sala was standing with his Jain teacher near a temple of the goddess Vasantika at Sosevur when a tiger came out. The teacher shouted two words: poy, Sala. Strike, Sala. He struck, and killed it, and the dynasty took its name from the command. Hoy is strike in old Kannada. Hoy-sala. You will see it as the royal emblem everywhere in these temples: a young man with a dagger over a tiger. There is a harder reading too. The tiger was the emblem of the Cholas, and Vishnuvardhana beat the Cholas at Talakad in 1116, a year before Belur was consecrated.",
-   "chunk_type": "story",
-   "is_legend": true,
-   "source_name": "Belur inscription of Vishnuvardhana, c. 1117, general reference",
-   "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": null,
-   "city": "Chikmagalur",
-   "title": "Jakanachari, and the son who found the flaw",
-   "body": "The story goes that Jakanachari was the greatest sculptor of his age. Working at Belur, he finished an image and a young man appeared and said there was a flaw in it: a hollow inside the stone with a frog and water. Jakanachari swore he would cut off his own hand if it were true. They opened the stone. There was a hollow. He cut off his hand. Then he learned the young man was his own son Dankanachari, whom he had left before birth. Scholars now think Jakanachari was never one man but a guild name, used across three centuries. The story survives anyway, because it is about what a craftsman owes the stone.",
-   "chunk_type": "story",
-   "is_legend": true,
-   "source_name": "MAP Academy, Jakanachari",
-   "source_url": "https://mapacademy.io/article/jakanachari",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": null,
-   "city": "Chikmagalur",
-   "title": "Soft when it comes out of the ground",
-   "body": "None of this carving would be possible in granite. Hoysala temples are built in chloritic schist, which people call soapstone. When it is quarried it is soft enough to work with a fine tool, soft enough to drill and undercut and turn on a lathe. Exposed to air over years it hardens. So the sculptors got wood-like workability and then the material set into something that could stand outdoors for nine hundred years. That is the whole technical secret of Belur and Halebidu. It is not that these carvers were better. It is that they had a better stone.",
-   "chunk_type": "fact",
-   "is_legend": false,
-   "source_name": "India That Was, The Hoysaleswara Temple Halebidu",
-   "source_url": "https://www.indiathatwas.com/2011/07/the-hoysaleswara-temple-halebidu",
    "last_verified": "2026-08-28"
   },
   {
@@ -1587,34 +1103,12 @@
   {
    "poi": "Hoysaleswara Temple, Halebidu",
    "city": "Chikmagalur",
-   "title": "The temple that was never finished",
-   "body": "Work started here around 1121 and it never stopped, and it never ended either. The tower over the sanctum was never built. Look at the roofline: it is flat where it should rise. Money and time kept going in for over a century and then in 1311 Malik Kafur came down from Delhi, and again in 1327, and the capital was sacked twice. After that there was no court left to pay for a tower. The name Halebidu means old capital, or ruined city. The town was renamed for what happened to it.",
-   "chunk_type": "hook",
-   "is_legend": false,
-   "source_name": "India That Was, The Hoysaleswara Temple Halebidu",
-   "source_url": "https://www.indiathatwas.com/2011/07/the-hoysaleswara-temple-halebidu",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Hoysaleswara Temple, Halebidu",
-   "city": "Chikmagalur",
    "title": "Two shrines under one roof",
    "body": "This is a dvikuta vimana: two sanctums side by side, sharing a hall. One is Hoysaleswara, named for the king Vishnuvardhana. The other is Shantaleswara, named for his queen Shantala Devi. Each has its own Nandi pavilion in front, and the two Nandis are different sizes and face their own shrine. An inscription dated 1121 credits the commission to Ketamalla, an officer of the king, with funding from wealthy Shaiva citizens of the town. So a temple named for a king was paid for by his officials and merchants. Walk between the two pavilions and compare the Nandis.",
    "chunk_type": "fact",
    "is_legend": false,
    "source_name": "India That Was, The Hoysaleswara Temple Halebidu",
    "source_url": "https://www.indiathatwas.com/2011/07/the-hoysaleswara-temple-halebidu",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Hoysaleswara Temple, Halebidu",
-   "city": "Chikmagalur",
-   "title": "Walk the wall and count nothing twice",
-   "body": "Go round the outside slowly, clockwise, at the level of the wall bands. Elephants at the bottom, then lions, then horses, then foliage, then the epics, then makaras, then swans. There are said to be around two hundred and forty large wall images and thousands of small ones, and the claim is that no two are identical. Test it on the elephants. Pick a stretch of twenty and look at the trunks and the ears. They differ. Then find Ravana lifting Mount Kailasa, and Krishna holding up Govardhan. Those two are the panels to slow down for.",
-   "chunk_type": "sensory",
-   "is_legend": false,
-   "source_name": "Kamat's Potpourri, The Hoysaleswara Temple of Halebidu",
-   "source_url": "http://www.kamat.com/kalranga/deccan/hoysala/halebidu.htm",
    "last_verified": "2026-08-28"
   },
   {
@@ -1873,45 +1367,12 @@
   {
    "poi": null,
    "city": "Bengaluru",
-   "title": "The town of boiled beans",
-   "body": "A Hoysala king, Veera Ballala, was lost and hungry in the forest here. He came to a hut and an old woman gave him a bowl of boiled beans. When he founded a settlement on the spot he called it Bendakaaluru, the town of boiled beans. That is the story every child in this city is told. Historians point at an older stone inscription that already carries a version of the name, so the king may have found the name rather than made it. Either way, a city that now runs on software is named after a meal somebody gave away for nothing.",
-   "chunk_type": "hook",
-   "is_legend": true,
-   "source_name": "IOL Travel, The town of boiled beans",
-   "source_url": "https://iol.co.za/travel/2004-07-14-the-town-of-boiled-beans",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": null,
-   "city": "Bengaluru",
    "title": "Kempegowda laid out four roads and a mud fort",
    "body": "In 1537 a chieftain from Magadi named Kempe Gowda built a mud fort here and laid out a town inside it. He set two main streets crossing at right angles, Chikkapete running east to west and Doddapete north to south, and he assigned trades to each quarter. Those quarters still carry their trade names: Balepet for bangles, Akkipet for rice, Taragupet for grain, Cottonpet for cotton. Walk the old town today and the street plan is still his. A city that has been rebuilt four times over has kept the grid of a sixteenth-century market.",
    "chunk_type": "fact",
    "is_legend": false,
    "source_name": "IOL Travel, The town of boiled beans",
    "source_url": "https://iol.co.za/travel/2004-07-14-the-town-of-boiled-beans",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": null,
-   "city": "Bengaluru",
-   "title": "Four towers, and a wife who paid for them",
-   "body": "Kempegowda's successor built four stone watchtowers to mark the limits the city should not grow beyond. They stand at Lalbagh, at Kempambudhi lake, near Ulsoor lake, and at Mekhri Circle. The city passed all four of them centuries ago. There is a story attached to the older fort too: that the walls kept collapsing until Kempegowda's daughter-in-law Lakshmi Devi gave her own life at the south gate to make them stand. A memorial to her is at the Koramangala side. Take the story as a story. The towers are real and you can walk to all four in a day.",
-   "chunk_type": "story",
-   "is_legend": true,
-   "source_name": "Kempegowda towers, general reference",
-   "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Lalbagh Botanical Garden",
-   "city": "Bengaluru",
-   "title": "A sultan's garden that became a science project",
-   "body": "Hyder Ali laid this out in 1760 as a formal Mughal-style pleasure garden. His son Tipu Sultan carried it on and imported plants from Persia, Afghanistan, Mauritius, Turkey and France. After 1799 the British kept it, and in the nineteenth century it turned into a working botanical garden with a herbarium and plant introduction programmes. So its history runs sultan, then coloniser, then state department, and each one added a layer. Two hundred and forty acres, over eighteen hundred species. It is one of the oldest botanical gardens in India and it is still doing research.",
-   "chunk_type": "fact",
-   "is_legend": false,
-   "source_name": "Lalbagh Garden, History of Lalbagh",
-   "source_url": "https://lalbaghgarden.in/history-of-lalbagh",
    "last_verified": "2026-08-28"
   },
   {
@@ -1967,17 +1428,6 @@
    "is_legend": false,
    "source_name": "Archaeological Survey of India, Bangalore Fort",
    "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Bull Temple (Dodda Basavana Gudi)",
-   "city": "Bengaluru",
-   "title": "The bull that kept eating the groundnuts",
-   "body": "The story here is agricultural. Farmers on this land kept losing their groundnut crop to a bull that came at night. They set a watch, and when the bull appeared they struck it, and it sat down and turned to stone. So they built a temple around it, and every year since they have brought the first groundnut harvest to it as an offering. That is the origin of the Kadalekai Parishe. The temple around the bull was built by Kempegowda in the sixteenth century. The stone bull is nearly five metres high.",
-   "chunk_type": "story",
-   "is_legend": true,
-   "source_name": "Karnataka Tourism, Basavanagudi Kadalekai Parishe",
-   "source_url": "https://karnatakatourism.org/experiences/basavanagudi-kadalekai-parishe",
    "last_verified": "2026-08-28"
   },
   {
@@ -2311,17 +1761,6 @@
    "last_verified": "2026-08-28"
   },
   {
-   "poi": null,
-   "city": "Chikmagalur",
-   "title": "Seven beans in a beard",
-   "body": "In the seventeenth century a Sufi named Baba Budan came back from Mecca through the Yemeni port of Mocha. Coffee left that port roasted, so that nobody outside Arabia could grow it. He took seven green beans and hid them in his beard. Seven, because seven is a sacred number. He planted them on the slopes above where you are standing. Every coffee estate in India traces back to that. The hills are named for him now: Baba Budangiri. Whether it happened exactly that way is another matter. The coffee is here, and it started somewhere.",
-   "chunk_type": "hook",
-   "is_legend": true,
-   "source_name": "Wikipedia, Baba Budan",
-   "source_url": "https://en.wikipedia.org/wiki/Baba_Budan",
-   "last_verified": "2026-08-28"
-  },
-  {
    "poi": "Baba Budangiri (Dattatreya Peetha)",
    "city": "Chikmagalur",
    "title": "A cave two faiths both claim",
@@ -2330,17 +1769,6 @@
    "is_legend": false,
    "source_name": "Wikipedia, Baba Budan",
    "source_url": "https://en.wikipedia.org/wiki/Baba_Budan",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Mullayanagiri Peak",
-   "city": "Chikmagalur",
-   "title": "The highest ground in Karnataka",
-   "body": "At around nineteen hundred and thirty metres, this is the highest point in the state, part of the Chandra Drona range of the Western Ghats. The name comes from a small Mullappa Swamy shrine at the summit. There is a road most of the way and then a set of steps with a handrail to the top, a few hundred of them. In the monsoon the summit is inside cloud and you will see nothing. From December to February the mornings are clear and cold, and the ridgelines run away from you in layers.",
-   "chunk_type": "fact",
-   "is_legend": false,
-   "source_name": "Chikmagalur Tourism, Mullayanagiri",
-   "source_url": "https://chikmagalurtourism.co.in/mullayanagiri-chikmagalur",
    "last_verified": "2026-08-28"
   },
   {
@@ -2462,17 +1890,6 @@
    "is_legend": false,
    "source_name": "travel-yantra field notes",
    "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": "Talakaveri",
-   "city": "Coorg",
-   "title": "A river starts in a tank the size of a room",
-   "body": "The Kaveri feeds a large part of south India, waters two states and has been fought over in court for a century. It starts here, in a small stone tank on the side of Brahmagiri hill, a hole called the Brahmakundike. You can walk round the tank in twenty seconds. On the day of Tula Sankramana in October, usually the seventeenth, water is said to well up in the spring at a fixed moment and thousands come to see it. Stand at the tank and try to hold both facts: this cup of water, and the river it becomes.",
-   "chunk_type": "hook",
-   "is_legend": false,
-   "source_name": "Inditales, Talakaveri and Bhagamandala",
-   "source_url": "https://inditales.com/talakaveri-bhagamandala-triveni-coorg",
    "last_verified": "2026-08-28"
   },
   {
@@ -2641,17 +2058,6 @@
    "last_verified": "2026-08-28"
   },
   {
-   "poi": "Coorg Cuisine, Madikeri",
-   "city": "Coorg",
-   "title": "Pandi curry, kachampuli and akki roti",
-   "body": "The dish to eat here is pandi curry, pork cooked dark and sour. The sourness comes from kachampuli, a thick black vinegar made by reducing the juice of the kokum-like Garcinia fruit. It is not tamarind and it does not taste like it. Eat it with kadambuttu, steamed rice balls, or with akki roti. If you do not eat pork, ask for koli curry, which is chicken done the same way, or the bamboo shoot dish when it is in season. Home-stay kitchens do this far better than restaurants. Ask for the vinegar on the side if you are unsure.",
-   "chunk_type": "taste",
-   "is_legend": false,
-   "source_name": "travel-yantra field notes",
-   "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
    "poi": "Madikeri Spice Market",
    "city": "Coorg",
    "title": "Buy pepper and cardamom where it is graded",
@@ -2742,17 +2148,6 @@
   {
    "poi": null,
    "city": "Hampi",
-   "title": "Rome, and a city nobody in Europe believed",
-   "body": "When Domingo Paes wrote that this place was as large as Rome and the best provided city in the world, readers in Portugal treated it as traveller's exaggeration. It was not. Modern survey work puts the fortified urban area at something over twenty-five square kilometres, with a population estimated in the hundreds of thousands, fed by a canal system that is still being mapped. Stand anywhere here and turn a full circle. What you can see in every direction, boulder to boulder, was inside the walls of one city. Then remember it took five months to break.",
-   "chunk_type": "hook",
-   "is_legend": false,
-   "source_name": "BA Notes, Paes and Nuniz on Vijayanagara",
-   "source_url": "https://banotes.org/history-writing-india/vijayanagara-empire-domingo-paes-fernao-nuniz-16th-century",
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": null,
-   "city": "Hampi",
    "title": "Colin Mackenzie found it, in a way",
    "body": "After 1565 this place was known locally and ignored elsewhere. In 1799, the same year Tipu died, a Scottish surveyor named Colin Mackenzie came through and made the first systematic drawings and notes of the ruins. He collected inscriptions, hired local scholars to read them, and sent the material to Calcutta. That is where the modern archaeological record of Vijayanagara begins. The people living here had never forgotten what it was. What Mackenzie did was write it down in a language the rest of the world would read, which is a different thing from finding it.",
    "chunk_type": "story",
@@ -2825,17 +2220,6 @@
    "is_legend": false,
    "source_name": "Archaeological Survey of India, Karnataka recovery records, general reference",
    "source_url": null,
-   "last_verified": "2026-08-28"
-  },
-  {
-   "poi": null,
-   "city": "Chikmagalur",
-   "title": "You are drinking a smuggled crop",
-   "body": "Every cup of coffee poured in this district descends from a crime. Yemen controlled the coffee trade and exported only roasted beans so that nothing could be planted elsewhere. Baba Budan carried seven live beans out past the guards. That single act broke a monopoly and started an industry that now employs hundreds of thousands of people in these hills. Look at the plants under the shade trees as you drive. Genetically, a great many of the arabica plants in India trace back to a very narrow founding stock. It is a large industry standing on a very small beginning.",
-   "chunk_type": "hook",
-   "is_legend": true,
-   "source_name": "Wikipedia, Baba Budan",
-   "source_url": "https://en.wikipedia.org/wiki/Baba_Budan",
    "last_verified": "2026-08-28"
   },
   {
