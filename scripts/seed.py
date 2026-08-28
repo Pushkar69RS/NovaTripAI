@@ -1,14 +1,19 @@
 """Full reload of poi, poi_edge, intercity_leg and advisory from data/pois.json.
 
-    uv run python scripts/seed.py
+    uv run python scripts/seed.py [--include-ai-generated]
 
 TRUNCATE of those four tables is pre-approved (see CLAUDE.md). doc_chunk holds a
 FK to poi, and Postgres refuses to truncate poi unless doc_chunk is truncated in
 the same statement, so it is included only after confirming it is empty.
+
+Rows a cold start drafted (poi.trust = 'ai_generated', doc_chunk.source_name =
+'ai_generated') are not in the seed file and would be wiped, so the reload
+refuses to run while any exist unless --include-ai-generated is passed.
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -77,9 +82,26 @@ def poi_row(p: dict) -> dict:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--include-ai-generated",
+        action="store_true",
+        help="wipe rows a cold start drafted along with everything else",
+    )
+    args = parser.parse_args()
     load_dotenv(ROOT / ".env")
     data = json.loads((ROOT / "data" / "pois.json").read_text(encoding="utf-8"))
     with psycopg.connect(os.environ["SUPABASE_DB_URL"]) as conn, conn.cursor() as cur:
+        (drafted,) = cur.execute(
+            "SELECT (SELECT count(*) FROM poi WHERE trust = 'ai_generated') + "
+            "(SELECT count(*) FROM doc_chunk WHERE source_name = 'ai_generated')"
+        ).fetchone()
+        if drafted and not args.include_ai_generated:
+            print(
+                f"{drafted} ai_generated rows would be wiped; "
+                "pass --include-ai-generated if that is what you want"
+            )
+            return 1
         (chunks,) = cur.execute("SELECT count(*) FROM doc_chunk").fetchone()
         if chunks:
             print(

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import threading
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager, suppress
@@ -15,6 +16,7 @@ from app.api.routes import router
 from app.web import pages
 
 load_dotenv()
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
 STATIC = Path(__file__).resolve().parent / "static"
 

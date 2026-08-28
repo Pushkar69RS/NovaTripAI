@@ -64,8 +64,10 @@ LOCALITIES: dict[str, str] = {
 
 
 def hub_city(name: str) -> str:
-    """The hub city for a typed place; unknown names pass through untouched."""
-    return LOCALITIES.get(name.strip().lower(), name.strip())
+    """The hub city for a typed place. An unknown name is kept, title-cased, so
+    Mangalore and mangalore are one city in poi and city_centre."""
+    key = name.strip().lower()
+    return LOCALITIES.get(key, " ".join(w.capitalize() for w in name.split()))
 
 
 class Traveller(BaseModel):

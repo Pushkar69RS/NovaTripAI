@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from collections.abc import Iterator
 from typing import Annotated, Any
@@ -23,11 +24,21 @@ from app.chat.router import (
 from app.demo import cached_demo
 from app.katha.build import WORDS_PER_MIN, DbCatalogue, build, db_retriever
 from app.katha.models import Depth, Katha, Scope
+from app.llm.client import complete
 from app.llm.narrate import narrate_segment
-from app.planner.engine import load, plan_all, scored_pool
-from app.planner.models import Plan, TripRequest, Verdict
+from app.planner.coldstart import (
+    MIN_PLACES,
+    ColdStartError,
+    ColdStartReport,
+    ensure_city,
+)
+from app.planner.distance import DETOUR, haversine
+from app.planner.engine import CENTROID_SQL, load, plan_all, scored_pool
+from app.planner.models import Alternative, Plan, Reason, TripRequest, Verdict, hub_city
 from app.rag.retrieve import TripContext
 from app.voice.tts import cache_path, speak
+
+log = logging.getLogger(__name__)
 
 
 def db() -> Iterator[Any]:
@@ -63,40 +74,121 @@ def _json(value: Any) -> Any:
 # --------------------------------------------------------------------------- #
 
 
-def create(request: TripRequest, conn: Any, user_id: int | None = None) -> dict:
-    """Plan, store, and return what the page needs. demo_seed.py uses this too.
+def hub_alternatives(
+    conn: Any, city: str, centre: tuple[float, float] | None
+) -> list[Alternative]:
+    """One "Plan <hub> instead" per hub within 300 km of the centre; every hub
+    when the centre itself is unknown, because a hub plans without the model."""
+    counts = dict(
+        conn.execute("SELECT city, count(*) FROM poi GROUP BY city").fetchall()
+    )
+    out = []
+    for hub, lat, lng in conn.execute(CENTROID_SQL).fetchall():
+        if hub == city:
+            continue
+        km = None
+        if centre is not None:
+            km = round(haversine(centre[0], centre[1], float(lat), float(lng)) * DETOUR)
+            if km > 300:
+                continue
+        where = (
+            f"about {km} km by road, estimated" if km is not None else "a city we know"
+        )
+        out.append(
+            Alternative(
+                title=f"Plan {hub} instead",
+                description=f"{hub} is {where}; we know {int(counts.get(hub, 0))} places there.",
+                request_override={"destination_cities": [hub]},
+            )
+        )
+    return out
+
+
+def _store_verdict(
+    conn: Any,
+    request: TripRequest,
+    user_id: int | None,
+    verdict: Verdict,
+    reports: list[ColdStartReport],
+) -> dict:
+    cold = [r.model_dump(mode="json") for r in reports]
+    (trip_id,) = conn.execute(
+        "INSERT INTO trip (request, status, alternatives, user_id, cold_start) "
+        "VALUES (%s, %s, %s, %s, %s) RETURNING id",
+        (
+            request.model_dump_json(),
+            "impossible",
+            verdict.model_dump_json(),
+            user_id,
+            json.dumps(cold),
+        ),
+    ).fetchone()
+    return {
+        "id": str(trip_id),
+        "status": "impossible",
+        "verdict": verdict.model_dump(mode="json"),
+        "cold_start": cold,
+    }
+
+
+def create(
+    request: TripRequest, conn: Any, user_id: int | None = None, *, llm: Any = complete
+) -> dict:
+    """Cold-start any city we have never seen, plan, store, and return what the
+    page needs. demo_seed.py uses this too.
 
     A planned trip keeps the best candidate in `plan` and the other two in
     `alternatives`; a verdict keeps its reasons and alternatives there instead.
+    Every cold-start report rides along on `cold_start`.
     """
+    reports: list[ColdStartReport] = []
+    wanted = [(request.origin_city, False)] + [
+        (c, True) for c in request.destination_cities
+    ]
+    for city, need_places in wanted:
+        try:
+            report = ensure_city(conn, city, need_places=need_places, llm=llm)
+        except ColdStartError as exc:
+            log.warning("cold start %s failed: %s", city, exc)
+            verdict = Verdict(
+                status="impossible",
+                reasons=[
+                    Reason(label="Could not reach the model", value=city, unit="")
+                ],
+                alternatives=hub_alternatives(conn, city, None),
+            )
+            return _store_verdict(conn, request, user_id, verdict, reports)
+        reports.append(report)
+        if need_places and report.poi_count < MIN_PLACES:
+            verdict = Verdict(
+                status="impossible",
+                reasons=[
+                    Reason(
+                        label=f"Places we could find in {city}",
+                        value=report.poi_count,
+                        unit="places",
+                    )
+                ],
+                alternatives=hub_alternatives(conn, city, report.centre),
+            )
+            return _store_verdict(conn, request, user_id, verdict, reports)
+
     result = plan_all(request, conn)
     if isinstance(result, Verdict):
-        (trip_id,) = conn.execute(
-            "INSERT INTO trip (request, status, alternatives, user_id) "
-            "VALUES (%s, %s, %s, %s) RETURNING id",
-            (
-                request.model_dump_json(),
-                "impossible",
-                result.model_dump_json(),
-                user_id,
-            ),
-        ).fetchone()
-        return {
-            "id": str(trip_id),
-            "status": "impossible",
-            "verdict": result.model_dump(mode="json"),
-        }
+        return _store_verdict(conn, request, user_id, result, reports)
     first, *others = result
     alternatives = [p.model_dump(mode="json") for p in others]
+    cold = [r.model_dump(mode="json") for r in reports]
     (trip_id,) = conn.execute(
-        "INSERT INTO trip (request, status, plan, alternatives, user_id) "
-        "VALUES (%s, %s, %s, %s, %s) RETURNING id",
+        "INSERT INTO trip (request, status, plan, alternatives, user_id, cold_start) "
+        "VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
         (
             request.model_dump_json(),
             "planned",
             first.model_dump_json(),
             json.dumps(alternatives),
             user_id,
+            json.dumps(cold),
         ),
     ).fetchone()
     return {
@@ -104,6 +196,7 @@ def create(request: TripRequest, conn: Any, user_id: int | None = None) -> dict:
         "status": "planned",
         "plan": first.model_dump(mode="json"),
         "alternatives": alternatives,
+        "cold_start": cold,
     }
 
 
@@ -119,8 +212,8 @@ def load_trip(conn: Any, trip_id: str, user_id: int | None = None) -> dict:
     """One trip. With a user_id, a trip someone else owns is a 404, not a 403:
     the traveller has no business learning that the id exists."""
     row = conn.execute(
-        "SELECT id, request, status, plan, alternatives, created_at, user_id "
-        "FROM trip WHERE id = %s",
+        "SELECT id, request, status, plan, alternatives, created_at, user_id, "
+        "narration, cold_start FROM trip WHERE id = %s",
         (trip_id,),
     ).fetchone()
     if not row or (user_id is not None and row[6] is not None and row[6] != user_id):
@@ -133,6 +226,8 @@ def load_trip(conn: Any, trip_id: str, user_id: int | None = None) -> dict:
         "alternatives": _json(row[4]),
         "created_at": row[5].isoformat(),
         "user_id": row[6],
+        "narration": row[7] if len(row) > 7 else None,
+        "cold_start": _json(row[8]) if len(row) > 8 else None,
     }
 
 
@@ -398,6 +493,20 @@ def coverage(conn: Any) -> list[dict]:
         }
         for r in rows
     ]
+
+
+@router.get("/places/coverage")
+def places_coverage(conn: Db, cities: str = "") -> dict:
+    """{typed city: poi rows we hold}, so the form can warn before it posts."""
+    typed = list(dict.fromkeys(c.strip() for c in cities.split(",") if c.strip()))
+    hubs = {c: hub_city(c) for c in typed}
+    counts = dict(
+        conn.execute(
+            "SELECT city, count(*) FROM poi WHERE city = ANY(%s) GROUP BY city",
+            (sorted(set(hubs.values())),),
+        ).fetchall()
+    )
+    return {c: int(counts.get(h, 0)) for c, h in hubs.items()}
 
 
 @router.get("/places/search")

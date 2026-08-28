@@ -3,6 +3,8 @@
 import json
 from pathlib import Path
 
+from app.planner.poi_rules import INDIA_BOX, KARNATAKA_BOX, poi_problems
+
 DATA = json.loads(
     (Path(__file__).resolve().parents[1] / "data" / "pois.json").read_text(
         encoding="utf-8"
@@ -30,19 +32,31 @@ def test_counts() -> None:
 
 
 def test_poi_fields() -> None:
+    # The same rule set the cold start applies, against the Karnataka box.
     for p in POIS:
-        assert 11.5 <= p["lat"] <= 18.5, p["name"]
-        assert 74.0 <= p["lng"] <= 78.6, p["name"]
-        assert p["typical_dwell_min"] > 0, p["name"]
+        assert poi_problems(p, KARNATAKA_BOX) == [], p["name"]
         assert p["category"] in CATEGORIES, p["name"]
-        assert set(p.get("closed_on", [])) <= set(range(1, 8)), p["name"]
-        assert 1 <= p.get("popularity", 3) <= 5, p["name"]
-        assert p.get("entry_fee_inr", 0) >= 0, p["name"]
         assert p.get("trust", "draft") in {"verified", "draft"}, p["name"]
-        if p.get("opens") and p.get("closes"):
-            assert p["opens"] < p["closes"], p[
-                "name"
-            ]  # "HH:MM" strings compare correctly
+
+
+def test_the_rules_catch_a_bad_row() -> None:
+    good = {
+        "name": "X",
+        "lat": 12.9,
+        "lng": 74.8,
+        "category": "temple",
+        "typical_dwell_min": 45,
+        "opens": "09:00",
+        "closes": "17:30",
+    }
+    assert poi_problems(good, KARNATAKA_BOX) == []
+    assert poi_problems({**good, "lat": 28.6}, KARNATAKA_BOX) == ["outside the box"]
+    assert poi_problems({**good, "lat": 28.6}, INDIA_BOX) == []
+    assert "unknown category" in poi_problems({**good, "category": "hotel"}, INDIA_BOX)
+    assert "opens is not HH:MM" in poi_problems({**good, "opens": "9am"}, INDIA_BOX)
+    assert "closed_on must be ISO weekdays" in poi_problems(
+        {**good, "closed_on": [0, 8]}, INDIA_BOX
+    )
 
 
 def test_no_duplicate_name_city() -> None:
