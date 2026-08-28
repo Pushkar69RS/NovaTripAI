@@ -27,6 +27,7 @@ from app.api.routes import (
     places_search,
 )
 from app.demo import DEMO_REQUEST, find_demo_trip
+from app.katha.city_layer import THEME_LEDE, THEME_ORDER, label_for
 from app.planner.engine import CENTROID_SQL, load, transfer_moves
 from app.planner.models import Day, Plan, TripRequest
 from app.planner.transport import attach
@@ -640,7 +641,13 @@ def katha_page(request: Request, tour_id: str, conn: Db, me: Me) -> HTMLResponse
     for s in katha.segments:
         place = _place_of(s.spine_item)
         theme = s.spine_item.split(":", 1)[1].strip() if ":" in s.spine_item else ""
-        if scope.kind == "place" and theme:
+        title = s.title
+        if s.theme:  # a city Katha: the theme is the side label, the paragraph keeps its own title
+            side = label_for(s.theme, str(scope.id))
+            title = (
+                s.body_source_chunks[0].title if s.body_source_chunks else None
+            ) or s.title
+        elif scope.kind == "place" and theme:
             side = theme[:1].upper() + theme[1:]
         elif theme == "opening":
             side = f"{place} · to begin"
@@ -650,7 +657,7 @@ def katha_page(request: Request, tour_id: str, conn: Db, me: Me) -> HTMLResponse
         source = next((r.name or r.url for r in s.sources if r.name or r.url), "")
         segments.append(
             {
-                "title": s.title,
+                "title": title,
                 "chunk_type": s.chunk_type,
                 "is_legend": s.is_legend,
                 "place": place,
@@ -666,6 +673,21 @@ def katha_page(request: Request, tour_id: str, conn: Db, me: Me) -> HTMLResponse
                 else None,
             }
         )
+    themes = {s.theme for s in katha.segments if s.theme}
+    lede = note = None
+    if scope.kind == "city":
+        if themes:
+            parts = [
+                THEME_LEDE[t] for t in THEME_ORDER if t in THEME_LEDE and t in themes
+            ]
+            lede = (
+                f"{scope_title} in {katha.duration_min} minutes — {', '.join(parts)}."
+            )
+        else:
+            note = (
+                f"We have nothing written about {scope_title} as a city yet; "
+                "here is what we have on its places."
+            )
     return render(
         request,
         "katha.html",
@@ -676,6 +698,8 @@ def katha_page(request: Request, tour_id: str, conn: Db, me: Me) -> HTMLResponse
         scope_title=scope_title,
         kn_title=kn_title,
         segments=segments,
+        lede=lede,
+        note=note,
         trip=trip,
         trip_title=trip_title,
         language_name=LANGUAGE_NAMES.get(katha.language, katha.language),

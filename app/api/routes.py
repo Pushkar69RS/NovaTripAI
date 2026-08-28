@@ -8,6 +8,7 @@ import os
 from collections.abc import Iterator
 from typing import Annotated, Any
 
+import httpx
 import psycopg
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field
@@ -32,6 +33,7 @@ from app.planner.coldstart import (
     ColdStartError,
     ColdStartReport,
     ensure_city,
+    ensure_city_layer,
 )
 from app.planner.distance import DETOUR, haversine
 from app.planner.engine import CENTROID_SQL, load, plan_all, scored_pool
@@ -381,9 +383,24 @@ def fill_narration(katha: Katha, city: str | None) -> tuple[bool, str]:
         segment.narration = narrate_segment(
             segment.model_dump(),
             katha.language,
-            place=segment.spine_item or city or "",
+            place=(city or "") if segment.theme else (segment.spine_item or city or ""),
         ).text
     return True, "narrator"
+
+
+def _city_layer_drafter(conn: Any) -> Any:
+    """Draft the Katha city layer for a city that has none; never raises."""
+
+    def draft(city: str) -> bool:
+        try:
+            n, cost = ensure_city_layer(conn, city)
+        except (ValueError, TypeError, KeyError, RuntimeError, httpx.HTTPError) as exc:
+            log.warning("city layer for %s not drafted: %s", city, exc)
+            return False
+        log.info("city layer %s: %d paragraphs, cost_usd=%.5f", city, n, cost)
+        return n > 0
+
+    return draft
 
 
 @router.post("/katha")
@@ -397,6 +414,7 @@ def create_katha(body: KathaIn, conn: Db, me: Me) -> dict:
             body.trip_id,
             catalogue=DbCatalogue(conn),
             retriever=db_retriever(conn),
+            drafter=_city_layer_drafter(conn),
         )
     except ValueError as exc:
         raise HTTPException(404, str(exc)) from exc

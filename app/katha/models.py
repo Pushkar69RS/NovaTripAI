@@ -39,6 +39,7 @@ class Segment(BaseModel):
     words: int
     spine_item: str
     narration: str | None = None
+    theme: str | None = None  # set on a city Katha's segments; see city_layer.py
 
 
 class SpineItem(BaseModel):
@@ -60,3 +61,4 @@ class Katha(BaseModel):
     total_words: int
     spine: list[SpineItem]
     type_sequence: list[str] = Field(default_factory=list)
+    note: str | None = None  # "nothing written about X as a city yet", when so

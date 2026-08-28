@@ -287,7 +287,10 @@ def _system(language: str, is_legend: bool, job: str) -> str:
         f"{SCRIPT_NOTE[language]} "
         "Use ONLY the facts given below. Never add a date, number, name, place or "
         "claim that is not in them; if the facts are silent, stay silent. Never "
-        "give a percentage, a score or a probability. "
+        "give a percentage, a score or a probability. Never name the kind of "
+        "paragraph this is (no 'story', 'fact', 'hook', 'sensory', 'practical' "
+        "as labels) and never say 'this section' or 'this segment'; you are "
+        "already mid-walk. "
         f"{legend} "
         f"Output the {job} only, with no heading, no preamble and no notes."
     )

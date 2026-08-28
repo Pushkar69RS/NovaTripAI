@@ -7,11 +7,13 @@
     <p class="eyebrow">{{ {'city': 'City Katha', 'place': 'Place Katha · one monument, properly', 'day': 'Day Katha · your stops, in order'}[katha.scope.kind] }}</p>
     <h2 class="h1" style="font-size:33px;margin-bottom:{{ '6px' if katha.scope.kind == 'place' else '18px' }}">{{ scope_title }}{% if kn_title %} <span style="font-family:var(--kn);font-size:.6em;color:var(--ink-60)">{{ kn_title }}</span>{% endif %}</h2>
     {% if katha.scope.kind == 'day' and trip_title %}<p class="lede" style="margin-bottom:18px">From your trip to {{ trip_title }}. {{ katha.total_words }} words of material for {{ katha.duration_min }} minutes.</p>
-    {% elif katha.scope.kind == 'place' %}<p class="lede" style="margin-bottom:18px">{{ katha.segments|length|plural('segment') }}, {{ katha.total_words }} words, {{ katha.depth }}. You decide how much of it you want.</p>{% endif %}
+    {% elif katha.scope.kind == 'place' %}<p class="lede" style="margin-bottom:18px">{{ katha.segments|length|plural('segment') }}, {{ katha.total_words }} words, {{ katha.depth }}. You decide how much of it you want.</p>
+    {% elif note %}<p class="lede" style="margin-bottom:18px">{{ note }}</p>
+    {% elif lede %}<p class="lede" style="margin-bottom:18px">{{ lede }}</p>{% endif %}
 
     <div class="tourbar">
       <div><span class="pick__label">How long</span><div class="pick" data-pick="duration_min">{% for m in [2, 5, 10] %}<button data-value="{{ m }}" aria-current="{{ 'true' if katha.duration_min == m else 'false' }}">{{ m }} min</button>{% endfor %}</div></div>
-      <div><span class="pick__label">How deep</span><div class="pick" data-pick="depth"><button data-value="quick" aria-current="{{ 'true' if katha.depth == 'quick' else 'false' }}">Quick</button><button data-value="deep" aria-current="{{ 'true' if katha.depth == 'deep' else 'false' }}">Deep</button></div></div>
+      {% if katha.scope.kind != 'city' %}<div><span class="pick__label">How deep</span><div class="pick" data-pick="depth"><button data-value="quick" aria-current="{{ 'true' if katha.depth == 'quick' else 'false' }}">Quick</button><button data-value="deep" aria-current="{{ 'true' if katha.depth == 'deep' else 'false' }}">Deep</button></div></div>{% endif %}
       <div><span class="pick__label">Language</span><div class="pick" data-pick="language"><button data-value="en" aria-current="{{ 'true' if katha.language == 'en' else 'false' }}">English</button><button data-value="kn" aria-current="{{ 'true' if katha.language == 'kn' else 'false' }}">ಕನ್ನಡ</button><button data-value="hi" aria-current="{{ 'true' if katha.language == 'hi' else 'false' }}">हिन्दी</button></div></div>
     </div>
     <p class="hint" id="pick-status" style="margin:8px 0 0" hidden></p>
@@ -23,15 +25,13 @@
         {% for s in segments %}
         <div class="seg" data-seg="{{ loop.index0 }}" data-place="{{ s.place }}">
           <div class="seg__side">
-            <span class="chip{% if s.chunk_type in ['hook', 'story'] %} chip--lat{% endif %}">{{ s.chunk_type|capitalize }}</span>
-            {% if s.is_legend %}<span class="chip chip--lat">Legend</span>{% endif %}
             <span class="seg__place">{{ s.side }}</span>
             {% if s.deeper %}<button class="seg__deeper" data-deeper="{{ s.deeper }}">Go deeper →</button>{% endif %}
           </div>
           <div class="seg__body{% if not s.narrated and katha.language != 'en' %} narr-pending{% endif %}">
             <h4>{{ s.title }}</h4>
             {% for p in s.paragraphs %}<p>{{ p }}</p>{% endfor %}
-            <p class="seg__src">{% if s.is_legend %}As the legend goes · {% endif %}{{ s.source or 'source on file' }}</p>
+            <p class="seg__src">{% if s.is_legend %}As the story goes · {% endif %}{{ s.source or 'source on file' }}</p>
           </div>
         </div>
         {% endfor %}

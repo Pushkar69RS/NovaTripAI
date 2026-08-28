@@ -47,6 +47,8 @@ class Filters(BaseModel):
     poi_id: int | None = None
     chunk_type: str | None = None
     exclude_ids: list[int] = Field(default_factory=list)
+    city_level_only: bool = False  # poi_id IS NULL: paragraphs about the city itself
+    theme: str | None = None  # a city-layer theme, see app/katha/city_layer.py
 
 
 class TripContext(BaseModel):
@@ -89,6 +91,11 @@ def _where(filters: Filters, extra: str = "") -> tuple[str, dict[str, Any]]:
     if filters.chunk_type:
         clauses.append("chunk_type = %(chunk_type)s")
         params["chunk_type"] = filters.chunk_type
+    if filters.city_level_only:
+        clauses.append("poi_id IS NULL")
+    if filters.theme:
+        clauses.append("theme = %(theme)s")
+        params["theme"] = filters.theme
     if filters.exclude_ids:
         clauses.append("id <> ALL(%(exclude_ids)s)")
         params["exclude_ids"] = list(filters.exclude_ids)

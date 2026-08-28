@@ -19,9 +19,9 @@ import argparse
 import json
 import os
 from collections.abc import Callable
-from itertools import pairwise
 from typing import Any, Protocol
 
+from app.katha.city_layer import THEME_ORDER, label_for
 from app.rag.retrieve import Filters, Hit
 
 from .models import Depth, Katha, Scope, Segment, SourceChunk, SourceRef, SpineItem
@@ -76,11 +76,19 @@ def places_for(duration_min: int) -> int:
 
 
 class Catalogue(Protocol):
-    """What the builder needs to know about places and trips."""
+    """What the builder needs to know about places, trips and the city layer."""
 
     def poi(self, poi_id: int) -> dict[str, Any] | None: ...
+
     def top_pois(self, city: str, n: int) -> list[dict[str, Any]]: ...
+
     def day_stops(self, trip_id: str, day_index: int) -> tuple[str, list[dict]]: ...
+
+    def city_layer(self, city: str) -> list[dict[str, Any]]:
+        """The themed paragraphs about the city itself, in theme order, then
+        tier, then id. Keys: id, poi_id, poi_name, title, body, chunk_type,
+        is_legend, source_name, source_url, theme, tier."""
+        ...
 
 
 Retriever = Callable[[str, Filters], list[Hit]]
@@ -198,22 +206,19 @@ def _segment(hit: Hit, item: SpineItem) -> Segment:
 def _best(
     candidates: list[Hit], depth: Depth, previous: str | None, first: bool
 ) -> Hit | None:
-    allowed = [
-        h
-        for h in candidates
-        if h.chunk_type != previous and (not first or h.chunk_type in OPENERS)
-    ]
+    # A Katha opens on a hook or a story when one exists; after that the best
+    # paragraph wins, whatever came before it.
+    allowed = [h for h in candidates if not first or h.chunk_type in OPENERS]
+    if not allowed and first:
+        allowed = list(candidates)
     if not allowed:
         return None
     return max(allowed, key=lambda h: h.score + FAVOUR[depth][h.chunk_type])
 
 
 def _fits(segments: list[Segment], position: int, chunk_type: str) -> bool:
-    before = segments[position - 1].chunk_type if position > 0 else None
-    after = segments[position].chunk_type if position < len(segments) else None
-    if position == 0 and chunk_type not in OPENERS:
-        return False
-    return chunk_type != before and chunk_type != after
+    """Only the opener is protected: nothing but a hook or a story goes first."""
+    return position != 0 or not segments or chunk_type in OPENERS
 
 
 def arrange(
@@ -271,7 +276,7 @@ def arrange(
 
     if duration_min >= LONG_KATHA_MIN:
         spare = [h for pool in pools for h in pool if h.id not in used]
-        for needed in ({"story"}, {"taste", "sensory"}):
+        for needed in ({"story"},):
             if any(s.chunk_type in needed for s in segments):
                 continue
             for hit in sorted(spare, key=lambda h: -h.score):
@@ -298,25 +303,85 @@ def arrange(
 
 
 def check_rhythm(segments: list[Segment], duration_min: int) -> list[str]:
-    """Every rhythm rule the Katha breaks. Empty means it holds."""
+    """Every rhythm rule a place or day Katha breaks. Empty means it holds.
+
+    Three rules: a paragraph never repeats; the Katha opens on a hook or a
+    story when it has one; five minutes or more carry at least one story.
+    """
     problems: list[str] = []
     if not segments:
         return ["empty"]
-    if segments[0].chunk_type not in OPENERS:
+    types = {s.chunk_type for s in segments}
+    if segments[0].chunk_type not in OPENERS and types & OPENERS:
         problems.append(f"opens on {segments[0].chunk_type}, not hook or story")
-    for a, b in pairwise(segments):
-        if a.chunk_type == b.chunk_type:
-            problems.append(f"adjacent {a.chunk_type} segments")
     ids = [c.id for s in segments for c in s.body_source_chunks]
     if len(ids) != len(set(ids)):
         problems.append("a paragraph repeats")
-    if duration_min >= LONG_KATHA_MIN:
-        types = {s.chunk_type for s in segments}
-        if "story" not in types:
-            problems.append("no story in a long Katha")
-        if not types & {"taste", "sensory"}:
-            problems.append("no taste or sensory in a long Katha")
+    if duration_min >= LONG_KATHA_MIN and "story" not in types:
+        problems.append("no story in a long Katha")
     return problems
+
+
+# --------------------------------------------------------------------------- #
+# the city Katha: a fixed portrait, no retrieval
+# --------------------------------------------------------------------------- #
+
+
+def city_katha(
+    city: str,
+    duration_min: int,
+    depth: Depth,
+    language: str,
+    *,
+    catalogue: Catalogue,
+) -> Katha | None:
+    """Every city-layer paragraph whose tier fits the minutes, in theme order.
+
+    The same city and minutes always give the same Katha in the same order:
+    no retrieval, no FAVOUR, no rhythm rules, and depth is ignored. None when
+    the city has no layer yet.
+    """
+    rows = [
+        r for r in catalogue.city_layer(city) if (r.get("tier") or 99) <= duration_min
+    ]
+    if not rows:
+        return None
+    segments = []
+    for r in rows:
+        label = label_for(r["theme"], city)
+        segments.append(
+            Segment(
+                title=label,
+                chunk_type=r["chunk_type"],
+                is_legend=bool(r["is_legend"]),
+                body_source_chunks=[
+                    SourceChunk(
+                        id=r["id"],
+                        title=r["title"],
+                        body=r["body"],
+                        chunk_type=r["chunk_type"],
+                        is_legend=bool(r["is_legend"]),
+                    )
+                ],
+                sources=[SourceRef(name=r.get("source_name"), url=r.get("source_url"))],
+                text=r["body"],
+                words=len(r["body"].split()),
+                # a worth_seeing paragraph is filed under the place it opens
+                # with, so the locator pin and "Go deeper" resolve
+                spine_item=r.get("poi_name") or label,
+                theme=r["theme"],
+            )
+        )
+    return Katha(
+        scope=Scope(kind="city", id=city),
+        duration_min=duration_min,
+        depth=depth,
+        language=language,
+        segments=segments,
+        total_words=sum(s.words for s in segments),
+        spine=[],
+        type_sequence=[s.chunk_type for s in segments],
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -333,7 +398,21 @@ def build(
     *,
     catalogue: Catalogue,
     retriever: Retriever,
+    drafter: Callable[[str], object] | None = None,
 ) -> Katha:
+    note = None
+    if scope.kind == "city":
+        city = str(scope.id)
+        katha = city_katha(city, duration_min, depth, language, catalogue=catalogue)
+        if katha is None and drafter is not None:
+            drafter(city)  # the cold-start drafter; it swallows its own errors
+            katha = city_katha(city, duration_min, depth, language, catalogue=catalogue)
+        if katha is not None:
+            return katha
+        note = (
+            f"We have nothing written about {city} as a city yet; "
+            "here is what we have on its places."
+        )
     budget = duration_min * WORDS_PER_MIN
     items = split_budget(
         spine_for(scope, duration_min, depth, catalogue, trip_id), budget
@@ -390,6 +469,7 @@ def build(
         total_words=sum(s.words for s in segments),
         spine=items,
         type_sequence=[s.chunk_type for s in segments],
+        note=note,
     )
 
 
@@ -436,6 +516,33 @@ class DbCatalogue:
             if i.get("kind") == "stop"
         ]
         return day["city"], stops
+
+    def city_layer(self, city: str) -> list[dict[str, Any]]:
+        rows = self.db.execute(
+            "SELECT c.id, c.poi_id, p.name, c.title, c.body, c.chunk_type, "
+            "c.is_legend, c.source_name, c.source_url, c.theme, c.tier "
+            "FROM doc_chunk c LEFT JOIN poi p ON p.id = c.poi_id "
+            "WHERE c.city = %s AND c.theme IS NOT NULL AND c.tier IS NOT NULL "
+            "AND NOT c.retired "
+            "ORDER BY array_position(%s::text[], c.theme), c.tier, c.id",
+            (city, list(THEME_ORDER)),
+        ).fetchall()
+        return [
+            {
+                "id": r[0],
+                "poi_id": r[1],
+                "poi_name": r[2],
+                "title": r[3],
+                "body": r[4],
+                "chunk_type": r[5],
+                "is_legend": r[6],
+                "source_name": r[7],
+                "source_url": r[8],
+                "theme": r[9],
+                "tier": r[10],
+            }
+            for r in rows
+        ]
 
 
 def _poi(row: Any) -> dict[str, Any]:

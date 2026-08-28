@@ -56,7 +56,9 @@ def main() -> int:
         narrations = []
         for segment in katha.segments:
             n = narrate_segment(
-                segment.model_dump(), language, place=segment.spine_item
+                segment.model_dump(),
+                language,
+                place="Mysuru" if segment.theme else segment.spine_item,
             )
             narrations.append(n)
             flag = "fallback" if n.fell_back else f"ok x{n.attempts}"

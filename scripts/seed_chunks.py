@@ -57,11 +57,11 @@ POI_ALIAS = {
 UPSERT = """
 INSERT INTO doc_chunk
     (poi_id, city, title, body, chunk_type, is_legend, lang,
-     source_name, source_url, last_verified, aliases, retired)
+     source_name, source_url, last_verified, aliases, retired, theme, tier)
 VALUES
     (%(poi_id)s, %(city)s, %(title)s, %(body)s, %(chunk_type)s, %(is_legend)s,
      %(lang)s, %(source_name)s, %(source_url)s, %(last_verified)s, %(aliases)s,
-     false)
+     false, %(theme)s, %(tier)s)
 ON CONFLICT (city, title) DO UPDATE SET
     poi_id = excluded.poi_id,
     body = excluded.body,
@@ -72,6 +72,8 @@ ON CONFLICT (city, title) DO UPDATE SET
     last_verified = excluded.last_verified,
     aliases = excluded.aliases,
     retired = false,
+    theme = coalesce(excluded.theme, doc_chunk.theme),
+    tier = coalesce(excluded.tier, doc_chunk.tier),
     embedding = CASE
         WHEN doc_chunk.body IS DISTINCT FROM excluded.body
           OR doc_chunk.aliases IS DISTINCT FROM excluded.aliases THEN NULL
@@ -105,6 +107,32 @@ def curated_rows() -> list[dict]:
     return out
 
 
+CITY_DATE = date(2026, 8, 28)  # the date on the city layer file's own note
+
+
+def city_rows() -> tuple[list[dict], list[dict]]:
+    """(new city-layer paragraphs, retags of existing rows) from chunks_city.json.
+
+    A retag names an existing (city, title) and gives it a theme and a tier;
+    it carries no body and rewrites nothing else.
+    """
+    data = json.loads((ROOT / "data" / "chunks_city.json").read_text(encoding="utf-8"))
+    rows, retags = [], []
+    for c in data["chunks"]:
+        if "body" in c:
+            rows.append(
+                {
+                    **c,
+                    "lang": "en",
+                    "origin": "city",
+                    "last_verified": CITY_DATE.isoformat(),
+                }
+            )
+        else:
+            retags.append(c)
+    return rows, retags
+
+
 def generated_rows() -> list[dict]:
     data = json.loads((ROOT / "data" / "chunks.json").read_text(encoding="utf-8"))
     return [{**c, "lang": "en", "origin": "generated"} for c in data["chunks"]]
@@ -132,7 +160,8 @@ def main() -> int:
     args = parser.parse_args()
 
     load_dotenv(ROOT / ".env")
-    rows = curated_rows() + generated_rows()
+    city_new, retags = city_rows()
+    rows = curated_rows() + generated_rows() + city_new
 
     live: set[tuple[str, str]] = set()
     for r in rows:
@@ -179,8 +208,24 @@ def main() -> int:
                         "last_verified": date.fromisoformat(r["last_verified"]),
                         # aliases feed body_tsv: what the chunk is about, not where
                         "aliases": " | ".join(n for n in (r["poi"], name_kn) if n),
+                        "theme": r.get("theme"),
+                        "tier": r.get("tier"),
                     },
                 )
+            for t in retags:
+                cur.execute(
+                    "UPDATE doc_chunk SET theme = %s, tier = %s "
+                    "WHERE city = %s AND title = %s AND NOT retired",
+                    (t["theme"], t["tier"], t["city"], t["title"]),
+                )
+                if cur.rowcount != 1:
+                    print(f"retag found no live row: {t['city']!r} / {t['title']!r}")
+                    return 1
+            for city, n in cur.execute(
+                "SELECT city, count(*) FROM doc_chunk WHERE theme IS NOT NULL "
+                "AND NOT retired GROUP BY city ORDER BY city"
+            ):
+                print(f"  city layer {city}: {n} paragraphs")
             curated = sum(r["origin"] == "curated" for r in rows)
             print(
                 f"doc_chunk rows written: {len(rows)} "
