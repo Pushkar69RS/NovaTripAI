@@ -8,13 +8,16 @@ they are. Slides are only ever reused or duplicated from it, never restyled.
 Where one mandated section needs more than one slide, the extra slide is a
 duplicate of the same template slide with "(contd.)" in the title.
 
-Every figure on the results slides is traceable to this repository; the two
-literature figures are attributed to their papers on the slide itself.
+Every figure on a slide comes from docs/review1/numbers.md (the JSON block at
+its end), which records the command each number came from; the literature
+figures are attributed to their papers on the slide itself.
 """
 
 from __future__ import annotations
 
 import copy
+import json
+import math
 import sys
 from pathlib import Path
 
@@ -32,6 +35,23 @@ TEMPLATE = (
 )
 OUT = ROOT / "docs/review1/Travel_Yantra_Phase2_Review1.pptx"
 SHOTS = ROOT / "docs/screenshots"
+NUMBERS = ROOT / "docs/review1/numbers.md"
+
+
+def load_numbers() -> dict:
+    """Every figure on a slide comes from the JSON block in numbers.md."""
+    text = NUMBERS.read_text(encoding="utf-8")
+    return json.loads(text.split("```json", 1)[1].split("```", 1)[0])
+
+
+N = load_numbers()
+DEMO, RET, DB, COLD, LIT = (
+    N["demo"],
+    N["retrieval"],
+    N["db"],
+    N["cold_start"],
+    N["literature"],
+)
 
 #: The template's own theme colours (theme1.xml), used for every diagram so no
 #: colour enters the deck that the template did not already define.
@@ -388,10 +408,10 @@ def slide_abstract(prs) -> None:
             (
                 0,
                 (
-                    "Context: Planning a multi-day trip in India means assembling it by "
-                    "hand across booking, review and mapping platforms, and almost every "
-                    "one of those tools assumes the traveller reads English. At the site "
-                    "itself there is no grounded guide to explain what is being looked at."
+                    "Context: Planning a trip in India means a dozen browser tabs, almost "
+                    "all in English, and a chat answer that may be confidently wrong about "
+                    "when a place closes. At the site itself there is no guide that can be "
+                    "trusted on a date or a fee."
                 ),
             ),
             (
@@ -415,22 +435,27 @@ def slide_abstract(prs) -> None:
             (
                 0,
                 (
-                    "Methods: A deterministic solver computes the itinerary — candidate "
-                    "selection, k-means day clustering, nearest-neighbour and 2-opt "
-                    "ordering under opening-hour windows, a validator and a repair loop. "
-                    "The language model is confined to parsing the traveller's words and "
-                    "narrating what the solver has already decided, over a "
-                    "retrieval-augmented corpus in which every paragraph carries a source."
+                    "Methods: Our own solver computes the itinerary — candidate selection, "
+                    "grouping places by part of the city, nearest-next ordering then "
+                    "untangling under opening hours, a checklist, and a repair loop that "
+                    "rebuilds one day. The language model reads the traveller's words into "
+                    "the form, drafts places for a city we have never seen (labelled "
+                    "unverified), writes the finished plan up and reads the guide aloud; "
+                    "every paragraph it speaks is checked against its source."
                 ),
             ),
             (
                 0,
                 (
-                    "Results: On the seeded demonstration trip the routed itinerary is "
-                    "30.9 km against 34.98 km for the same stops visited in list order, "
-                    "with 37 of 37 constraint checks passed and a 3 ms build. Retrieval "
-                    "reaches Recall@5 of 0.933, all 14 narration segments passed the "
-                    "groundedness check, and 101 automated tests pass."
+                    f"Results: On the demonstration trip the routed itinerary is "
+                    f"{DEMO['routed_km']} km against {DEMO['listed_km']} km for the same "
+                    f"stops in list order, with {DEMO['checks_passed']} of "
+                    f"{DEMO['checks_total']} checks passed in {DEMO['build_ms']} ms. "
+                    f"Retrieval reaches Recall@5 of {RET['written']['hybrid'][0]:.3f} on "
+                    f"written questions and {RET['lookups']['hybrid'][0]:.3f} on name "
+                    f"lookups; {N['narration']['passed']} of {N['narration']['total']} "
+                    f"narrated segments passed the fact-check; {N['tests']} automated "
+                    "tests pass."
                 ),
             ),
         ],
@@ -468,8 +493,9 @@ def slide_introduction(prs) -> None:
                 (
                     "Scope of this review — Objective 1: the planner is an India-wide "
                     "architecture; nothing in the solver is specific to one state. It is "
-                    "demonstrated on a Karnataka dataset because that is where our "
-                    "verified data currently exists."
+                    "demonstrated on Karnataka data because that is where our verified "
+                    "data exists; a city outside it is drafted by the model on first "
+                    "request and labelled unverified until a source confirms it."
                 ),
             ),
             (
@@ -641,14 +667,18 @@ def slide_objectives(prs) -> None:
 # --------------------------------------------------------------------------- #
 
 PIPELINE = [
-    ("1 Intake", "form: who, when,\nbudget, pace, tastes", False),
-    ("2 Candidates", "SQL + interest tags +\nknowledge-graph edges", False),
-    ("3 Cluster", "k-means over (lat, lng),\nfixed seed", False),
-    ("4 Route", "nearest neighbour, then\n2-opt under hour windows", False),
-    ("5 Validate", "hours, closures, day end,\nmeal gap, travel, budget", False),
-    ("6 Repair", "drops one flexible stop,\nrebuilds that day only", False),
+    ("1 Your words", "the model reads them into\na form you check", True),
+    ("2 Unknown city?", "the model drafts its places,\nlabelled unverified", True),
+    ("3 Candidates", "SQL + your interests +\npairing edges (our code)", False),
+    (
+        "4 Days and route",
+        "group by part of the city;\nnearest-next, then untangle",
+        False,
+    ),
+    ("5 Checklist", "hours, closures, day end,\nmeal, travel, budget", False),
+    ("6 Repair", "drop one flexible stop,\nrebuild that day only", False),
     ("7 Reasons", "one plain sentence per\nstop, from templates", False),
-    ("8 Narrate", "Katha and chat replies,\nfact-checked after", True),
+    ("8 Narrate", "writes the plan up, reads\nKatha aloud, fact-checked", True),
 ]
 
 
@@ -661,17 +691,16 @@ def slide_methodology(prs) -> None:
             (
                 0,
                 (
-                    "The language model parses what the traveller writes and narrates "
-                    "what has been decided. The itinerary itself is computed by our own "
-                    "deterministic solver."
+                    "The plan is computed by our own solver. The AI reads, drafts data "
+                    "when we have none, and narrates. It never decides the plan."
                 ),
                 True,
             ),
             (
                 0,
                 (
-                    "Seven of the eight stages below are ordinary code with a fixed "
-                    "random seed, so the same request always produces the same plan."
+                    "Stages 3 to 7 are ordinary code following fixed rules with a fixed "
+                    "random seed, so the same request always gives the same plan."
                 ),
             ),
         ],
@@ -717,7 +746,7 @@ def slide_methodology(prs) -> None:
         legend_y - 0.03,
         3.5,
         0.25,
-        "Our code — deterministic, seeded",
+        "Our code — fixed rules, seeded",
         size=10,
     )
     box(slide, 4.35, legend_y, 0.22, 0.16, "", fill=ORANGE, line=None)
@@ -727,7 +756,7 @@ def slide_methodology(prs) -> None:
         legend_y - 0.03,
         4.2,
         0.25,
-        "Large language model — language only",
+        "Language model — reads, drafts, narrates",
         size=10,
     )
     label(
@@ -736,9 +765,10 @@ def slide_methodology(prs) -> None:
         5.78,
         8.9,
         0.9,
-        "The model is also used to parse a chat edit into a strict JSON instruction "
-        "(stage 1 on a later turn). It never chooses a stop, a time or an order; a "
-        "message it cannot parse becomes one clarifying question, not a guess.",
+        "The model also turns a chat edit into a strict instruction, and one day is "
+        "rebuilt while the others stay untouched. Anything it drafts is labelled on "
+        "screen until a source confirms it; anything it narrates is checked against "
+        "its source, and a message it cannot read becomes one question, not a guess.",
         size=11,
         italic=True,
         color=RGBColor(0x33, 0x33, 0x33),
@@ -859,21 +889,28 @@ def slide_methodology_2(slide) -> None:
     # 100% of a benchmark maps to `span` inches. 0.6% would be invisible, so
     # every bar keeps a minimum sliver and its value is printed beside it.
     span = 2.45
+    neural = LIT["chinatravel_neurosymbolic"] / LIT["chinatravel_neural_ratio"]
     groups = [
         (
             1.92,
             "TravelPlanner (Xie et al., ICML 2024) — final pass rate [1]",
-            [("GPT-4-Turbo", 0.6, RED), ("LLM + SMT solver [2]", 97.0, BLUE)],
+            [
+                ("GPT-4-Turbo", LIT["travelplanner_gpt4"], RED, None),
+                ("LLM + solver [2]", LIT["travelplanner_solver"], BLUE, None),
+            ],
         ),
         (
             2.98,
             "ChinaTravel (Shao et al., ICLR 2026) — constraint satisfaction [3]",
-            [("Purely neural", 2.6, RED), ("Neuro-symbolic", 37.0, BLUE)],
+            [
+                ("Purely neural", neural, RED, "about a tenth"),
+                ("Neuro-symbolic", LIT["chinatravel_neurosymbolic"], BLUE, None),
+            ],
         ),
     ]
     for top, caption, entries in groups:
         label(slide, 5.35, top, 4.1, 0.24, caption, size=8.5, italic=True, color=GREY)
-        for i, (name, value, colour) in enumerate(entries):
+        for i, (name, value, colour, shown) in enumerate(entries):
             y = top + 0.26 + i * 0.35
             width = max(value / 100 * span, 0.05)
             bar(slide, 6.72, y, width, 0.26, fill=colour, text="")
@@ -882,9 +919,9 @@ def slide_methodology_2(slide) -> None:
                 slide,
                 6.79 + width,
                 y + 0.01,
-                1.0,
+                1.4,
                 0.24,
-                f"{value:g}%",
+                shown or f"{value:g}%",
                 size=9.5,
                 bold=True,
             )
@@ -894,11 +931,12 @@ def slide_methodology_2(slide) -> None:
         4.02,
         4.1,
         1.5,
-        "Pure language-model agents score in the low single digits on both "
-        "benchmarks. Pairing the model with a solver raises that by more than an "
-        "order of magnitude on both. These are the published figures, not ours, "
-        "and they are why the planner here is a solver and the model is kept out "
-        "of the decision.",
+        f"Pure language-model agents score in the low single digits on both "
+        f"benchmarks. Pairing the model with a solver raises that to "
+        f"{LIT['travelplanner_solver']:g} percent on TravelPlanner (Hao et al.) and "
+        f"tenfold on ChinaTravel, the papers' own comparison. These are published "
+        f"figures, not ours, and they are why the plan here is computed by a solver "
+        f"and the model is kept out of the decision.",
         size=10,
         color=INK,
     )
@@ -908,10 +946,125 @@ def slide_methodology_2(slide) -> None:
         5.50,
         4.1,
         0.6,
-        "Our own constraint result on the demonstration trip — 37 of 37 checks "
-        "passed — is on the results slide.",
+        f"Our own result on the demonstration trip — {DEMO['checks_passed']} of "
+        f"{DEMO['checks_total']} checks passed — is on the results slide.",
         size=10,
         bold=True,
+    )
+
+
+def slide_methodology_3(slide) -> None:
+    head(slide, "METHODOLOGY (contd.)", size=30)
+    set_body(
+        slide,
+        [
+            (
+                0,
+                (
+                    "Katha, the guide: the model speaks only from paragraphs we have "
+                    "written and stored, and every paragraph carries its source."
+                ),
+                True,
+            )
+        ],
+        size=14,
+        space=2,
+    )
+    place(body_of(slide), left=0.5, top=1.00, width=8.96, height=0.5)
+
+    label(
+        slide,
+        0.55,
+        1.60,
+        4.3,
+        0.25,
+        "City Katha — a fixed portrait",
+        size=11,
+        bold=True,
+    )
+    box(
+        slide,
+        0.55,
+        1.90,
+        4.3,
+        3.15,
+        "What the city is · how it began · who ruled here · the city today · "
+        "what it eats · festivals · worth your time · before you come\n\n"
+        "Each paragraph sits at a tier — 2, 5 or 10 minutes — so a longer Katha "
+        "is a superset of a shorter one. More minutes means more of the city, "
+        "never more of the inside of one monument; that lives in the Place Katha "
+        "behind “Go deeper”.\n\n"
+        "No retrieval and no randomness on this path: the same city and the same "
+        "minutes always tell the same story, in the same order. A city we have "
+        "never seen gets its portrait drafted by the model and labelled.",
+        fill=WHITE,
+        line=BLUE,
+        line_width=1.5,
+        size=10,
+        align=PP_ALIGN.LEFT,
+        anchor=MSO_ANCHOR.TOP,
+        shape=MSO_SHAPE.RECTANGLE,
+    )
+
+    label(
+        slide,
+        5.15,
+        1.60,
+        4.3,
+        0.25,
+        "Place and Day Kathas, and questions — retrieval",
+        size=11,
+        bold=True,
+    )
+    box(
+        slide,
+        5.15,
+        1.90,
+        4.3,
+        3.15,
+        "Every paragraph is turned into a list of numbers that captures its "
+        "meaning, so a question asked in Kannada lands near an answer written in "
+        "English. A second search matches exact words, for names. The two rankings "
+        "are merged; below 0.81 similarity with no exact match the guide refuses "
+        "rather than answers.\n\n"
+        "After the model writes a paragraph, every date, number and name is checked "
+        "against the source it was given. Anything of its own is thrown away and the "
+        "model tries once more; if that fails too, the source text is spoken as it "
+        "is.\n\n"
+        "Speech is Sarvam, served from our own cache for the demo.",
+        fill=WHITE,
+        line=ORANGE,
+        line_width=1.5,
+        size=10,
+        align=PP_ALIGN.LEFT,
+        anchor=MSO_ANCHOR.TOP,
+        shape=MSO_SHAPE.RECTANGLE,
+    )
+    label(
+        slide,
+        0.55,
+        5.25,
+        8.9,
+        0.5,
+        "For the record: pgvector HNSW for the meaning search, tsvector for the exact "
+        "words, reciprocal rank fusion (k = 60), multilingual-e5-small (384 "
+        "dimensions), google/gemini-3.1-flash-lite for narration.",
+        size=9,
+        italic=True,
+        color=GREY,
+    )
+    label(
+        slide,
+        0.55,
+        5.80,
+        8.9,
+        0.7,
+        "Rhythm rules for a Place or Day Katha: a paragraph never repeats; it opens "
+        "on a hook or a story when there is one; five minutes or more carries at "
+        "least one story.",
+        size=10,
+        italic=True,
+        color=RGBColor(0x33, 0x33, 0x33),
     )
 
 
@@ -922,52 +1075,58 @@ def slide_methodology_2(slide) -> None:
 SHOT_ROWS = [
     [
         (
-            "01-landing.png",
-            "Landing page. The Day 2 map is drawn from the live plan in the database — no mock data on any page.",
+            "04b-form-step1.png",
+            "The form, filled by the model from one pasted sentence; the traveller checks it.",
         ),
         (
-            "04-form-step1.png",
-            "Structured intake, step 1 of 3: origin, destinations, dates, departure window and local transport.",
+            "07b-building.png",
+            (
+                f"Build trace from PlanMetrics: {DEMO['candidates']} of {DEMO['places']} candidates, "
+                f"{DEMO['listed_km']} → {DEMO['routed_km']} km, {DEMO['checks_passed']}/{DEMO['checks_total']} checks."
+            ),
         ),
         (
-            "07-building.png",
-            "Build trace, every figure read back from PlanMetrics: 27 candidates of 112, 3 clusters, 34.98 km listed to 30.9 km routed, 37/37 checks, 3 repairs.",
+            "09b-plan-routed.png",
+            "Plan page: “In a few words”, written by the model and checked; the getting-around line.",
         ),
         (
-            "08-chooser.png",
-            "Three ranked plans from three scoring variants, each with its real entry-fee total and comfort verdict.",
-        ),
-    ],
-    [
-        (
-            "09-plan-routed.png",
-            "Plan view: day tabs, the timed rail with travel legs, and the day map. The filled pin is the fixed-time stop.",
-        ),
-        (
-            "10-plan-day2-listed.png",
-            "The same Day 2 drawn as listed — visiting the stops in candidate order costs 10.53 km.",
-        ),
-        (
-            "11-plan-day2-trace.png",
-            "The trace drawer: every stage of the computation for the day on screen, including the fixes made.",
-        ),
-        (
-            "12-plan-chat-edit.png",
-            "A chat edit rebuilds Day 2 only. Days 1 and 3 are byte-for-byte identical, and the reply says so.",
+            "10b-plan-day2-listed.png",
+            (
+                f"Day 2 as listed, on real tiles: {DEMO['day2_listed_km']} km in list order against "
+                f"{DEMO['day2_routed_km']} km routed."
+            ),
         ),
     ],
     [
         (
-            "17-katha-city.png",
-            "Katha player: segments typed hook, story, fact or taste, each carrying the source it was built from.",
+            "12b-plan-chat-edit.png",
+            "A chat edit rebuilds Day 2 only; Days 1 and 3 untouched, and the reply says so.",
         ),
         (
-            "18-katha-playing.png",
-            "Sarvam speech playing from the on-disk cache; the browser voice is the fallback when speech is unavailable.",
+            "17b-katha-city.png",
+            "Mysuru city Katha at 2 minutes: a fixed portrait, no type labels, a source per paragraph.",
         ),
         (
-            "19-doesnt-fit.png",
-            "Mysuru and Hampi in one day: refused, with the arithmetic shown and three buildable alternatives.",
+            "14b-katha-place.png",
+            "Place Katha for Mysore Palace, with the depth picker; monument interiors live here.",
+        ),
+        (
+            "15b-katha-home.png",
+            "Katha home: one pin per region with its place count, on real tiles.",
+        ),
+    ],
+    [
+        (
+            "07c-building-coldstart.png",
+            f"Mangalore, never seen before: {COLD['places']} places drafted in {COLD['seconds']:g} s, labelled unverified.",
+        ),
+        (
+            "09c-plan-mangalore.png",
+            "The Mangalore plan: our solver scheduled the draft; each stop says “AI-drafted · unverified”.",
+        ),
+        (
+            "19c-doesnt-fit.png",
+            "Mysuru and Hampi in one day: refused with the arithmetic and two buildable alternatives.",
         ),
     ],
 ]
@@ -1007,9 +1166,9 @@ def slide_results(prs) -> None:
                 (
                     "Setup: Python 3.12 and FastAPI against Supabase PostgreSQL 17 with "
                     "pgvector and pg_trgm; embeddings computed locally with "
-                    "multilingual-e5-small; speech from Sarvam bulbul:v3. Planner and "
-                    "retrieval are measured by their own harnesses, offline where they "
-                    "can be, so the numbers are reproducible."
+                    "multilingual-e5-small; models through OpenRouter; speech from Sarvam "
+                    "bulbul:v3. Planner and retrieval are measured by their own harnesses, "
+                    "offline where they can be, so the numbers are reproducible."
                 ),
                 False,
             )
@@ -1036,11 +1195,12 @@ def slide_results(prs) -> None:
         4.15,
         [
             ["Dataset", "Count"],
-            ["Points of interest", "112"],
-            ["Verified against live sources", "20"],
-            ["Of those 20, corrected by verification", "16"],
-            ["Live corpus paragraphs", "257"],
-            ["Paragraphs marked legend", "24"],
+            ["Places in the table", str(DB["poi_total"])],
+            ["Verified against a live source", str(DB["poi_verified"])],
+            ["Of those, corrected by verification", str(DB["corrected_of_verified"])],
+            ["Drafted by the model, unverified", str(DB["poi_ai"])],
+            ["Live corpus paragraphs", str(DB["chunks_live"])],
+            ["Of which the city portrait layer", str(DB["chunks_themed"])],
         ],
         col_widths=[3.05, 1.10],
         size=10,
@@ -1051,27 +1211,29 @@ def slide_results(prs) -> None:
         0.55,
         3.92,
         4.15,
-        0.75,
-        "Sixteen of the twenty verified entries were wrong before we checked them. "
-        "That ratio is the argument for verifying rather than trusting.",
-        size=10,
+        0.62,
+        f"{DB['corrected_of_verified']} of the {DB['poi_verified']} verified entries "
+        "were wrong before we checked them. That ratio is the argument for verifying "
+        "rather than trusting, and for labelling what is not yet verified.",
+        size=9.5,
         italic=True,
         color=RGBColor(0x33, 0x33, 0x33),
     )
 
-    label(slide, 0.55, 4.72, 4.15, 0.25, "Module-wise status", size=11.5, bold=True)
+    label(slide, 0.55, 4.62, 4.15, 0.25, "Module-wise status", size=11.5, bold=True)
     table(
         slide,
         0.55,
-        5.00,
+        4.90,
         4.15,
         [
             ["Module", "State"],
+            ["Intake parser and cold start", "Working"],
             ["Planner (cluster, route, validate, repair)", "Working"],
-            ["Retrieval and Katha builder", "Working"],
-            ["Narration with post-check", "Working"],
+            ["Retrieval; city, place and day Kathas", "Working"],
+            ["Narration with fact-check", "Working"],
             ["Speech (Sarvam, cached)", "Working"],
-            ["Web application and chat", "Working"],
+            ["Web application, maps and chat", "Working"],
         ],
         col_widths=[3.15, 1.00],
         size=9.5,
@@ -1088,14 +1250,14 @@ def slide_results(prs) -> None:
         size=11.5,
         bold=True,
     )
-    # One scale for all four bars (2.55 in = 34.98 km), so Day 2 cannot be read
-    # as though it were the whole trip. Labels sit outside the short bars.
-    scale = 2.55 / 34.98
+    # One scale for all four bars, so Day 2 cannot be read as though it were
+    # the whole trip. Labels sit outside the short bars.
+    scale = 2.55 / DEMO["listed_km"]
     rows = [
-        (2.34, "Whole trip, as listed", 34.98, RED),
-        (2.70, "Whole trip, as routed", 30.90, BLUE),
-        (3.16, "Day 2, as listed", 10.53, RED),
-        (3.52, "Day 2, as routed", 6.45, BLUE),
+        (2.34, "Whole trip, as listed", DEMO["listed_km"], RED),
+        (2.70, "Whole trip, as routed", DEMO["routed_km"], BLUE),
+        (3.16, "Day 2, as listed", DEMO["day2_listed_km"], RED),
+        (3.52, "Day 2, as routed", DEMO["day2_routed_km"], BLUE),
     ]
     for y, name, value, colour in rows:
         bar(slide, 6.45, y, value * scale, 0.28, fill=colour, text="")
@@ -1128,10 +1290,13 @@ def slide_results(prs) -> None:
         4.35,
         [
             ["Planner measure", "Result"],
-            ["Constraint checks passed", "37 / 37"],
-            ["Repairs applied", "3"],
-            ["Candidates considered", "27 of 112"],
-            ["Build time", "3 ms"],
+            [
+                "Constraint checks passed",
+                f"{DEMO['checks_passed']} / {DEMO['checks_total']}",
+            ],
+            ["Repairs applied", str(DEMO["repairs"])],
+            ["Candidates considered", f"{DEMO['candidates']} of {DEMO['places']}"],
+            ["Build time", f"{DEMO['build_ms']} ms"],
         ],
         col_widths=[3.15, 1.20],
         size=10,
@@ -1145,7 +1310,7 @@ def slide_results(prs) -> None:
         0.85,
         "“As listed” is the same stops visited in candidate order — what an "
         "itinerary that never routes produces. It is the honest baseline, because "
-        "nearest-neighbour was already optimal here.",
+        "nearest-next was already optimal here.",
         size=10,
         italic=True,
         color=RGBColor(0x33, 0x33, 0x33),
@@ -1157,13 +1322,14 @@ def slide_results_2(slide) -> None:
     body = body_of(slide)
     body._element.getparent().remove(body._element)
 
+    w, lk, kn = RET["written"], RET["lookups"], RET["kannada"]
     label(
         slide,
         0.55,
         1.00,
         5.6,
         0.25,
-        "Retrieval — Recall@5 over the evaluation set",
+        f"Retrieval — Recall@5, re-measured today (eval_run {RET['eval_run']})",
         size=11.5,
         bold=True,
     )
@@ -1173,43 +1339,66 @@ def slide_results_2(slide) -> None:
         1.30,
         5.55,
         [
-            ["Method", "Recall@5", "Kannada-only", "p50 latency"],
-            ["Dense (pgvector, e5)", "0.933", "0.833", "58 ms"],
-            ["Lexical (tsvector)", "0.733", "0.333", "—"],
-            ["Hybrid + RRF", "0.933", "—", "116 ms"],
+            ["Method", "30 questions", "10 name lookups", "Kannada", "p50"],
+            [
+                "Dense (pgvector, e5)",
+                f"{w['dense'][0]:.3f}",
+                f"{lk['dense'][0]:.3f}",
+                f"{kn['dense']:.3f}",
+                f"{w['dense'][2]:.0f} ms",
+            ],
+            [
+                "Lexical (tsvector)",
+                f"{w['lexical'][0]:.3f}",
+                f"{lk['lexical'][0]:.3f}",
+                f"{kn['lexical']:.3f}",
+                f"{w['lexical'][2]:.0f} ms",
+            ],
+            [
+                "Hybrid + RRF",
+                f"{w['hybrid'][0]:.3f}",
+                f"{lk['hybrid'][0]:.3f}",
+                f"{kn['hybrid']:.3f}",
+                f"{w['hybrid'][2]:.0f} ms",
+            ],
         ],
-        col_widths=[2.25, 1.05, 1.20, 1.05],
-        size=10,
-        head_size=10,
+        col_widths=[1.75, 1.05, 1.25, 0.75, 0.75],
+        size=9.5,
+        head_size=9.5,
     )
     label(
         slide,
         0.55,
         2.60,
         5.55,
-        1.5,
+        1.45,
         "Reported honestly: hybrid retrieval tied dense rather than beating it, at "
-        "twice the latency. We kept it for one measured reason — lexical retrieval is "
-        "perfect on exact proper nouns (MRR 1.000 on name lookups), which is how a "
-        "traveller actually searches for a monument. Dense retrieval dominates on "
-        "Kannada, where the English index has almost nothing to match.",
-        size=10.5,
+        "nearly twice the latency. We keep it for one measured reason — on exact "
+        f"names the word search is as good as the meaning search ({lk['lexical'][0]:.3f} "
+        f"against {lk['dense'][0]:.3f}) at less than half the time, which is how a "
+        "traveller actually looks for a monument — and the meaning search carries "
+        f"Kannada ({kn['dense']:.3f} against {kn['lexical']:.3f}), where the English "
+        "index has almost nothing to match.",
+        size=10,
     )
     label(
         slide,
         0.55,
         4.05,
         5.55,
-        1.2,
-        "Also reported: Recall@5 fell from 0.933 to 0.867 after we merged our "
-        "hand-written corpus into the generated one, because three hand-written "
-        "answers phrase things differently from the evaluation questions. We did not "
-        "tune the benchmark back up. The number stands as measured.",
-        size=10.5,
+        1.25,
+        "Also reported: Recall@5 fell from 0.933 to 0.867 when the hand-written "
+        "corpus was merged in, and was not tuned back. Re-measured after today's city "
+        f"portrait layer: Recall@5 unchanged, MRR {RET['previous_mrr']:.3f} → "
+        f"{w['hybrid'][1]:.3f}, p50 {RET['previous_p50']} → {w['hybrid'][2]:.0f} ms. "
+        "The numbers stand as measured.",
+        size=10,
         bold=True,
     )
 
-    label(slide, 6.35, 1.00, 3.1, 0.25, "Grounding and refusal", size=11.5, bold=True)
+    label(
+        slide, 6.35, 1.00, 3.1, 0.25, "Grounding, refusal, tests", size=11.5, bold=True
+    )
     table(
         slide,
         6.35,
@@ -1217,9 +1406,12 @@ def slide_results_2(slide) -> None:
         3.10,
         [
             ["Measure", "Result"],
-            ["Narration segments passing", "14 / 14"],
-            ["Refusal gate", "6 / 6"],
-            ["Automated tests", "101"],
+            [
+                "Narrated segments passing the check",
+                f"{N['narration']['passed']} / {N['narration']['total']}",
+            ],
+            ["Refusal gate", f"{RET['refusal'][0]} / {RET['refusal'][1]}"],
+            ["Automated tests", str(N["tests"])],
         ],
         col_widths=[2.05, 1.05],
         size=10,
@@ -1228,16 +1420,44 @@ def slide_results_2(slide) -> None:
     label(
         slide,
         6.35,
-        2.60,
+        2.55,
+        3.1,
+        0.25,
+        "Cold start — a city never seen",
+        size=11.5,
+        bold=True,
+    )
+    table(
+        slide,
+        6.35,
+        2.83,
         3.10,
-        2.6,
+        [
+            ["City", "Places", "Paragraphs", "Time", "Cost"],
+            [
+                COLD["city"],
+                str(COLD["places"]),
+                str(COLD["paragraphs"]),
+                f"{COLD['seconds']:g} s",
+                f"${COLD['cost_usd']:.3f}",
+            ],
+        ],
+        col_widths=[0.90, 0.55, 0.75, 0.45, 0.45],
+        size=9,
+        head_size=9,
+    )
+    label(
+        slide,
+        6.35,
+        3.55,
+        3.10,
+        1.75,
         "Every narrated segment is checked after generation against the paragraphs "
-        "it was given: any year, number or English proper name that is not in the "
-        "source fails the check, and the segment is retried and then replaced by the "
-        "corpus text itself.\n\n"
+        "it was given: any date, number or English name not in the source fails, the "
+        "segment is retried, then replaced by the source text itself.\n\n"
         "The refusal gate is the opposite test — six questions the corpus cannot "
-        "answer, all six refused rather than answered.",
-        size=10.5,
+        "answer, all six refused.",
+        size=9.5,
     )
     label(
         slide,
@@ -1245,11 +1465,11 @@ def slide_results_2(slide) -> None:
         5.45,
         8.9,
         0.8,
-        "Analysis: the planner result is a constraint-satisfaction result, not an "
-        "opinion — 37 of 37 checks on a trip with an elder, a child, a fixed-time "
-        "palace slot and a 7 pm curfew. The retrieval result is reported as measured, "
-        "including the regression, because a benchmark that only moves upward is not "
-        "a benchmark.",
+        f"Analysis: the planner result is a checklist result, not an opinion — "
+        f"{DEMO['checks_passed']} of {DEMO['checks_total']} checks on a trip with an "
+        "elder, a child, a fixed-time palace slot and a 7 pm evening. The retrieval "
+        "result is reported as measured, including the regression, because a "
+        "benchmark that only moves upward is not a benchmark.",
         size=11,
         italic=True,
     )
@@ -1266,22 +1486,26 @@ def slide_status(prs) -> None:
             "Completed",
             BLUE,
             (
-                "Database and schema\nDeterministic planner\nHybrid retrieval\nKatha builder\n"
+                "Intake: your words read into a form\nCold start for an unseen city\n"
+                "Deterministic planner\nHybrid retrieval\nCity, Place and Day Kathas\n"
                 "Narration with fact-check\nSarvam speech, cached\nChat repair, one day\n"
-                "Web application\nEvaluation harness"
+                "Web app on real map tiles"
             ),
         ),
         (
             "In progress",
             YELLOW,
-            "Corpus breadth beyond\nthe five current regions\n\nInternal code review",
+            (
+                "Verifying the model-drafted places\n\nCounting getting-around cost\n"
+                "against the budget\n\nOpenStreetMap as the place source\nfor new cities"
+            ),
         ),
         (
             "Not started — Review 2",
             GREY,
             (
                 "Objective 2: full five-\nlanguage support\n\nObjective 3: WhatsApp and\nvoice channels\n\n"
-                "Objective 4: live booking\nand routing APIs"
+                "Objective 4: live booking\nand routing APIs\n\nA dedicated vector database\nfor the five-language corpus"
             ),
         ),
     ]
@@ -1310,7 +1534,7 @@ def slide_status(prs) -> None:
             items,
             fill=WHITE,
             line=colour,
-            size=10.5,
+            size=10,
             align=PP_ALIGN.LEFT,
             shape=MSO_SHAPE.RECTANGLE,
             anchor=MSO_ANCHOR.TOP,
@@ -1319,7 +1543,7 @@ def slide_status(prs) -> None:
     label(
         slide,
         0.55,
-        3.90,
+        3.85,
         8.9,
         0.25,
         "Known limits, stated plainly",
@@ -1328,24 +1552,27 @@ def slide_status(prs) -> None:
     )
     limits = [
         (
-            "92 of the 112 points of interest are still unverified draft data; the "
+            f"{DB['poi_ai']} places drafted by the model for {COLD['city']} are unverified; "
+            "every one is labelled “AI-drafted · unverified” on screen until a source confirms it."
+        ),
+        (
+            "The getting-around cost is shown per day, estimated, and not yet counted "
+            "against the budget or checked by the planner."
+        ),
+        (
+            f"{DB['poi_draft']} of the seeded places are still unverified draft data; the "
             "interface labels them as estimated rather than hiding it."
         ),
         (
-            "Coorg has a single midday food stop in our data, so a long Coorg day trips "
-            "the meal-gap rule. The rule is right; the data is thin."
-        ),
-        (
-            "Map routes are drawn as straight segments between stops, not road-shaped "
-            "geometry. Distances use a detour factor, so the kilometres are honest but "
-            "the drawing is schematic."
+            "Routes are drawn as straight segments between stops, on real tiles or on the "
+            "sketch; the kilometres use a detour factor and are honest, the drawing is not."
         ),
         (
             "The system runs on localhost for this review; deployment is a post-review "
             "decision recorded in the project log."
         ),
     ]
-    y = 4.20
+    y = 4.12
     for text in limits:
         box(
             slide,
@@ -1358,20 +1585,20 @@ def slide_status(prs) -> None:
             line=None,
             shape=MSO_SHAPE.RECTANGLE,
         )
-        label(slide, 0.78, y - 0.05, 8.65, 0.5, text, size=10.5)
-        y += 0.50
+        label(slide, 0.78, y - 0.06, 8.65, 0.42, text, size=10)
+        y += 0.40
 
     label(
         slide,
         0.55,
-        6.25,
+        6.15,
         8.9,
-        0.6,
+        0.7,
         "Conclusion: two of six objectives are demonstrated in working software, "
-        "measured rather than asserted. The planner computes and proves its "
-        "itineraries; the guide speaks only what a source supports, and refuses when "
-        "it has nothing.",
-        size=11.5,
+        "measured rather than asserted. Beyond Karnataka, a city we have never seen is "
+        "drafted by the model on first request, labelled, and still scheduled by our "
+        "solver; OpenStreetMap is the intended place source for Review 2.",
+        size=11,
         bold=True,
     )
 
@@ -1413,9 +1640,9 @@ def slide_publication(prs) -> None:
             (
                 1,
                 (
-                    "Our planner, its validator and the 112-place verified dataset are "
-                    "the working reference implementation the benchmark would be released "
-                    "alongside."
+                    f"Our planner, its validator and the {DB['poi_total']}-place dataset "
+                    f"({DB['poi_verified']} verified against live sources) are the working "
+                    "reference implementation the benchmark would be released alongside."
                 ),
             ),
             (
@@ -1504,12 +1731,14 @@ LEAKED = ("<function", "0x0", "object at", "None")
 
 
 def check(path: Path) -> None:
-    """Fail loudly if any shape carries a repr rather than the text intended."""
+    """Fail loudly if any shape carries a repr rather than the text intended,
+    and report any text box whose estimated height overruns its frame."""
     from pptx import Presentation as _Presentation
 
+    prs = _Presentation(str(path))
     bad = [
         (i, shape.name, needle, shape.text_frame.text[:60])
-        for i, slide in enumerate(_Presentation(str(path)).slides, 1)
+        for i, slide in enumerate(prs.slides, 1)
         for shape in slide.shapes
         if shape.has_text_frame
         for needle in LEAKED
@@ -1519,6 +1748,29 @@ def check(path: Path) -> None:
         for entry in bad:
             print(f"  LEAKED {entry}")
         raise SystemExit(f"{len(bad)} shape(s) carry a leaked Python value")
+
+    # Overflow estimate: characters per line from the frame width and the font
+    # size (Times, about 0.5 em per character), lines at 1.2 em. Crude, so it
+    # only has to be right about the ones that clearly do not fit.
+    for i, slide in enumerate(prs.slides, 1):
+        for shape in slide.shapes:
+            if not shape.has_text_frame or not shape.text_frame.text.strip():
+                continue
+            width_in = shape.width / 914400
+            height_in = shape.height / 914400
+            lines = 0.0
+            for para in shape.text_frame.paragraphs:
+                size = next(
+                    (r.font.size.pt for r in para.runs if r.font.size is not None), 18.0
+                )
+                cpl = max(8.0, width_in * 72 / (size * 0.5))
+                text = "".join(r.text for r in para.runs)
+                lines += max(1.0, math.ceil(len(text) / cpl)) * size * 1.2 / 72
+            if lines > height_in * 1.25 + 0.1:
+                print(
+                    f"  OVERFLOW? slide {i} {shape.name!r}: ~{lines:.2f} in of text in "
+                    f"{height_in:.2f} in — {shape.text_frame.text[:50]!r}"
+                )
 
 
 def main() -> int:
@@ -1538,6 +1790,8 @@ def main() -> int:
     # Continuations, duplicated from the template slide of the same section.
     method_2 = duplicate(prs, T_METHOD)
     slide_methodology_2(method_2)
+    method_3 = duplicate(prs, T_METHOD)
+    slide_methodology_3(method_3)
     demo_slides = [prs.slides[T_DEMO]] + [duplicate(prs, T_DEMO) for _ in range(2)]
     for i, (slide, rows) in enumerate(
         zip(demo_slides, SHOT_ROWS, strict=True), start=1
@@ -1549,7 +1803,7 @@ def main() -> int:
     slide_references(references)
 
     # Template order, with each continuation directly after its own section.
-    reorder(prs, [0, 1, 2, 3, 4, 5, 6, 11, 7, 12, 13, 8, 14, 9, 10, 15])
+    reorder(prs, [0, 1, 2, 3, 4, 5, 6, 11, 12, 7, 13, 14, 8, 15, 9, 10, 16])
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     prs.save(str(OUT))

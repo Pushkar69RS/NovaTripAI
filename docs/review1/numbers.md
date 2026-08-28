@@ -55,6 +55,8 @@ Plan narration on the walk-through trips: passed after one retry on the Mysuru &
 (with "In a few words" and the getting-around line), 09c-plan-mangalore (AI-drafted chips),
 10-plan-day2-listed, 11-plan-day2-trace, 12b-plan-chat-edit, 13-katha-day, 14b-katha-place, 15-katha-home,
 16-katha-search, 17b-katha-city (2 minutes, no type labels), 18-katha-playing, 19b-doesnt-fit, 20-saved.
+Map tiles (after the Leaflet work): 09d-plan-day2-tiles, 09e-plan-day1-transfer, 09f-plan-sketch-fallback (tile host
+blocked), 10b-plan-day2-listed, 15b-katha-home, 17c-katha-locator, 19c-doesnt-fit.
 
 ## 8. Literature figures (verified with tavily on 28 Aug; attributed on the slide)
 TravelPlanner (Xie et al., ICML 2024): GPT-4-Turbo final pass rate 0.6% (confirmed: paper, opensymbolic.ai,

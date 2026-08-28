@@ -98,10 +98,19 @@ Four @travelyantra.in accounts seeded from DEMO_PASSWORD; signed cookie; every /
 or Katha someone else owns is a 404; /health and the landing page stay open.
 
 ## Review 1 deliverables (docs/review1/)
-`Travel_Yantra_Phase2_Review1.pptx` from `uv run python scripts/build_deck.py` (template slides only reused or
-duplicated; numbers from docs/review1/numbers.md), `Travel_Yantra_Phase2_Review1_Script.md` (10 minutes: about
-6 speaking, 2 demo, 2 Q&A), docs/review1/numbers.md (every figure with the command it came from), screenshots
-01–20 plus the 28 Aug captures (04b–07c, 08b, 09b–09f, 10b, 12b, 14b, 15b, 17b, 17c, 19b, 19c).
+`Travel_Yantra_Phase2_Review1.pptx` — 17 slides from `uv run python scripts/build_deck.py`: the department
+template's slides only reused or duplicated (Title, Content, Abstract, Introduction, Problem, Objectives,
+Methodology x3, Demonstration x3, Results x2, Status, Publication, References). Every figure is read from
+docs/review1/numbers.md, which records the command each number came from; the builder refuses a leaked repr
+and reports estimated text overflow. The methodology shows the AI at both ends (reads, drafts, narrates) and
+the solver in the middle. Benchmark figures as verified on 28 Aug: TravelPlanner 0.6% (Xie et al.), 93.9%
+with a solver (Hao et al., NAACL 2025), ChinaTravel 37.0% and a tenfold gain over purely neural (Shao et
+al.); the earlier ~97% and 2.6% were not the papers' figures and are gone.
+`Travel_Yantra_Phase2_Review1_Script.md` and `.docx` (`uv run python scripts/build_script_docx.py`) — 10 min:
+5:56 speaking, 2:00 demo, 2:00 Q&A; written for a technical panel with each term said once and explained;
+an eight-step demo path with cue lines, a break-glass note per step, fourteen anticipated questions (the
+vector-database plan included) and a one-page cue card.
+Screenshots: 01–20 plus the 28 Aug captures (04b–07c, 08b, 09b–09f, 10b, 12b, 14b, 15b, 17b, 17c, 19b, 19c).
 
 Known issue: RLS disabled on every public table; enable before the anon key is used.
 Known limit: 92 draft places are unverified and labelled estimated; 23 Mangalore places are model-drafted and
