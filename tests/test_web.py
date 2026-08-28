@@ -228,6 +228,9 @@ def test_the_plan_page_shows_the_narration_only_when_it_exists(password) -> None
     told = client.get("/trips/t1")
     assert "In a few words" in told.text and conn.narration in told.text
     assert "checked against it" in told.text
+    # the map library is self-hosted and loads only behind the session
+    assert "/static/leaflet/leaflet.js" in told.text
+    assert "unpkg" not in told.text and "cdn" not in told.text.lower()
     client.cookies.clear()
 
 

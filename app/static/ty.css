@@ -335,3 +335,23 @@ a.avatar{text-decoration:none}
 .narr p{margin:0 0 6px;font-size:14.5px;line-height:1.55}
 .narr .hint{margin:0}
 .dayhead__around{width:100%;margin:6px 0 0;font-size:13px;color:var(--ink-60)}
+/* real maps: Leaflet over CARTO Positron, the sketch beneath as the fallback --- */
+#day-map,#locator,#coverage-map,#fit-map{position:relative}
+#day-map{height:300px}#locator{height:240px}#coverage-map{height:400px}#fit-map{height:260px}
+#day-map svg,#locator svg,#coverage-map svg,#fit-map svg{width:100%;height:100%}
+.lmap{position:absolute;inset:0;opacity:0;transition:opacity .25s;background:var(--sheet-3)}
+.lmap.is-on{opacity:1}
+.leaflet-tile-pane{filter:sepia(.12) saturate(.9)}
+.leaflet-container{font-family:var(--body);background:var(--sheet-3)}
+.lpin{display:grid;place-items:center;box-sizing:border-box;width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--sheet-2);border:2px solid var(--sheet-2);font-family:var(--mono);font-size:11px;line-height:1;cursor:pointer}
+.lpin--hard{box-shadow:0 0 0 2px var(--laterite)}
+.lpin--lat{background:var(--laterite)}
+.lpin--dim{opacity:.4}
+.lpin--on{box-shadow:0 0 0 3px var(--river)}
+.lroute{stroke:var(--laterite);fill:none}
+.lroute--listed{stroke:var(--laterite)}
+.lroute--transfer{opacity:.85}
+.ltip.leaflet-tooltip{background:var(--sheet-2);color:var(--ink);border:1px solid var(--contour);border-radius:2px;box-shadow:none;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:3px 6px}
+.ltip.leaflet-tooltip::before{display:none}
+.leaflet-control-attribution{font-family:var(--mono);font-size:9px;background:rgba(242,242,236,.85);color:var(--ink-38)}
+.leaflet-control-attribution a{color:var(--ink-60)}

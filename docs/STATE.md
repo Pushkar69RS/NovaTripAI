@@ -60,6 +60,12 @@ costed from the hops inside the city, estimated, shown and NOT added to the tota
 trust ai_generated wear "AI-drafted · unverified" and their why ends "Hours and fee are the model's draft, not
 verified." Eyebrows read "2 adults (one over 60), 1 child" from travellers ("N people" for old trips); the
 chooser says "the evenings you asked for"; the doesn't-fit page renders a cold-start verdict without a map.
+Maps (mapInto in ty.js): Leaflet 1.9.4 self-hosted in app/static/leaflet (loaded on signed-in pages only) over
+CARTO Positron tiles — no key, no account — on the plan day map (numbered pins, hard stops ringed laterite,
+routed solid / as-listed dashed, the transfer as a dashed line with its duration), the doesn't-fit legs, the Katha
+coverage map (a pin per region with its place count) and the Katha locator (the lit place, later ones dimmed).
+The SVG sketch is drawn first and stays underneath; if no tile loads within four seconds the map is removed and
+the sketch remains (verified with the tile host blocked). The landing page keeps the SVG and makes no request.
 
 ## Katha (app/katha/build.py, app/katha/city_layer.py, data/chunks_city.json)
 A city Katha is a fixed portrait: the city's theme/tier rows (identity, origins, rulers, character, food,
@@ -95,14 +101,15 @@ or Katha someone else owns is a 404; /health and the landing page stay open.
 `Travel_Yantra_Phase2_Review1.pptx` from `uv run python scripts/build_deck.py` (template slides only reused or
 duplicated; numbers from docs/review1/numbers.md), `Travel_Yantra_Phase2_Review1_Script.md` (10 minutes: about
 6 speaking, 2 demo, 2 Q&A), docs/review1/numbers.md (every figure with the command it came from), screenshots
-01–20 plus the 28 Aug "b/c" captures (04b–07c, 08b, 09b, 09c, 12b, 14b, 17b, 19b).
+01–20 plus the 28 Aug captures (04b–07c, 08b, 09b–09f, 10b, 12b, 14b, 15b, 17b, 17c, 19b, 19c).
 
 Known issue: RLS disabled on every public table; enable before the anon key is used.
 Known limit: 92 draft places are unverified and labelled estimated; 23 Mangalore places are model-drafted and
 labelled AI-drafted · unverified until a verification pass promotes them.
 Known limit: the getting-around cost is shown, estimated, and not yet counted against the budget.
 Known limit: must_see reaches the narrator and the chat, not the solver.
-Known limit: map segments are straight lines; kilometres use a detour factor.
+Known limit: routes are drawn as straight segments between stops, on tiles or on the sketch; kilometres use a
+detour factor. Tiles need the network; the sketch does not.
 Known limit: a cold-started destination has no intercity_leg row, so the transfer is the formula
 (Bengaluru → Mangalore comes out at 536 minutes by train, estimated).
 Known limit: 54 retired doc_chunk rows await `DELETE FROM doc_chunk WHERE retired` — Rohan's call.

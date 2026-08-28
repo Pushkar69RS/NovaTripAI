@@ -178,6 +178,67 @@
       .catch(function (err) { if (button) { button.disabled = false; button.textContent = button.dataset.label; } alert(err.message); });
   }
 
+
+  // ---------------------------------------------------------------- real maps
+  // Leaflet over CARTO Positron tiles (no key, no account), the library served
+  // from /static/leaflet. The SVG sketch is drawn first and stays underneath:
+  // the tiles fade in on the first tile that loads, and if none has loaded
+  // within four seconds (dead WiFi) the map is removed and the sketch remains.
+  var TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+  var TILE_ATTR = '&copy; OpenStreetMap contributors &copy; CARTO';
+  var KARNATAKA = [[11.5, 74.0], [18.5, 78.6]];
+  var TILE_WAIT_MS = 4000;
+  function mapInto(container, opts) {
+    // opts: height, svg (the sketch), pins [{lat, lng, label, hard, dim, on, laterite, tooltip, permanent, key, onClick}],
+    //       lines [{key, points, dashed, cls, tooltip}], bounds ([[lat,lng],[lat,lng]] or absent: fit the pins)
+    if (!container) return null;
+    container.innerHTML = opts.svg || '';
+    var pins = opts.pins || [];
+    if (!window.L || !pins.length) { console.log('[map] sketch (' + (window.L ? 'no pins' : 'no Leaflet') + ')'); return null; }
+    var box = document.createElement('div');
+    box.className = 'lmap'; box.style.height = opts.height + 'px';
+    container.appendChild(box);
+    var map = L.map(box, {zoomControl: false, scrollWheelZoom: false, dragging: true});
+    map.attributionControl.setPrefix(false);
+    var tiles = L.tileLayer(TILES, {attribution: TILE_ATTR, subdomains: 'abcd', maxZoom: 19}).addTo(map);
+    var live = {map: map, markers: {}, layers: {}, dead: false};
+    pins.forEach(function (p) {
+      var cls = 'lpin' + (p.hard ? ' lpin--hard' : '') + (p.dim ? ' lpin--dim' : '') + (p.on ? ' lpin--on' : '') + (p.laterite ? ' lpin--lat' : '');
+      var icon = L.divIcon({className: cls, html: '<span>' + h(p.label == null ? '' : String(p.label)) + '</span>', iconSize: [24, 24], iconAnchor: [12, 12], tooltipAnchor: [0, -14]});
+      var m = L.marker([p.lat, p.lng], {icon: icon, keyboard: false}).addTo(map);
+      if (p.tooltip) m.bindTooltip(p.tooltip, {permanent: !!p.permanent, direction: 'top', className: 'ltip', opacity: 1});
+      if (p.onClick) m.on('click', p.onClick);
+      if (p.key != null) live.markers[p.key] = m;
+    });
+    (opts.lines || []).forEach(function (ln) {
+      var pl = L.polyline(ln.points, {className: 'lroute ' + (ln.cls || ''), dashArray: ln.dashed ? '7 6' : null, weight: 2.5, interactive: false});
+      if (ln.show !== false) pl.addTo(map);
+      if (ln.tooltip) {
+        var a = ln.points[0], b = ln.points[ln.points.length - 1];
+        L.tooltip({permanent: true, direction: 'top', className: 'ltip', opacity: 1}).setLatLng([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]).setContent(h(ln.tooltip)).addTo(map);
+      }
+      if (ln.key) live.layers[ln.key] = pl;
+    });
+    var pts = pins.map(function (p) { return [p.lat, p.lng]; });
+    if (opts.bounds) map.fitBounds(opts.bounds, {padding: [28, 28]});
+    else if (pts.length === 1) map.setView(pts[0], 15);
+    else map.fitBounds(pts, {padding: [28, 28]});
+    var shown = false;
+    var timer = setTimeout(function () {
+      if (shown) return;
+      live.dead = true; map.remove(); box.remove();
+      console.log('[map] sketch fallback: no tile loaded within ' + TILE_WAIT_MS + ' ms');
+    }, TILE_WAIT_MS);
+    tiles.once('tileload', function () { shown = true; clearTimeout(timer); box.classList.add('is-on'); console.log('[map] tiles'); });
+    live.focus = function (key) {
+      Object.keys(live.markers).forEach(function (k) { var el = live.markers[k].getElement(); if (el) el.classList.toggle('lpin--on', String(k) === String(key)); });
+    };
+    live.show = function (key, on) { var l = live.layers[key]; if (!l || live.dead) return; if (on) { if (!map.hasLayer(l)) l.addTo(map); } else if (map.hasLayer(l)) map.removeLayer(l); };
+    live.destroy = function () { clearTimeout(timer); if (!live.dead) { map.remove(); box.remove(); } live.dead = true; };
+    setTimeout(function () { if (!live.dead) map.invalidateSize(); }, 0);
+    return live;
+  }
+
   // -------------------------------------------------------------------- pages
   var MODE_LABEL = {cab: 'cabs', own_car: 'own car', auto_public: 'autos and public transport'};
   var init = {};
@@ -454,7 +515,15 @@
     var lines = legs.filter(function (m) { return cities[m.from_name] && cities[m.to_name]; })
       .map(function (m) { return [cities[m.from_name], cities[m.to_name], dur(m.minutes).toUpperCase()]; });
     var fitBox = $('#fit-map');  // absent when a city could not be placed
-    if (fitBox) fitBox.innerHTML = karnatakaSvg({dots: dots, lines: lines, label: route.join(' and ') + ' on the map'});
+    if (fitBox) {
+      mapInto(fitBox, {
+        height: 260,
+        svg: karnatakaSvg({dots: dots, lines: lines, label: route.join(' and ') + ' on the map'}),
+        pins: dots.map(function (d) { return {lat: d.lat, lng: d.lng, laterite: true, tooltip: d.name, permanent: true}; }),
+        lines: legs.filter(function (m) { return cities[m.from_name] && cities[m.to_name]; })
+          .map(function (m) { return {points: [cities[m.from_name], cities[m.to_name]], dashed: true, cls: 'lroute--transfer', tooltip: m.mode + ' · ' + dur(m.minutes)}; })
+      });
+    }
     document.addEventListener('click', function (e) {
       var b = e.target.closest('[data-alt]'); if (!b) return;
       var alt = (DATA.alternatives || [])[+b.dataset.alt]; if (!alt) return;
@@ -470,8 +539,22 @@
   init.trip = function () {
     var trip = DATA.trip, plan = trip.plan, req = trip.request;
     var current = parseInt(new URLSearchParams(location.search).get('day'), 10) || 1;
-    var mode = 'routed', lang = 'en';
+    var mode = 'routed', lang = 'en', live = null;
     function dayOf(n) { return plan.days.filter(function (d) { return d.index === n; })[0] || plan.days[0]; }
+    function dayLines(day, stops) {
+      var byId = {}; stops.forEach(function (s) { byId[s.poi_id] = [s.lat, s.lng]; });
+      var routed = stops.map(function (s) { return [s.lat, s.lng]; });
+      var listed = (day.naive_order || []).map(function (id) { return byId[id]; }).filter(Boolean);
+      var lines = [
+        {key: 'routed', points: routed, cls: 'lroute--routed', show: mode === 'routed'},
+        {key: 'listed', points: listed, dashed: true, cls: 'lroute--listed', show: mode === 'listed'}
+      ];
+      var transfer = transferOf(day), origin = originOf(day);
+      if (transfer && origin && stops.length) {
+        lines.push({points: [origin, [stops[0].lat, stops[0].lng]], dashed: true, cls: 'lroute--transfer', tooltip: 'from ' + transfer.from_name + ' · ' + transfer.mode + ' · ' + dur(transfer.minutes)});
+      }
+      return lines;
+    }
     var limit = DATA.day_limit ? hour12(DATA.day_limit) : '';
 
     function railHtml(day) {
@@ -514,6 +597,7 @@
       $('#btnListed').setAttribute('aria-pressed', String(mode === 'listed'));
       $('#btnRouted').setAttribute('aria-pressed', String(mode === 'routed'));
       $$('#day-map [data-route]').forEach(function (p) { p.style.display = p.dataset.route === mode ? '' : 'none'; });
+      if (live) { live.show('listed', mode === 'listed'); live.show('routed', mode === 'routed'); }
     }
     function renderQuick() {
       $('#quick').innerHTML = '<button data-quick="lighter">Make Day ' + current + ' lighter</button><button data-quick="food">One more food stop</button><button data-quick="kn">ಕನ್ನಡದಲ್ಲಿ ಹೇಳಿ</button>';
@@ -524,7 +608,16 @@
       var stops = stopsOf(day);
       $('#map-title').textContent = 'Day ' + day.index + ' · ' + day.city;
       $('#map-stops').textContent = plural(stops.length, 'stop');
-      $('#day-map').innerHTML = dayMapSvg(day, {origin: originOf(day), mode: mode});
+      if (live) { live.destroy(); live = null; }
+      live = mapInto($('#day-map'), {
+        height: 300,
+        svg: dayMapSvg(day, {origin: originOf(day), mode: mode}),
+        pins: stops.map(function (s, i) {
+          return {lat: s.lat, lng: s.lng, label: i + 1, hard: s.leg_type === 'hard', key: i + 1, tooltip: shortName(s.name),
+            onClick: function () { focusStop(i + 1, true); }};
+        }),
+        lines: dayLines(day, stops)
+      });
       routeLabel(day);
       var g = day.getting_around;
       var around = g ? '<p class="dayhead__around">Getting around: ' + h(MODE_LABEL[g.mode] || g.mode) + ' · about ' + inr(g.est_cost_inr) + ' for ' + g.km + ' km · estimated</p>' : '';
@@ -539,6 +632,7 @@
     function focusStop(n, scroll) {
       $$('#rail .stop').forEach(function (s) { s.classList.toggle('is-focus', s.dataset.stop === String(n)); });
       $$('#day-map .pin').forEach(function (p) { p.classList.toggle('is-focus', p.dataset.stop === String(n)); });
+      if (live && !live.dead) live.focus(n);
       if (scroll) { var card = $('#rail .stop[data-stop="' + n + '"]'); if (card) card.scrollIntoView({block: 'nearest', behavior: 'smooth'}); }
     }
     // "In a few words": the model writes it from the finished plan, checked
@@ -646,9 +740,17 @@
       });
     });
     var cov = DATA.coverage || [];
-    $('#coverage-map').innerHTML = karnatakaSvg({
-      label: 'Karnataka, with dots where Katha material exists',
-      dots: cov.map(function (c) { return {name: c.city, lat: c.lat, lng: c.lng, r: 3 + c.places / 5, title: c.city + ' — ' + plural(c.places, 'place') + ' · ' + plural(c.paragraphs, 'paragraph')}; })
+    mapInto($('#coverage-map'), {
+      height: 400,
+      bounds: KARNATAKA,
+      svg: karnatakaSvg({
+        label: 'Karnataka, with dots where Katha material exists',
+        dots: cov.map(function (c) { return {name: c.city, lat: c.lat, lng: c.lng, r: 3 + c.places / 5, title: c.city + ' — ' + plural(c.places, 'place') + ' · ' + plural(c.paragraphs, 'paragraph')}; })
+      }),
+      pins: cov.map(function (c) {
+        return {lat: c.lat, lng: c.lng, label: c.places, tooltip: c.city + ' · ' + plural(c.places, 'place'), permanent: true,
+          onClick: function () { kathaFor({kind: 'city', id: c.city}); }};
+      })
     });
     document.addEventListener('click', function (e) {
       var dot = e.target.closest('.dot[data-city]');
@@ -679,7 +781,33 @@
     });
 
     function placeAt(i) { var name = segEls[i] ? segEls[i].dataset.place : ''; return places[name] ? name : null; }
+    var locLive = null, locAt = null;
+    function locatorTiles(box, now) {
+      // rebuilt only when the lit place changes, so the map does not flicker
+      if (locLive && locAt === now && !locLive.dead) return;
+      if (locLive) locLive.destroy();
+      locAt = now;
+      var pinsOf = K.scope.kind === 'place' ? [order[0] || Object.keys(places)[0]].filter(Boolean) : order;
+      var seen = true;
+      locLive = mapInto(box, {
+        height: 240,
+        svg: box.innerHTML,
+        pins: pinsOf.map(function (n, i) {
+          var p = places[n], isNow = n === now;
+          if (isNow) seen = false;
+          var dim = K.scope.kind !== 'place' && !isNow && !seen;
+          return {lat: p.lat, lng: p.lng, label: K.scope.kind === 'place' ? '' : i + 1, on: isNow, dim: dim, tooltip: shortName(p.name), permanent: isNow};
+        })
+      });
+    }
     function locator(i) {
+      var box = $('#locator'), now = placeAt(i);
+      if (locLive && !locLive.dead && locAt === now) return;  // same place lit: nothing to redraw
+      locatorSvg(i);
+      if (locLive && locLive.dead) return;  // tiles never came: the sketch is the map from here on
+      locatorTiles(box, now);
+    }
+    function locatorSvg(i) {
       var box = $('#locator'), now = placeAt(i);
       if (K.scope.kind === 'place') {
         var p = places[order[0]] || places[Object.keys(places)[0]];

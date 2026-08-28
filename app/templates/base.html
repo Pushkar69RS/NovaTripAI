@@ -6,7 +6,8 @@
 <title>{% block title %}Travel Yantra{% endblock %}</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="/static/fonts.css">
-<link rel="stylesheet" href="/static/ty.css">
+{% if account %}<link rel="stylesheet" href="/static/leaflet/leaflet.css">
+{% endif %}<link rel="stylesheet" href="/static/ty.css">
 </head>
 <body data-page="{% block page %}{% endblock %}">
 <div class="wrap">
@@ -28,6 +29,7 @@
   {% block body %}{% endblock %}
 </div>
 <script id="page-data" type="application/json">{{ data|tojson }}</script>
-<script src="/static/ty.js"></script>
+{% if account %}<script src="/static/leaflet/leaflet.js"></script>
+{% endif %}<script src="/static/ty.js"></script>
 </body>
 </html>
