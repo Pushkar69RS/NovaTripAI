@@ -449,6 +449,11 @@ def build_day(
                     last=position == len(ordered) - 1,
                     arrive=clock(arrive),
                     request=request,
+                )
+                + (
+                    " Hours and fee are the model's draft, not verified."
+                    if poi.trust == "ai_generated"
+                    else ""
                 ),
             )
         )
@@ -1000,7 +1005,12 @@ def plan(request: TripRequest, db: Any) -> Plan | Verdict:
 
 def plan_all(request: TripRequest, db: Any) -> list[Plan] | Verdict:
     """All three ranked candidates, or the verdict. Reads only."""
-    return build_all(request, *load(request, db))
+    result = build_all(request, *load(request, db))
+    if not isinstance(result, Verdict):
+        from .transport import attach
+
+        attach(result, request)
+    return result
 
 
 # --------------------------------------------------------------------------- #

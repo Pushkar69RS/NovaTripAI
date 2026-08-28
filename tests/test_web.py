@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import json
+from datetime import UTC, datetime
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -151,6 +154,81 @@ def test_the_form_asks_only_what_the_planner_acts_on(password) -> None:
         "written up by templates · the ai reads it to you on the next page",
     ):
         assert kept in text, kept
+
+
+class OneTrip(OneUser):
+    """Rohan's one planned trip, with or without its narration."""
+
+    narration: str | None = None
+
+    def fetchone(self):
+        q = self.query
+        if "FROM trip WHERE id" in q:
+            return (
+                "t1",
+                json.dumps(TRIP_REQUEST),
+                "planned",
+                json.dumps(TRIP_PLAN),
+                None,
+                datetime(2026, 8, 28, tzinfo=UTC),
+                4,
+                self.narration,
+                None,
+            )
+        return super().fetchone()
+
+
+TRIP_REQUEST = {
+    "origin_city": "Bengaluru",
+    "destination_cities": ["Mysuru"],
+    "start_date": "2026-09-14",
+    "days": 1,
+    "travellers": [
+        {"kind": "adult", "age_band": "40-59"},
+        {"kind": "adult", "age_band": "60+"},
+        {"kind": "child", "age_band": "6-12"},
+    ],
+    "budget_inr": 9000,
+}
+TRIP_PLAN = {
+    "days": [
+        {
+            "index": 1,
+            "date": "2026-09-14",
+            "city": "Mysuru",
+            "items": [],
+            "ends_at": "18:00:00",
+        }
+    ],
+    "total_spend": 0,
+    "comfort": "comfortable",
+    "has_plan_b": False,
+    "metrics": {
+        "route_km_before": 0,
+        "route_km_after": 0,
+        "improvement_pct": 0,
+        "repair_iterations": 0,
+        "candidates_considered": 0,
+        "build_ms": 1,
+        "constraint_checks_passed": 0,
+        "constraint_checks_total": 0,
+    },
+}
+
+
+def test_the_plan_page_shows_the_narration_only_when_it_exists(password) -> None:
+    conn = OneTrip()
+    app.dependency_overrides[db] = lambda: conn
+    client.cookies.set(COOKIE, sign(4))
+    bare = client.get("/trips/t1")
+    assert bare.status_code == 200
+    assert "In a few words" not in bare.text
+    assert "2 adults (one over 60), 1 child" in bare.text  # not "3 people"
+    conn.narration = "Three easy stops and an early evening."
+    told = client.get("/trips/t1")
+    assert "In a few words" in told.text and conn.narration in told.text
+    assert "checked against it" in told.text
+    client.cookies.clear()
 
 
 def test_health_stays_open() -> None:

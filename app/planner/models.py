@@ -226,6 +226,16 @@ class Move(BaseModel):
     is_estimated: bool
 
 
+class DayTransport(BaseModel):
+    """Getting around inside the city for one day. Shown, not counted, not validated."""
+
+    mode: Literal["cab", "own_car", "auto_public"]
+    est_cost_inr: int
+    km: float  # the hops inside the city; the transfer in is not one
+    why: str
+    is_estimated: bool = True
+
+
 class Day(BaseModel):
     index: int
     date: date
@@ -238,6 +248,7 @@ class Day(BaseModel):
     naive_order: list[int] = []  # poi ids in candidate-score order: "as listed"
     naive_km: float = 0.0  # road km of visiting them in that order
     route_km: float = 0.0  # road km in the order built, measured the same way
+    getting_around: DayTransport | None = None  # see app/planner/transport.py
 
     @property
     def stops(self) -> list[Stop]:

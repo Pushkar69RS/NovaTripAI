@@ -4,7 +4,7 @@
 {% block crumb %}<div class="crumb"><a href="/home">Home</a> › <a href="/saved">Trips</a> › <b>Pick a plan</b></div>{% endblock %}
 {% block body %}
   <div class="page">
-    <p class="eyebrow">{{ req.title }} · {{ req.start_date|daterange(req.days) }} · {{ req.party_size }} people</p>
+    <p class="eyebrow">{{ req.title }} · {{ req.start_date|daterange(req.days) }} · {{ req|party }}</p>
     <h2 class="h1" style="font-size:33px">{{ cards|length|plural('plan') if cards|length != 3 else 'Three plans' }}. Not thirty.</h2>
     <p class="lede">{{ lede }}</p>
 

@@ -29,6 +29,7 @@ from app.api.routes import (
 from app.demo import DEMO_REQUEST, find_demo_trip
 from app.planner.engine import CENTROID_SQL, load, transfer_moves
 from app.planner.models import Day, Plan, TripRequest
+from app.planner.transport import attach
 from app.planner.validate import DAY_END, DAY_END_ELDERLY, local_moves
 
 ROOT = Path(__file__).resolve().parent
@@ -112,7 +113,7 @@ def weekday_date(d: Any) -> str:
     return f"{d:%a} {d.day} {d:%b}"
 
 
-SINGULAR = {"days": "day", "cities": "city"}
+SINGULAR = {"days": "day", "cities": "city", "places": "place"}
 
 
 def reason_value(r: dict) -> str:
@@ -126,6 +127,22 @@ def plural(n: int, word: str) -> str:
     return f"{n} {word}{'' if n == 1 else 's'}"
 
 
+def party_text(req: TripRequest) -> str:
+    """'2 adults (one over 60), 1 child' from travellers; 'N people' for a trip
+    stored before travellers existed."""
+    if not req.travellers:
+        return f"{req.party_size} people"
+    adults = [t for t in req.travellers if t.kind == "adult"]
+    kids = [t for t in req.travellers if t.kind == "child"]
+    elders = sum(t.age_band == "60+" for t in adults)
+    text = plural(len(adults), "adult")
+    if elders:
+        text += f" ({'one' if elders == 1 else elders} over 60)"
+    if kids:
+        text += f", {len(kids)} {'child' if len(kids) == 1 else 'children'}"
+    return text
+
+
 templates.env.filters.update(
     {
         "inr": inr,
@@ -137,6 +154,7 @@ templates.env.filters.update(
         "weekday_date": weekday_date,
         "reason_value": reason_value,
         "plural": plural,
+        "party": party_text,
     }
 )
 
@@ -205,8 +223,12 @@ def join_names(names: list[str]) -> str:
 
 
 def route_km(day: Day) -> float:
-    """Day.route_km when the plan carries it; older plans add up their hops."""
-    if day.naive_order:
+    """Day.route_km when the plan carries it; older plans add up their hops.
+
+    A plan stored before Day.route_km existed deserialises to 0.0, which is not
+    a measurement, so those fall through to the hops.
+    """
+    if day.route_km:
         return day.route_km
     return round(sum(m.km for m in local_moves(day)), 1)
 
@@ -257,7 +279,7 @@ def trip_rows(conn: Any, limit: int, user_id: int) -> list[dict]:
         if plan:
             meta = f"{plural(req.days, 'day')} · {inr(plan['total_spend'])} · {plan['comfort']}"
             meta_home = (
-                f"Trip · {plural(req.days, 'day')} · {req.party_size} people · "
+                f"Trip · {plural(req.days, 'day')} · {party_text(req)} · "
                 f"{plan['comfort']}"
             )
         else:
@@ -440,10 +462,27 @@ def trip_page(request: Request, trip_id: str, conn: Db, me: Me) -> HTMLResponse:
             "alternatives": [],
         }
         _pois, _edges, legs, _adv, centres = load(req, conn)
-        moves = transfer_moves(req, legs, centres)
         route = [req.origin_city, *req.destination_cities]
+        try:
+            moves = transfer_moves(req, legs, centres)
+        except ValueError:  # a city nobody could place: no distance to draw
+            moves = []
         labels = {r["label"]: r["value"] for r in verdict["reasons"]}
-        if "Cities with nothing open to visit" in labels:
+        found = [k for k in labels if k.startswith("Places we could find in ")]
+        if found:
+            city = found[0].removeprefix("Places we could find in ")
+            prose = (
+                f"We could find only {plural(int(labels[found[0]]), 'place')} in "
+                f"{city}, and a day needs at least eight to choose from. What we "
+                f"did find is drafted by the model and unverified."
+            )
+        elif "Could not reach the model" in labels:
+            prose = (
+                f"We have nothing on {labels['Could not reach the model']} yet, and "
+                f"the model that drafts a new city could not be reached, so "
+                f"nothing could be planned there right now."
+            )
+        elif "Cities with nothing open to visit" in labels:
             prose = (
                 f"Nothing in {labels['Cities with nothing open to visit']} is open "
                 f"to visit on these dates, so there is no day to build there."
@@ -468,6 +507,7 @@ def trip_page(request: Request, trip_id: str, conn: Db, me: Me) -> HTMLResponse:
             moves=moves,
             total_km=round(sum(m.km for m in moves)),
             estimated=any(m.is_estimated for m in moves),
+            show_map=bool(moves) and sum(c in centres for c in route) >= 2,
             data={
                 "request": trip["request"],
                 "route": route,
@@ -493,7 +533,7 @@ def trip_page(request: Request, trip_id: str, conn: Db, me: Me) -> HTMLResponse:
         ]
         tight = sum(p.comfort == "tight" for p in plans)
         if tight == 0:
-            knees = ", and your amma's knees" if req.has_elderly else ""
+            knees = ", and the evenings you asked for" if req.has_elderly else ""
             count = {2: "Both", 3: "All three"}.get(len(plans), f"All {len(plans)}")
             lede = f"{count} fit your budget and your evenings{knees}. They just make different trades."
         else:
@@ -515,6 +555,8 @@ def trip_page(request: Request, trip_id: str, conn: Db, me: Me) -> HTMLResponse:
         )
 
     plan = Plan.model_validate(trip["plan"])
+    attach([plan], req)  # a trip stored before the line existed gets it now
+    trip["plan"] = plan.model_dump(mode="json")
     limit = day_limit(req)
     return render(
         request,

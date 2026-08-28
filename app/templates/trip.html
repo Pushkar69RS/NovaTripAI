@@ -7,7 +7,7 @@
     <div class="plan__main">
       <div class="plan__head">
         <div>
-          <p class="eyebrow">{{ req.start_date|daterange(req.days, true) }} · {{ req.party_size }} people · {{ title|lower }}</p>
+          <p class="eyebrow">{{ req.start_date|daterange(req.days, true) }} · {{ req|party }} · {{ title|lower }}</p>
           <h2 class="h1" style="font-size:30px;margin:.2em 0 .3em">{{ req.title }}</h2>
           <div style="display:flex;gap:7px;flex-wrap:wrap">
             <span class="chip {{ 'chip--lat' if plan.comfort == 'tight' else 'chip--river' }}" id="chip-comfort">{{ plan.comfort|capitalize }}</span>
@@ -21,6 +21,7 @@
         </div>
       </div>
 
+      {% if trip.narration %}<section class="narr" id="narr"><p class="eyebrow">In a few words</p><p id="narr-text">{{ trip.narration }}</p><p class="hint">Written by the model from the computed plan, and checked against it.</p></section>{% endif %}
       <div class="daytabs" id="daytabs">{% for d in plan.days %}<button data-day="{{ d.index }}" aria-current="{{ 'true' if loop.first else 'false' }}">Day {{ d.index }}</button>{% endfor %}</div>
 
       <div class="daygrid">

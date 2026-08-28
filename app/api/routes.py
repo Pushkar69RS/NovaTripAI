@@ -26,7 +26,7 @@ from app.katha.build import WORDS_PER_MIN, DbCatalogue, build, db_retriever
 from app.katha.models import Depth, Katha, Scope
 from app.llm.client import complete
 from app.llm.intake import parse_intake
-from app.llm.narrate import narrate_segment
+from app.llm.narrate import narrate_plan, narrate_segment
 from app.planner.coldstart import (
     MIN_PLACES,
     ColdStartError,
@@ -36,6 +36,7 @@ from app.planner.coldstart import (
 from app.planner.distance import DETOUR, haversine
 from app.planner.engine import CENTROID_SQL, load, plan_all, scored_pool
 from app.planner.models import Alternative, Plan, Reason, TripRequest, Verdict, hub_city
+from app.planner.transport import attach
 from app.rag.retrieve import TripContext
 from app.voice.tts import cache_path, speak
 
@@ -307,8 +308,10 @@ def chat(trip_id: str, body: ChatIn, conn: Db, me: Me) -> dict:
     if isinstance(resolved, Clarification):
         return resolved.model_dump()
     result = apply_edit(resolved, plan, request, loaded)
+    attach([result.plan], request)
+    # The paragraph described the old plan; the next load writes a new one.
     conn.execute(
-        "UPDATE trip SET plan = %s WHERE id = %s",
+        "UPDATE trip SET plan = %s, narration = NULL WHERE id = %s",
         (result.plan.model_dump_json(), trip_id),
     )
     return {
@@ -319,6 +322,25 @@ def chat(trip_id: str, body: ChatIn, conn: Db, me: Me) -> dict:
         "change_summary": result.change_summary.model_dump(),
         "violations": result.violations,
     }
+
+
+@router.post("/trips/{trip_id}/narrate")
+def trip_narrate(trip_id: str, conn: Db, me: Me) -> dict:
+    """The plan in a few words, written by the model and checked against the
+    plan, stored once. A narration that failed its check is not returned."""
+    trip = load_trip(conn, trip_id, me.id)
+    if trip.get("narration"):
+        return {"narration": trip["narration"], "source": "stored"}
+    if not trip["plan"]:
+        raise HTTPException(409, "this trip has no plan to describe")
+    request = TripRequest.model_validate(trip["request"])
+    plan = Plan.model_validate(trip["plan"])
+    attach([plan], request)
+    told = narrate_plan(plan, request, "en")
+    if told.fell_back:
+        raise HTTPException(502, "the narration did not pass its check")
+    conn.execute("UPDATE trip SET narration = %s WHERE id = %s", (told.text, trip_id))
+    return {"narration": told.text, "source": "narrator", "cost_usd": told.cost_usd}
 
 
 # --------------------------------------------------------------------------- #

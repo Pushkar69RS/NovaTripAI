@@ -179,6 +179,7 @@
   }
 
   // -------------------------------------------------------------------- pages
+  var MODE_LABEL = {cab: 'cabs', own_car: 'own car', auto_public: 'autos and public transport'};
   var init = {};
 
   init.landing = function () {
@@ -452,7 +453,8 @@
     var dots = route.filter(function (c) { return cities[c]; }).map(function (c) { return {name: c, lat: cities[c][0], lng: cities[c][1], r: 7, laterite: true}; });
     var lines = legs.filter(function (m) { return cities[m.from_name] && cities[m.to_name]; })
       .map(function (m) { return [cities[m.from_name], cities[m.to_name], dur(m.minutes).toUpperCase()]; });
-    $('#fit-map').innerHTML = karnatakaSvg({dots: dots, lines: lines, label: route.join(' and ') + ' on the map'});
+    var fitBox = $('#fit-map');  // absent when a city could not be placed
+    if (fitBox) fitBox.innerHTML = karnatakaSvg({dots: dots, lines: lines, label: route.join(' and ') + ' on the map'});
     document.addEventListener('click', function (e) {
       var b = e.target.closest('[data-alt]'); if (!b) return;
       var alt = (DATA.alternatives || [])[+b.dataset.alt]; if (!alt) return;
@@ -483,6 +485,7 @@
         n++;
         var hard = it.leg_type === 'hard';
         var chips = [hard ? '<span class="chip chip--river">Must be on time</span>' : '<span class="chip">Flexible</span>']
+          .concat(it.trust === 'ai_generated' ? ['<span class="chip chip--lat">AI-drafted · unverified</span>'] : [])
           .concat((it.tags || []).slice(0, 2).map(function (t) { return '<span class="chip">' + h(cap(t)) + '</span>'; }));
         out.push('<div class="leg"><div class="leg__time">' + h(hm(it.arrive)) + '</div><div class="leg__node"><span class="node node--' + (hard ? 'hard' : 'soft') + '"></span></div>' +
           '<div class="leg__body"><div class="stop" data-stop="' + n + '"><div class="stop__top"><span class="stop__name">' + n + ' · ' + h(it.name) + '</span><span class="stop__meta">' + h(dur(it.dwell_min)) + ' · ' + (it.cost_inr ? inr(it.cost_inr) : 'free') + '</span></div>' +
@@ -523,9 +526,12 @@
       $('#map-stops').textContent = plural(stops.length, 'stop');
       $('#day-map').innerHTML = dayMapSvg(day, {origin: originOf(day), mode: mode});
       routeLabel(day);
-      $('#dayhead').innerHTML = '<h3>' + h(dateLong(day.date)) + '</h3><span class="kn">ದಿನ ' + knNum(day.index) + ' · ' + h(CITY_KN[day.city] || day.city) + '</span><span class="chip">Ends ' + h(clock12(day.ends_at)) + '</span>';
+      var g = day.getting_around;
+      var around = g ? '<p class="dayhead__around">Getting around: ' + h(MODE_LABEL[g.mode] || g.mode) + ' · about ' + inr(g.est_cost_inr) + ' for ' + g.km + ' km · estimated</p>' : '';
+      $('#dayhead').innerHTML = '<h3>' + h(dateLong(day.date)) + '</h3><span class="kn">ದಿನ ' + knNum(day.index) + ' · ' + h(CITY_KN[day.city] || day.city) + '</span><span class="chip">Ends ' + h(clock12(day.ends_at)) + '</span>' + around;
       $('#rail').innerHTML = railHtml(day);
-      $('#summary').innerHTML = '<div><span>On foot</span><b>' + day.walk_km + ' km</b></div><div><span>By road</span><b>' + day.road_km + ' km</b></div><div><span>Spend today</span><b>' + inr(day.spend_inr) + '</b></div><div><span>Ends</span><b>' + h(clock12(day.ends_at)) + '</b></div>';
+      $('#summary').innerHTML = '<div><span>On foot</span><b>' + day.walk_km + ' km</b></div><div><span>By road</span><b>' + day.road_km + ' km</b></div><div><span>Spend today</span><b>' + inr(day.spend_inr) + '</b></div><div><span>Ends</span><b>' + h(clock12(day.ends_at)) + '</b></div>' +
+        (g ? '<div><span>Not in the total</span><b>+ ' + inr(g.est_cost_inr) + ' getting around, estimated</b></div>' : '');
       $('#trace').innerHTML = traceHtml(day);
       $('#chat-day').textContent = 'Day ' + day.index;
       renderQuick();
@@ -535,6 +541,23 @@
       $$('#day-map .pin').forEach(function (p) { p.classList.toggle('is-focus', p.dataset.stop === String(n)); });
       if (scroll) { var card = $('#rail .stop[data-stop="' + n + '"]'); if (card) card.scrollIntoView({block: 'nearest', behavior: 'smooth'}); }
     }
+    // "In a few words": the model writes it from the finished plan, checked
+    // against it; nothing else waits on it, and a failure hides the block.
+    function showNarration(text) {
+      var box = $('#narr');
+      if (!box) {
+        box = el('<section class="narr" id="narr"><p class="eyebrow">In a few words</p><p id="narr-text"></p><p class="hint">Written by the model from the computed plan, and checked against it.</p></section>');
+        $('#daytabs').parentNode.insertBefore(box, $('#daytabs'));
+      }
+      $('#narr-text').textContent = text;
+      box.hidden = false;
+    }
+    function fetchNarration() {
+      api('POST', '/api/trips/' + trip.id + '/narrate')
+        .then(function (out) { if (out && out.narration) { trip.narration = out.narration; showNarration(out.narration); } })
+        .catch(function () { var box = $('#narr'); if (box) box.hidden = true; });
+    }
+    if (!trip.narration) fetchNarration();
     $('#btnListed').addEventListener('click', function () { mode = 'listed'; routeLabel(dayOf(current)); });
     $('#btnRouted').addEventListener('click', function () { mode = 'routed'; routeLabel(dayOf(current)); });
     document.addEventListener('click', function (e) {
@@ -583,6 +606,8 @@
     input.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); send(); } });
     function applyEdit(out) {
       plan = out.plan; trip.plan = plan;
+      // the paragraph described a plan that no longer exists
+      trip.narration = null; var narr = $('#narr'); if (narr) narr.hidden = true; fetchNarration();
       var changed = out.changed_day, others = plan.days.map(function (d) { return d.index; }).filter(function (i) { return i !== changed; });
       msg('msg--sys', 'Day ' + changed + ' rebuilt' + (others.length ? ' · Day' + (others.length > 1 ? 's ' : ' ') + listJoin(others) + ' untouched' : ''));
       var s = out.change_summary, day = dayOf(changed), bits = [];

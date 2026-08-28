@@ -330,3 +330,8 @@ a.avatar{text-decoration:none}
 .tag[disabled],.seg3 button[disabled]{opacity:.4;cursor:not-allowed}
 .freebox{max-width:680px}
 .fixed-line{font-size:13px;color:var(--ink-60);margin:8px 0 0}
+/* the plan in a few words, and the getting-around line ------------------- */
+.narr{border-left:3px solid var(--river);background:var(--sheet-2);padding:12px 16px;margin:0 0 18px}
+.narr p{margin:0 0 6px;font-size:14.5px;line-height:1.55}
+.narr .hint{margin:0}
+.dayhead__around{width:100%;margin:6px 0 0;font-size:13px;color:var(--ink-60)}

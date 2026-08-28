@@ -381,15 +381,32 @@ def narrate_segment(
 
 
 def plan_as_text(plan: Plan, request: TripRequest) -> str:
+    who = ", ".join(f"{t.kind} {t.age_band}" for t in request.travellers)
     lines = [
         (
             f"Trip: {request.days} days from {request.origin_city} to "
-            f"{', '.join(request.destination_cities)}, party of {request.party_size}, "
-            f"{request.pace} pace, comfort {plan.comfort}."
+            f"{', '.join(request.destination_cities)}, party of {request.party_size}"
+            f"{f' ({who})' if who else ''}, {request.pace} pace, comfort {plan.comfort}."
         )
     ]
+    if request.trip_type:
+        lines.append(f"Trip type: {request.trip_type}.")
+    if request.food:
+        lines.append(f"Food: {request.food} only.")
+    if request.must_see:
+        lines.append(f"Must see: {', '.join(request.must_see)}.")
+    if request.skip:
+        lines.append(f"Skip: {', '.join(request.skip)}.")
+    if request.notes:
+        lines.append(f"The traveller wrote: {request.notes}")
     for day in plan.days:
         lines.append(f"Day {day.index}, {day.date:%A %d %B}, {day.city}:")
+        if day.getting_around:
+            g = day.getting_around
+            lines.append(
+                f"  getting around by {g.mode.replace('_', ' ')}, about {g.est_cost_inr} "
+                "rupees, estimated"
+            )
         for item in day.items:
             if item.kind == "move":
                 lines.append(
@@ -418,7 +435,9 @@ def narrate_plan(
     user = (
         "Tell the traveller their plan as a companion would, day by day, in the "
         "order given. Keep every time, place and rupee amount exactly as given. "
-        f"Say why each stop sits where it does using the reasons given.\n\nPLAN:\n{source}"
+        "Say why each stop sits where it does using the reasons given. When what "
+        "the traveller wrote bears on a day, say how the day answers it."
+        f"\n\nPLAN:\n{source}"
     )
     return _narrate(
         _system(language, False, "companion narration"),

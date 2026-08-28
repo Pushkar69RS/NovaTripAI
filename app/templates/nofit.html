@@ -26,13 +26,13 @@
         <p class="hint" style="max-width:64ch;margin-top:18px">Think our road time is wrong? Say so in the chat and we'll show the working. We'd rather be corrected than build you a day that dies at 3 pm.</p>
         <p class="err" id="alt-error" hidden></p>
       </div>
-      <div>
+      {% if show_map %}<div>
         <div class="map">
           <div class="map__head"><b>The distance</b><span class="chip chip--lat">{{ total_km }} km</span></div>
           <div id="fit-map"></div>
           <div class="map__foot"><span>Road time from our own table</span><span class="chip">{{ 'estimated' if estimated else 'from our table' }}</span></div>
         </div>
-      </div>
+      </div>{% endif %}
     </div>
   </div>
 {% endblock %}
