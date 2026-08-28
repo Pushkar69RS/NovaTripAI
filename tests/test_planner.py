@@ -11,6 +11,9 @@ import random
 from datetime import date, time, timedelta
 from pathlib import Path
 
+import pytest
+from pydantic import ValidationError
+
 from app.planner.cluster import balance, kmeans
 from app.planner.distance import haversine, intercity_move
 from app.planner.engine import (
@@ -19,13 +22,16 @@ from app.planner.engine import (
     build,
     day_pools,
     select_candidates,
+    skipped,
 )
 from app.planner.models import (
+    PACE_CAPACITY,
     Advisory,
     Leg,
     Move,
     Plan,
     Poi,
+    Traveller,
     TripRequest,
     Verdict,
 )
@@ -116,6 +122,14 @@ def trip(**over: object) -> TripRequest:
         "interest_tags": ["heritage", "palace", "food"],
     }
     return TripRequest(**(base | over))
+
+
+def adult(band: str) -> Traveller:
+    return Traveller(kind="adult", age_band=band)
+
+
+def child(band: str) -> Traveller:
+    return Traveller(kind="child", age_band=band)
 
 
 def scatter(n: int, seed: int) -> list[Poi]:
@@ -260,15 +274,80 @@ def test_localities_resolve_to_their_hub_city_and_keep_the_typed_names() -> None
     ]
 
 
-def test_day_one_start_and_day_end_are_honoured() -> None:
-    late = run(trip(day_one_start=time(14, 0)))
-    assert isinstance(late, Plan)
-    first = late.days[0].stops[0]
-    assert (first.arrive.hour, first.arrive.minute) >= (14, 0)
-
+def test_day_end_is_honoured() -> None:
     early_end = run(trip(day_end=time(17, 0)))
     assert isinstance(early_end, Plan)
     assert all(d.ends_at <= time(17, 0) for d in early_end.days)
+
+
+def test_travellers_derive_the_party_facts() -> None:
+    request = trip(
+        travellers=[adult("40-59"), adult("60+"), child("3-5"), child("13-17")]
+    )
+    assert request.party_size == 4
+    assert request.has_elderly and request.has_children and request.has_toddler
+    grown = trip(travellers=[adult("18-39"), adult("40-59")])
+    assert (grown.party_size, grown.has_elderly, grown.has_children) == (
+        2,
+        False,
+        False,
+    )
+    assert not grown.has_toddler
+    # No travellers listed: the explicit fields win, as stored trips rely on.
+    explicit = trip(party_size=3, has_elderly=True)
+    assert (explicit.party_size, explicit.has_elderly) == (3, True)
+    assert not explicit.has_toddler
+    with pytest.raises(ValidationError):
+        Traveller(kind="child", age_band="60+")
+
+
+def test_a_toddler_party_ends_early_and_never_runs_packed() -> None:
+    request = trip(
+        travellers=[adult("40-59"), adult("40-59"), child("under 3")],
+        days=3,
+        pace="packed",
+    )
+    assert request.capacity == PACE_CAPACITY["comfortable"]
+    result = run(request)
+    assert isinstance(result, Plan)
+    assert all(day.ends_at <= time(19, 0) for day in result.days)
+    by_id = {p.id: p for p in pois()}
+    assert all(by_id[s.poi_id].elderly_friendly for d in result.days for s in d.stops)
+
+
+def test_trip_type_seeds_interest_tags_only_when_none_were_picked() -> None:
+    assert trip(trip_type="pilgrimage", interest_tags=[]).interest_tags == ["spiritual"]
+    assert trip(trip_type="family", interest_tags=[]).interest_tags == [
+        "heritage",
+        "food",
+    ]
+    assert trip(trip_type="family", interest_tags=["nature"]).interest_tags == [
+        "nature"
+    ]
+    assert trip(interest_tags=[]).interest_tags == []
+
+
+def test_intercity_move_with_a_missing_centroid_raises_value_error() -> None:
+    known = {"Bengaluru": (12.98, 77.59)}
+    with pytest.raises(ValueError, match="unknown city: Mangalore"):
+        intercity_move("Bengaluru", "Mangalore", "any", [], known)
+
+
+def test_a_skip_word_reaches_the_place_it_names() -> None:
+    zoo = next(p for p in pois() if p.name.startswith("Mysore Zoo"))
+    assert skipped(zoo, trip(skip=["zoos"]))
+    assert skipped(zoo, trip(skip=["Nature"]))  # its category
+    assert not skipped(zoo, trip(skip=["temples"]))
+    assert not skipped(zoo, trip())
+
+
+def test_every_stop_carries_its_place_trust() -> None:
+    plan = run(trip())
+    assert isinstance(plan, Plan)
+    by_id = {p.id: p for p in pois()}
+    stops = [s for d in plan.days for s in d.stops]
+    assert stops and all(s.trust == by_id[s.poi_id].trust for s in stops)
+    assert {s.trust for s in stops} <= {"verified", "draft"}
 
 
 def test_build_all_ranks_three_variants_best_first() -> None:

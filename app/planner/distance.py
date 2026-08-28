@@ -80,6 +80,11 @@ def intercity_move(
             mode=leg.mode,
             is_estimated=leg.is_estimated,
         )
+    missing = [c for c in (a, b) if c not in centroids]
+    if missing:
+        # A city nobody has seeded and nobody could place. The API turns this
+        # sentence into a 422; a KeyError here used to be a 500.
+        raise ValueError(f"unknown city: {missing[0]}")
     (lat1, lng1), (lat2, lng2) = centroids[a], centroids[b]
     straight = haversine(lat1, lng1, lat2, lng2)
     return Move(

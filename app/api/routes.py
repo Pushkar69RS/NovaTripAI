@@ -109,7 +109,10 @@ def create(request: TripRequest, conn: Any, user_id: int | None = None) -> dict:
 
 @router.post("/trips")
 def create_trip(request: TripRequest, conn: Db, me: Me) -> dict:
-    return create(request, conn, me.id)
+    try:
+        return create(request, conn, me.id)
+    except ValueError as exc:  # "unknown city: X" from the planner, never a 500
+        raise HTTPException(422, str(exc)) from exc
 
 
 def load_trip(conn: Any, trip_id: str, user_id: int | None = None) -> dict:

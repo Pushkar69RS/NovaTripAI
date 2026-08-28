@@ -13,7 +13,7 @@ from datetime import date, time
 from typing import Any
 
 from app.katha.models import Katha
-from app.planner.models import TripRequest
+from app.planner.models import Traveller, TripRequest
 from app.voice.tts import CACHE_DIR
 
 DEMO_REQUEST = TripRequest(
@@ -21,29 +21,22 @@ DEMO_REQUEST = TripRequest(
     destination_cities=["Mysuru", "Srirangapatna"],
     start_date=date(2026, 9, 14),
     days=3,
-    party_size=4,  # 2 adults + 1 elder + 1 child
-    has_elderly=True,
-    has_children=True,
+    travellers=[  # 2 adults + 1 elder + 1 child
+        Traveller(kind="adult", age_band="40-59"),
+        Traveller(kind="adult", age_band="40-59"),
+        Traveller(kind="adult", age_band="60+"),
+        Traveller(kind="child", age_band="6-12"),
+    ],
+    trip_type="family",
     pace="comfortable",
     budget_inr=18000,
+    budget_basis="total",
     transport="train",
+    getting_around="cab",
     interest_tags=["heritage", "food"],
+    must_see=["Mysore Palace"],
     notes="Amma tires by evening. And one really good breakfast, please.",
-    day_one_start=time(9, 0),
     day_end=time(19, 0),
-    preferences={
-        "adults": "2",
-        "elders": "1",
-        "children": "1",
-        "children_ages": "5–12",
-        "walking": "Someone finds stairs hard",
-        "mornings": "Easy mornings, please",
-        "food": "No preference",
-        "budget_covers": "Stay, Food, Tickets, Getting around",
-        "stay": "Mid-range",
-        "getting_around": "Hired car / cab",
-        "must_see": "Mysore Palace",
-    },
 )
 
 #: The fields that identify the canonical trip in the `trip` table.
@@ -53,6 +46,7 @@ DEMO_KEY = {
     "start_date": DEMO_REQUEST.start_date.isoformat(),
     "days": DEMO_REQUEST.days,
     "party_size": DEMO_REQUEST.party_size,
+    "trip_type": DEMO_REQUEST.trip_type,  # trips stored before the intake rework lack it
     "budget_inr": DEMO_REQUEST.budget_inr,
     "notes": DEMO_REQUEST.notes,
 }

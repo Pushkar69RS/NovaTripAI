@@ -32,6 +32,7 @@ from .models import (
     Poi,
     Reason,
     Stop,
+    Traveller,
     TripRequest,
     Verdict,
 )
@@ -109,6 +110,15 @@ def closed_by_advisory(poi: Poi, advisories: list[Advisory]) -> bool:
     )
 
 
+def skipped(poi: Poi, request: TripRequest) -> bool:
+    """A place the traveller asked to skip: a word of theirs in its name, tags
+    or category. "zoos" reaches "Mysore Zoo" because a trailing s is dropped."""
+    # ponytail: substring match; a stemmer if "art" ever has to miss "market"
+    words = {w.strip().lower().rstrip("s") for w in request.skip if w.strip()}
+    haystack = " ".join([poi.name, poi.category, *poi.tags]).lower()
+    return any(w and w in haystack for w in words)
+
+
 def eligible(
     pois: list[Poi], request: TripRequest, advisories: list[Advisory]
 ) -> list[Poi]:
@@ -119,8 +129,9 @@ def eligible(
         for p in pois
         if p.city in request.destination_cities
         and not closed_by_advisory(p, advisories)
-        and (not request.has_elderly or p.elderly_friendly)
+        and (not request.gentle or p.elderly_friendly)
         and p.entry_fee_inr <= cap
+        and not skipped(p, request)
     ]
 
 
@@ -429,6 +440,7 @@ def build_day(
                 leg_type="hard" if hard else "soft",
                 tags=poi.tags,
                 note=None,
+                trust=poi.trust,
                 why=why(
                     poi,
                     is_anchor=hard,
@@ -575,7 +587,7 @@ def day_pools(
                     chosen,
                     arrival,
                     centroids.get(city, fallback),
-                    request.day_one_start if index == 0 else DAY_START,
+                    DAY_START,
                 )
             )
             index += 1
@@ -898,7 +910,7 @@ def build_all(
 POI_SQL = """
 SELECT p.id, p.name, p.name_kn, p.city, p.lat, p.lng, p.category, p.tags,
        p.typical_dwell_min, p.entry_fee_inr, p.opens, p.closes, p.closed_on,
-       p.elderly_friendly, p.popularity
+       p.elderly_friendly, p.popularity, p.trust
 FROM poi p
 WHERE p.city = ANY(%(cities)s)
   AND p.entry_fee_inr <= %(fee_cap)s
@@ -920,6 +932,8 @@ FROM intercity_leg WHERE from_city = ANY(%s) OR to_city = ANY(%s)
 """
 EDGE_SQL = "SELECT from_poi, to_poi, coalesce(weight, 1.0) FROM poi_edge"
 CENTROID_SQL = "SELECT city, avg(lat), avg(lng) FROM poi GROUP BY city"
+#: Fills in only the cities with no poi rows (a cold-started origin, say).
+CENTRE_SQL = "SELECT name, lat, lng FROM city_centre"
 
 Loaded = tuple[list[Poi], list[Edge], list[Leg], list[Advisory], dict[str, Point]]
 
@@ -944,13 +958,14 @@ def load(request: TripRequest, db: Any) -> Loaded:
             closed_on=list(r[12] or []),
             elderly_friendly=r[13],
             popularity=r[14] or 3,
+            trust=r[15] or "draft",
         )
         for r in db.execute(
             POI_SQL,
             {
                 "cities": request.destination_cities,
                 "fee_cap": fee_cap(request),
-                "elderly": request.has_elderly,
+                "elderly": request.gentle,
             },
         ).fetchall()
     ]
@@ -973,6 +988,8 @@ def load(request: TripRequest, db: Any) -> Loaded:
     centroids = {
         r[0]: (float(r[1]), float(r[2])) for r in db.execute(CENTROID_SQL).fetchall()
     }
+    for r in db.execute(CENTRE_SQL).fetchall():
+        centroids.setdefault(r[0], (float(r[1]), float(r[2])))
     return pois, edges, legs, advisories, centroids
 
 
@@ -1060,12 +1077,16 @@ def demo_request() -> TripRequest:
         destination_cities=["Mysuru"],
         start_date=datetime.now(tz=IST).date() + timedelta(days=1),
         days=2,
-        party_size=2,
-        has_elderly=False,
-        has_children=False,
+        travellers=[
+            Traveller(kind="adult", age_band="40-59"),
+            Traveller(kind="adult", age_band="40-59"),
+        ],
+        trip_type="heritage",
         pace="comfortable",
         budget_inr=20000,
+        budget_basis="total",
         transport="any",
+        getting_around="cab",
         interest_tags=["heritage", "palace", "food", "photography"],
         notes="Review demo trip.",
     )

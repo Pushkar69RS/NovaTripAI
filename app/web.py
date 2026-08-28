@@ -187,7 +187,7 @@ def poi_total(conn: Any) -> int:
 
 
 def day_limit(req: TripRequest) -> time:
-    return req.day_end or (DAY_END_ELDERLY if req.has_elderly else DAY_END)
+    return req.day_end or (DAY_END_ELDERLY if req.gentle else DAY_END)
 
 
 def short(name: str) -> str:
