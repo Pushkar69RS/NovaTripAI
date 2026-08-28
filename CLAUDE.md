@@ -12,6 +12,7 @@ Reload this every session. These rules are non-negotiable.
 5. Never put secrets in code or commits — env vars only (see `.env.example`).
 6. When a fact could be stale, label it "estimated" rather than asserting it.
 7. `docs/STATE.md` stays under 150 lines and is rewritten, not appended.
+8. Commit messages carry no Co-Authored-By trailer, no model or tool name, and no "Generated with" line — on every commit, amend, rebase and squash.
 
 ## Preflight
 

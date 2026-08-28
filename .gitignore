@@ -19,3 +19,6 @@ var/
 
 # Playwright MCP snapshots
 .playwright-mcp/
+
+# Claude Code local settings
+.claude/
