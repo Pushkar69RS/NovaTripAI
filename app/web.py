@@ -422,7 +422,10 @@ def trip_new(request: Request, conn: Db, me: Me) -> HTMLResponse:
         user=me,
         nav="trips",
         defaults=DEMO_REQUEST,
-        data={"poi_total": poi_total(conn)},
+        data={
+            "poi_total": poi_total(conn),
+            "defaults": DEMO_REQUEST.model_dump(mode="json"),
+        },
     )
 
 

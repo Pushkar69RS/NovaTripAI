@@ -32,6 +32,16 @@
     return pick.toUpperCase().replace(/[^A-Z0-9'\-]/g, '');
   }
   function plural(n, w, ws) { return n + ' ' + (n === 1 ? w : (ws || w + 's')); }
+  function dateShort(iso) { var d = new Date(iso + 'T00:00:00'); return isNaN(d) ? iso : d.toLocaleDateString('en-GB', {weekday: 'short', day: 'numeric', month: 'short'}); }
+  // "2 adults (one over 60), 1 child" from travellers; "N people" for a trip stored before them.
+  function partyText(req) {
+    var t = req.travellers || [];
+    if (!t.length) return (req.party_size || 1) + ' people';
+    var adults = t.filter(function (x) { return x.kind === 'adult'; }), kids = t.filter(function (x) { return x.kind === 'child'; });
+    var elders = adults.filter(function (x) { return x.age_band === '60+'; }).length;
+    var s = plural(adults.length, 'adult') + (elders ? ' (' + (elders === 1 ? 'one' : elders) + ' over 60)' : '');
+    return kids.length ? s + ', ' + plural(kids.length, 'child', 'children') : s;
+  }
   function listJoin(xs) { xs = xs.map(String); return xs.length < 2 ? xs.join('') : xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1]; }
   function round1(x) { return Math.round(x * 10) / 10; }
   function fmt(n) { return Math.round(n * 10) / 10; }
@@ -177,11 +187,124 @@
 
   init.trip_new = function () {
     var page = $('#form-page');
+    var ADULT_BANDS = ['18-39', '40-59', '60+'], CHILD_BANDS = ['under 3', '3-5', '6-12', '13-17'];
+    var TRIP_TAGS = {pilgrimage: ['spiritual'], heritage: ['heritage'], nature: ['nature', 'waterfall'], food: ['food'], family: ['heritage', 'food'], adventure: ['nature', 'trek'], couple: ['quiet', 'nature'], friends: ['food', 'photography']};
+    var TRIP_LABEL = {family: 'Family holiday', pilgrimage: 'Pilgrimage', heritage: 'Heritage & history', nature: 'Nature & hills', food: 'Food trail', adventure: 'Adventure', couple: 'Couple', friends: 'Friends'};
+    var AROUND = {cab: 'cabs', own_car: 'your own car', auto_public: 'autos and public transport', suggest: 'whatever we suggest'};
+    var THERE = {train: 'Train', bus: 'Bus', flight: 'Flight', car: 'Own car', any: 'Any way'};
+    var touched = {pace: false, endby: false, interests: false};
+    var fillNote = '';
+
     function showStep(id) {
       $$('.fstep').forEach(function (p) { p.classList.toggle('is-on', p.id === id); });
       $$('.steps button').forEach(function (b) { b.setAttribute('aria-current', String(b.dataset.fstep === id)); });
       window.scrollTo({top: 0});
     }
+    function current(sel) { var b = $(sel + ' [aria-current="true"]'); return b ? (b.dataset.value !== undefined ? b.dataset.value : b.textContent.trim()) : ''; }
+    function single(sel) { var b = $(sel + ' [aria-pressed="true"]'); return b ? (b.dataset.value !== undefined ? b.dataset.value : b.textContent.trim()) : ''; }
+    function setSingle(sel, value) { $$(sel + ' .tag').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.value === value)); }); }
+    function setSeg(sel, value) { $$(sel + ' button').forEach(function (b) { b.setAttribute('aria-current', String(b.dataset.value === value)); }); }
+    function num(id) { return parseInt($('#' + id).textContent, 10) || 0; }
+    function val(id) { return $('#' + id).value.trim(); }
+    function list(id) { return val(id).split(/[,;/]/).map(function (s) { return s.trim(); }).filter(Boolean); }
+
+    // ---- who's going: one row per traveller, bands kept when the count changes
+    function row(kind, i, options, value) {
+      return '<div class="field"><label>' + cap(kind) + ' ' + (i + 1) + ' · age</label><select data-kind="' + kind + '" data-index="' + i + '">' +
+        options.map(function (b) { return '<option value="' + b + '"' + (b === value ? ' selected' : '') + '>' + b + '</option>'; }).join('') + '</select></div>';
+    }
+    function renderTravellers(preset) {
+      var prev = {};
+      $$('#travellers select').forEach(function (s) { prev[s.dataset.kind + s.dataset.index] = s.value; });
+      (preset || []).forEach(function (t, i) { prev[t.kind + t.index] = t.age_band; });
+      var html = '', a = num('adults'), c = num('children');
+      for (var i = 0; i < a; i++) html += row('adult', i, ADULT_BANDS, prev['adult' + i] || '40-59');
+      for (var j = 0; j < c; j++) html += row('child', j, CHILD_BANDS, prev['child' + j] || '6-12');
+      $('#travellers').innerHTML = html;
+    }
+    function travellers() { return $$('#travellers select').map(function (s) { return {kind: s.dataset.kind, age_band: s.value}; }); }
+    function facts() {
+      var t = travellers();
+      var elders = t.filter(function (x) { return x.kind === 'adult' && x.age_band === '60+'; }).length;
+      var toddler = t.some(function (x) { return x.kind === 'child' && (x.age_band === 'under 3' || x.age_band === '3-5'); });
+      return {list: t, adults: t.filter(function (x) { return x.kind === 'adult'; }).length, children: t.filter(function (x) { return x.kind === 'child'; }).length, elders: elders, toddler: toddler, gentle: elders > 0 || toddler};
+    }
+    // Derived defaults: relaxed and 7 pm for an elder or a child under six,
+    // packed greyed for a toddler, interests seeded from the trip type. A
+    // control the traveller touched is left alone.
+    function derive() {
+      var f = facts();
+      $('#pace [data-value="packed"]').disabled = f.toddler;
+      if (!touched.pace) setSeg('#pace', f.gentle ? 'relaxed' : 'comfortable');
+      else if (f.toddler && current('#pace') === 'packed') setSeg('#pace', 'comfortable');
+      if (!touched.endby) $('#endby').value = f.gentle ? '19:00' : '20:00';
+      if (!touched.interests) {
+        var tags = TRIP_TAGS[single('#triptype')] || [];
+        $$('#interests .tag').forEach(function (b) { b.setAttribute('aria-pressed', String(tags.indexOf(b.dataset.tag) >= 0)); });
+      }
+    }
+    function money() {
+      var figure = parseInt(val('m1').replace(/[^\d]/g, ''), 10) || 0, basis = current('#basis') || 'total';
+      var party = Math.max(1, facts().list.length);
+      var total = basis === 'per_person' ? figure * party : figure;
+      var head = Math.round(total / party);
+      $('#budget-line').textContent = inr(total) + ' total · ' + inr(head) + ' a head for ' + party;
+      $$('#budget-chips .tag').forEach(function (t) { t.setAttribute('aria-pressed', String(+t.dataset.budget === figure)); });
+      return {total: total, basis: basis, head: head, party: party};
+    }
+    function request() {
+      var transport = val('w6'); if (transport === 'flight') transport = 'any';
+      var m = money();
+      return {
+        origin_city: val('w1'),
+        destination_cities: list('w2'),
+        start_date: val('w3'),
+        days: parseInt(val('w4'), 10) || 1,
+        travellers: travellers(),
+        trip_type: single('#triptype') || null,
+        pace: current('#pace') || 'comfortable',
+        budget_inr: m.total,
+        budget_basis: m.basis,
+        transport: transport,
+        getting_around: single('#around') || 'suggest',
+        food: single('#food') || null,
+        interest_tags: $$('#interests [aria-pressed="true"]').map(function (b) { return b.dataset.tag; }),
+        must_see: list('m2'),
+        skip: list('m3'),
+        notes: val('free') || null,
+        // "Whenever" is an honest 23:00, not the silent 8 pm default.
+        day_end: val('endby') || '23:00'
+      };
+    }
+    // ---- the live summary: one sentence, then up to three lines that are true
+    function summary() {
+      var f = facts(), m = money(), req = request();
+      var who = plural(f.adults, 'adult') + (f.elders ? ' (' + (f.elders === 1 ? 'one' : f.elders) + ' over 60)' : '');
+      if (f.children) who += ', ' + plural(f.children, 'child', 'children') + ' (' + f.list.filter(function (x) { return x.kind === 'child'; }).map(function (x) { return x.age_band; }).join(', ') + ')';
+      var end = req.day_end === '23:00' ? 'No evening limit' : 'Evenings end by ' + hour12(req.day_end);
+      var bits = [
+        (req.origin_city || '…') + ' → ' + (req.destination_cities.join(' & ') || '…'),
+        plural(req.days, 'day') + (req.start_date ? ' from ' + dateShort(req.start_date) : ''),
+        who,
+        TRIP_LABEL[req.trip_type] || 'Trip type not set',
+        inr(m.total) + ' total, ' + inr(m.head) + ' a head',
+        THERE[req.transport === 'any' && val('w6') === 'flight' ? 'flight' : req.transport] + ' there, ' + AROUND[req.getting_around] + ' around',
+        req.interest_tags.length ? req.interest_tags.map(cap).join(', ') : 'No interests ticked',
+        end
+      ];
+      $('#sum-line').textContent = bits.join(' · ');
+      var rules = [];
+      if (f.elders) rules.push('Days end by ' + hour12(req.day_end) + ' and climbs stay short because someone is over 60.');
+      else if (f.toddler) rules.push('Days end by ' + hour12(req.day_end) + ' and the easy places win because a child is under 6.');
+      else if (req.day_end === '23:00') rules.push('No end-of-day limit: days run as late as the places stay open.');
+      if (req.skip.length) rules.push('Skipping ' + listJoin(req.skip) + '.');
+      rules.push('One lunch stop is reserved every day.');
+      rules.push('Getting around is costed per day, estimated.');
+      $('#sum-rules').innerHTML = rules.slice(0, 3).map(function (r) { return '<li>' + h(r) + '</li>'; }).join('');
+      var fillEl = $('#sum-fill'); fillEl.hidden = !fillNote; fillEl.textContent = fillNote;
+    }
+    function refresh() { summary(); }
+
     page.addEventListener('click', function (e) {
       var fs = e.target.closest('[data-fstep]');
       if (fs) { showStep(fs.dataset.fstep); return; }
@@ -189,59 +312,73 @@
       if (st) {
         var out = st.parentElement.querySelector('output'), min = +(st.parentElement.dataset.min || 0);
         out.textContent = Math.max(min, Math.min(12, parseInt(out.textContent, 10) + parseInt(st.dataset.step, 10)));
+        renderTravellers(); derive(); refresh();
         return;
       }
-      var tag = e.target.closest('.tag, .check');
-      if (tag) {
+      var tag = e.target.closest('.tag');
+      if (tag && !tag.disabled) {
         var group = tag.parentElement, on = tag.getAttribute('aria-pressed') === 'true';
         if (group.hasAttribute('data-single')) {
-          $$('.tag, .check', group).forEach(function (t) { t.setAttribute('aria-pressed', 'false'); });
+          $$('.tag', group).forEach(function (t) { t.setAttribute('aria-pressed', 'false'); });
           tag.setAttribute('aria-pressed', 'true');
         } else {
           tag.setAttribute('aria-pressed', String(!on));
         }
+        if (group.id === 'interests') touched.interests = true;
         if (tag.dataset.budget) $('#m1').value = inr(tag.dataset.budget);
+        if (group.id === 'triptype') derive();
+        refresh();
         return;
       }
       var seg = e.target.closest('.seg3 button');
-      if (seg) { $$('button', seg.parentElement).forEach(function (b) { b.setAttribute('aria-current', 'false'); }); seg.setAttribute('aria-current', 'true'); }
+      if (seg && !seg.disabled) {
+        $$('button', seg.parentElement).forEach(function (b) { b.setAttribute('aria-current', 'false'); }); seg.setAttribute('aria-current', 'true');
+        if (seg.parentElement.id === 'pace') touched.pace = true;
+        refresh();
+      }
     });
-    $('#m1').addEventListener('input', function () {
-      var v = parseInt($('#m1').value.replace(/[^\d]/g, ''), 10);
-      $$('#budget-chips .tag').forEach(function (t) { t.setAttribute('aria-pressed', String(+t.dataset.budget === v)); });
+    page.addEventListener('input', refresh);
+    page.addEventListener('change', function (e) {
+      if (e.target.id === 'endby') touched.endby = true;
+      if (e.target.closest('#travellers')) derive();
+      refresh();
     });
 
-    function pressed(sel) { return $$(sel + ' [aria-pressed="true"]').map(function (b) { return b.textContent.trim(); }); }
-    function current(sel) { var b = $(sel + ' [aria-current="true"]'); return b ? (b.dataset.value || b.textContent.trim()) : ''; }
-    function num(id) { return parseInt($('#' + id).textContent, 10) || 0; }
-    function val(id) { return $('#' + id).value.trim(); }
-    function request() {
-      var adults = num('adults'), elders = num('elders'), children = num('children');
-      var transport = val('w6'); if (transport === 'flight') transport = 'any';
-      return {
-        origin_city: val('w1'),
-        destination_cities: val('w2').split(/[,;/]/).map(function (s) { return s.trim(); }).filter(Boolean),
-        start_date: val('w3'),
-        days: parseInt(val('w4'), 10) || 1,
-        party_size: Math.max(1, adults + elders + children),
-        has_elderly: elders > 0,
-        has_children: children > 0,
-        pace: current('#pace') || 'comfortable',
-        budget_inr: parseInt(val('m1').replace(/[^\d]/g, ''), 10) || 0,
-        transport: transport,
-        interest_tags: $$('#interests [aria-pressed="true"]').map(function (b) { return b.dataset.tag; }),
-        notes: val('m4') || null,
-        day_one_start: val('w5'),
-        day_end: val('endby') || null,
-        preferences: {
-          adults: String(adults), elders: String(elders), children: String(children),
-          children_ages: pressed('#ages').join(', '), walking: pressed('#walking').join(', '),
-          mornings: val('mornings'), food: pressed('#food').join(', '), budget_covers: pressed('#covers').join(', '),
-          stay: current('#stay'), getting_around: pressed('#around').join(', '),
-          getting_there: $('#w6').selectedOptions[0].textContent, must_see: val('m2'), skip: val('m3')
+    // ---- "Fill the form from this": the AI reads, the traveller checks
+    var fillBtn = $('#fill'), fillNoteEl = $('#fill-note');
+    fillBtn.addEventListener('click', function () {
+      var text = val('free');
+      if (!text) { fillNoteEl.textContent = 'Write a line or two first.'; return; }
+      fillBtn.disabled = true; fillBtn.textContent = 'Reading…'; fillNoteEl.textContent = 'The model is reading what you wrote…';
+      api('POST', '/api/trips/parse', {text: text}).then(function (out) {
+        var f = out.filled || {}, n = Object.keys(f).length;
+        if (f.origin_city) $('#w1').value = f.origin_city;
+        if (f.destination_cities) $('#w2').value = f.destination_cities.join(', ');
+        if (f.start_date) $('#w3').value = f.start_date;
+        if (f.days) $('#w4').value = f.days;
+        if (f.travellers) {
+          var ad = f.travellers.filter(function (t) { return t.kind === 'adult'; }), ch = f.travellers.filter(function (t) { return t.kind === 'child'; });
+          $('#adults').textContent = Math.max(1, ad.length); $('#children').textContent = ch.length;
+          renderTravellers(ad.map(function (t, i) { return {kind: 'adult', index: i, age_band: t.age_band}; }).concat(ch.map(function (t, i) { return {kind: 'child', index: i, age_band: t.age_band}; })));
         }
-      };
-    }
+        if (f.trip_type) setSingle('#triptype', f.trip_type);
+        if (f.budget_basis) setSeg('#basis', f.budget_basis);
+        if (f.budget_inr) $('#m1').value = inr(f.budget_inr);
+        if (f.transport) $('#w6').value = f.transport;
+        if (f.getting_around) setSingle('#around', f.getting_around);
+        if (f.interest_tags) { touched.interests = true; $$('#interests .tag').forEach(function (b) { b.setAttribute('aria-pressed', String(f.interest_tags.indexOf(b.dataset.tag) >= 0)); }); }
+        if (f.must_see) $('#m2').value = f.must_see.join(', ');
+        if (f.skip) $('#m3').value = f.skip.join(', ');
+        if (f.food) setSingle('#food', f.food);
+        fillNote = out.note || ('Filled ' + n + ' fields from what you wrote — check them');
+        fillNoteEl.textContent = fillNote;
+        derive(); refresh();
+      }).catch(function (err) {
+        fillNote = "Couldn't read that — fill it in by hand"; fillNoteEl.textContent = fillNote + ' (' + err.message + ')'; refresh();
+      }).then(function () { fillBtn.disabled = false; fillBtn.textContent = 'Fill the form from this'; });
+    });
+
+    // ---- submit: warn about a city we have never seen, then post
     var btn = $('#make-plan'), hint = $('#make-hint');
     btn.addEventListener('click', function () {
       var req = request();
@@ -249,16 +386,34 @@
         hint.textContent = 'Where from, where to, and when — we need all three.'; hint.classList.add('err'); return;
       }
       btn.disabled = true; btn.textContent = 'Making your plan…'; hint.textContent = 'Reading your answers…'; hint.classList.remove('err');
-      api('POST', '/api/trips', req).then(function (out) {
-        if (out.status !== 'planned') { location.href = '/trips/' + out.id; return; }
-        showBuild(out, req);
-      }).catch(function (err) {
-        btn.disabled = false; btn.textContent = 'Make my plan →'; hint.textContent = err.message; hint.classList.add('err');
-      });
+      api('GET', '/api/places/coverage?cities=' + encodeURIComponent(req.destination_cities.join(',')))
+        .catch(function () { return {}; })
+        .then(function (cov) {
+          var unknown = req.destination_cities.filter(function (c) { return (cov[c] || 0) < 8; });
+          if (unknown.length) {
+            hint.textContent = "We haven't been to " + listJoin(unknown) + ' yet — learning about it first, about 20 seconds';
+            btn.textContent = 'Learning about ' + unknown[0] + '…';
+          }
+          return api('POST', '/api/trips', req);
+        })
+        .then(function (out) {
+          if (out.status !== 'planned') { location.href = '/trips/' + out.id; return; }
+          showBuild(out, req);
+        })
+        .catch(function (err) {
+          btn.disabled = false; btn.textContent = 'Make my plan →'; hint.textContent = err.message; hint.classList.add('err');
+        });
     });
     function showBuild(out, req) {
       var m = out.plan.metrics, days = out.plan.days.length;
-      $('#st-read').textContent = plural(req.destination_cities.length, 'place') + ' · ' + req.party_size + ' people · ' + inr(req.budget_inr);
+      $('#st-read').textContent = plural(req.destination_cities.length, 'place') + ' · ' + partyText(req) + ' · ' + inr(req.budget_inr);
+      var learned = (out.cold_start || []).filter(function (r) { return r.drafted_places > 0; });
+      var st = $('#st-learn');
+      if (learned.length) {
+        st.hidden = false;
+        $('span', st).textContent = 'Learning about ' + listJoin(learned.map(function (r) { return r.city; }));
+        $('small', st).textContent = learned.map(function (r) { return plural(r.drafted_places, 'place') + ' drafted, unverified'; }).join(' · ') + ' · ' + Math.round(learned.reduce(function (a, r) { return a + r.seconds; }, 0)) + ' s';
+      }
       $('#st-pick').textContent = m.candidates_considered + ' candidates from ' + (DATA.poi_total || '?');
       $('#st-sort').textContent = plural(days, 'cluster') + ', one per day';
       $('#st-order').textContent = m.route_km_naive + ' km as listed → ' + m.route_km_after + ' km as routed';
@@ -269,6 +424,15 @@
       var build = $('#build'); build.hidden = false; build.classList.add('is-on');
       window.scrollTo({top: 0});
     }
+
+    // first paint: the demo defaults, with the bands the page-data carries
+    var preset = ((DATA.defaults || {}).travellers || []);
+    var ai = 0, ci = 0;
+    renderTravellers(preset.map(function (t) { return {kind: t.kind, index: t.kind === 'adult' ? ai++ : ci++, age_band: t.age_band}; }));
+    if (DATA.defaults && DATA.defaults.pace) { setSeg('#pace', DATA.defaults.pace); touched.pace = true; }
+    if (DATA.defaults && DATA.defaults.day_end) { $('#endby').value = DATA.defaults.day_end.slice(0, 5); touched.endby = true; }
+    if ($$('#interests [aria-pressed="true"]').length) touched.interests = true;
+    derive(); refresh();
   };
 
   init.choose = function () {

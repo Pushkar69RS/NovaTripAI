@@ -46,6 +46,8 @@ class OneUser(NoRows):
             return self.ROW if self.params[0] == EMAIL else None
         if "FROM app_user" in q:
             return self.ROW[:3] if self.params[0] == 4 else None
+        if "count(*)" in q:
+            return (0,)
         return None
 
 
@@ -128,6 +130,27 @@ def test_the_landing_page_is_public_and_makes_no_external_request(empty_db) -> N
     assert "http://" not in r.text and "https://" not in r.text
     assert "/static/fonts.css" in r.text
     assert "No trip yet" in r.text  # honest empty state, nothing hardcoded
+
+
+def test_the_form_asks_only_what_the_planner_acts_on(password) -> None:
+    client.cookies.set(COOKIE, sign(4))
+    r = client.get("/trips/new")
+    client.cookies.clear()
+    assert r.status_code == 200
+    text = r.text.lower()
+    for gone in ("leave on day one", "walking", "mornings", "elders"):
+        assert gone not in text, gone
+    for kept in (
+        "tell us about the trip in your own words",
+        "fill the form from this",
+        "getting around once there",
+        "we show what it costs per day, estimated.",
+        "how full should the days be",
+        "total for everyone",
+        "this covers tickets, food and getting around. stay and the journey there are separate.",
+        "written up by templates · the ai reads it to you on the next page",
+    ):
+        assert kept in text, kept
 
 
 def test_health_stays_open() -> None:

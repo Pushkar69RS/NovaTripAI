@@ -25,6 +25,7 @@ from app.demo import cached_demo
 from app.katha.build import WORDS_PER_MIN, DbCatalogue, build, db_retriever
 from app.katha.models import Depth, Katha, Scope
 from app.llm.client import complete
+from app.llm.intake import parse_intake
 from app.llm.narrate import narrate_segment
 from app.planner.coldstart import (
     MIN_PLACES,
@@ -198,6 +199,16 @@ def create(
         "alternatives": alternatives,
         "cold_start": cold,
     }
+
+
+class ParseIn(BaseModel):
+    text: str = Field(min_length=1, max_length=2000)
+
+
+@router.post("/trips/parse")
+def parse_trip(body: ParseIn) -> dict:
+    """The traveller's own words into form fields; never a date, never a guess."""
+    return parse_intake(body.text)
 
 
 @router.post("/trips")
