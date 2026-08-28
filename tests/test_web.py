@@ -234,6 +234,20 @@ def test_the_plan_page_shows_the_narration_only_when_it_exists(password) -> None
     client.cookies.clear()
 
 
+def test_demo_autofill_prefills_only_when_asked(password, monkeypatch) -> None:
+    monkeypatch.delenv("DEMO_AUTOFILL", raising=False)
+    bare = client.get("/signin")
+    assert 'value="pw"' not in bare.text and "rohan@travelyantra.in" not in bare.text
+    assert 'href="/signin"' in client.get("/").text
+
+    monkeypatch.setenv("DEMO_AUTOFILL", "1")
+    filled = client.get("/signin")
+    assert (
+        'value="rohan@travelyantra.in"' in filled.text and 'value="pw"' in filled.text
+    )
+    assert 'href="/signin?next=/home"' in client.get("/").text
+
+
 def test_health_stays_open() -> None:
     assert client.get("/health").status_code == 200
 

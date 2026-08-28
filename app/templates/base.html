@@ -22,7 +22,7 @@
     <a class="avatar" href="/signout" title="{{ account.name }} · sign out">{{ account.initials }}</a>
     {% else %}
     <div class="nav"></div>
-    {% block barlink %}<a class="btn btn--sm btn--ghost" href="/signin">Sign in</a>{% endblock %}
+    {% block barlink %}<a class="btn btn--sm btn--ghost" href="/signin{{ '?next=/home' if autofill else '' }}">Sign in</a>{% endblock %}
     {% endif %}
   </div>
   {% block crumb %}{% endblock %}

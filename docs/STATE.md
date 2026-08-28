@@ -9,8 +9,10 @@ and parse_intake google/gemini-3.1-flash-lite, ids checked against the live /mod
 Sarvam bulbul:v3 for speech; embeddings local (multilingual-e5-small).
 Gates: `uv run ruff check .`, `uv run ruff format --check .`, `uv run pytest` — all pass (144 tests, ~19 s).
 Preflight: `uv run python scripts/check_env.py` before any DB or LLM task.
-Run: `uv run uvicorn app.main:app --port 8080`; `uv run python scripts/demo_seed.py` creates or finds the
-canonical demo trip and prints its metrics line. OpenRouter spend this run: about $0.04 (estimated).
+Run: double-click `Start Travel Yantra.bat` (runs demo.ps1: frees port 8080, `scripts/demo_up.py` seeds the
+accounts and the three demo trips, warms the narrations and the Mysuru Kannada Katha, starts uvicorn in its own
+window logging to var/server.log, opens the browser on the landing page; DEMO_AUTOFILL=1 in .env pre-fills the
+sign-in). By hand: `uv run uvicorn app.main:app --port 8080`. OpenRouter spend this run: about $0.04 (estimated).
 DB: poi 135 (20 verified, 92 draft, 23 ai_generated — all of Mangalore), doc_chunk 354 rows of which 300
 live (82 carry a theme: 14 per hub plus 12 drafted for Mangalore; 23 legends; 54 retired), city_centre 6
 (5 poi_average + Mangalore ai_generated), app_user 4, trip 9, tour 16, eval_run 10.

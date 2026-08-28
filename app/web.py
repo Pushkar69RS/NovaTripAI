@@ -184,10 +184,16 @@ def require_user(request: Request, conn: Db) -> User:
 Me = Annotated[User, Depends(require_user)]
 
 
+def demo_autofill() -> bool:
+    """DEMO_AUTOFILL=1 pre-fills the sign-in form. Localhost demo only."""
+    return os.environ.get("DEMO_AUTOFILL", "").strip() == "1"
+
+
 def render(
     request: Request, name: str, user: User | None = None, **context: Any
 ) -> HTMLResponse:
     context.setdefault("data", {})
+    context.setdefault("autofill", demo_autofill())
     context["account"] = user
     return templates.TemplateResponse(request, name, context)
 
@@ -371,8 +377,13 @@ def landing(request: Request, conn: Db) -> HTMLResponse:
 
 @pages.get("/signin", response_class=HTMLResponse)
 def signin_form(request: Request) -> HTMLResponse:
+    fill = demo_autofill()
     return render(
-        request, "signin.html", next=request.query_params.get("next", "/home")
+        request,
+        "signin.html",
+        next=request.query_params.get("next", "/home"),
+        email="rohan@travelyantra.in" if fill else "",
+        password=os.environ.get("DEMO_PASSWORD", "") if fill else "",
     )
 
 

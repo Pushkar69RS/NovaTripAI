@@ -22,3 +22,6 @@ var/
 
 # Claude Code local settings
 .claude/
+
+# Office lock files (the deck open in PowerPoint)
+~$*
